@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as TracciaSlugRouteImport } from './routes/traccia.$slug'
 import { Route as LidoSlugRouteImport } from './routes/lido.$slug'
 import { Route as AuthenticatedProdottiRouteImport } from './routes/_authenticated/prodotti'
 import { Route as AuthenticatedOrdiniRouteImport } from './routes/_authenticated/ordini'
@@ -29,6 +30,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TracciaSlugRoute = TracciaSlugRouteImport.update({
+  id: '/traccia/$slug',
+  path: '/traccia/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LidoSlugRoute = LidoSlugRouteImport.update({
@@ -60,6 +66,7 @@ export interface FileRoutesByFullPath {
   '/ordini': typeof AuthenticatedOrdiniRoute
   '/prodotti': typeof AuthenticatedProdottiRoute
   '/lido/$slug': typeof LidoSlugRoute
+  '/traccia/$slug': typeof TracciaSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -68,6 +75,7 @@ export interface FileRoutesByTo {
   '/ordini': typeof AuthenticatedOrdiniRoute
   '/prodotti': typeof AuthenticatedProdottiRoute
   '/lido/$slug': typeof LidoSlugRoute
+  '/traccia/$slug': typeof TracciaSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -78,6 +86,7 @@ export interface FileRoutesById {
   '/_authenticated/ordini': typeof AuthenticatedOrdiniRoute
   '/_authenticated/prodotti': typeof AuthenticatedProdottiRoute
   '/lido/$slug': typeof LidoSlugRoute
+  '/traccia/$slug': typeof TracciaSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -88,8 +97,16 @@ export interface FileRouteTypes {
     | '/ordini'
     | '/prodotti'
     | '/lido/$slug'
+    | '/traccia/$slug'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/impostazioni' | '/ordini' | '/prodotti' | '/lido/$slug'
+  to:
+    | '/'
+    | '/login'
+    | '/impostazioni'
+    | '/ordini'
+    | '/prodotti'
+    | '/lido/$slug'
+    | '/traccia/$slug'
   id:
     | '__root__'
     | '/'
@@ -99,6 +116,7 @@ export interface FileRouteTypes {
     | '/_authenticated/ordini'
     | '/_authenticated/prodotti'
     | '/lido/$slug'
+    | '/traccia/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -106,6 +124,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   LoginRoute: typeof LoginRoute
   LidoSlugRoute: typeof LidoSlugRoute
+  TracciaSlugRoute: typeof TracciaSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -129,6 +148,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/traccia/$slug': {
+      id: '/traccia/$slug'
+      path: '/traccia/$slug'
+      fullPath: '/traccia/$slug'
+      preLoaderRoute: typeof TracciaSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lido/$slug': {
@@ -182,6 +208,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   LoginRoute: LoginRoute,
   LidoSlugRoute: LidoSlugRoute,
+  TracciaSlugRoute: TracciaSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
