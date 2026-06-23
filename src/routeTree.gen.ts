@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as LidoSlugRouteImport } from './routes/lido.$slug'
 import { Route as AuthenticatedProdottiRouteImport } from './routes/_authenticated/prodotti'
 import { Route as AuthenticatedOrdiniRouteImport } from './routes/_authenticated/ordini'
 import { Route as AuthenticatedImpostazioniRouteImport } from './routes/_authenticated/impostazioni'
@@ -28,6 +29,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LidoSlugRoute = LidoSlugRouteImport.update({
+  id: '/lido/$slug',
+  path: '/lido/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedProdottiRoute = AuthenticatedProdottiRouteImport.update({
@@ -53,6 +59,7 @@ export interface FileRoutesByFullPath {
   '/impostazioni': typeof AuthenticatedImpostazioniRoute
   '/ordini': typeof AuthenticatedOrdiniRoute
   '/prodotti': typeof AuthenticatedProdottiRoute
+  '/lido/$slug': typeof LidoSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -60,6 +67,7 @@ export interface FileRoutesByTo {
   '/impostazioni': typeof AuthenticatedImpostazioniRoute
   '/ordini': typeof AuthenticatedOrdiniRoute
   '/prodotti': typeof AuthenticatedProdottiRoute
+  '/lido/$slug': typeof LidoSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -69,12 +77,19 @@ export interface FileRoutesById {
   '/_authenticated/impostazioni': typeof AuthenticatedImpostazioniRoute
   '/_authenticated/ordini': typeof AuthenticatedOrdiniRoute
   '/_authenticated/prodotti': typeof AuthenticatedProdottiRoute
+  '/lido/$slug': typeof LidoSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/impostazioni' | '/ordini' | '/prodotti'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/impostazioni'
+    | '/ordini'
+    | '/prodotti'
+    | '/lido/$slug'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/impostazioni' | '/ordini' | '/prodotti'
+  to: '/' | '/login' | '/impostazioni' | '/ordini' | '/prodotti' | '/lido/$slug'
   id:
     | '__root__'
     | '/'
@@ -83,12 +98,14 @@ export interface FileRouteTypes {
     | '/_authenticated/impostazioni'
     | '/_authenticated/ordini'
     | '/_authenticated/prodotti'
+    | '/lido/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   LoginRoute: typeof LoginRoute
+  LidoSlugRoute: typeof LidoSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -112,6 +129,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lido/$slug': {
+      id: '/lido/$slug'
+      path: '/lido/$slug'
+      fullPath: '/lido/$slug'
+      preLoaderRoute: typeof LidoSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/prodotti': {
@@ -157,6 +181,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   LoginRoute: LoginRoute,
+  LidoSlugRoute: LidoSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

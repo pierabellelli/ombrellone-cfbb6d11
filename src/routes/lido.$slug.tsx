@@ -409,6 +409,7 @@ function CartView({
         numero_ombrellone: ombrTrim.slice(0, 20),
         cognome: cogTrim.slice(0, 60),
         totale,
+        numero_ordine: 0, // assegnato dal trigger
         note: note.trim() ? note.trim().slice(0, 300) : null,
       })
       .select("id, numero_ordine")
