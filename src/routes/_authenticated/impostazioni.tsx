@@ -239,9 +239,10 @@ function ImageUploader({
         .from("lidi-branding")
         .createSignedUrl(path, SIGNED_TTL);
       if (sErr) throw sErr;
+      const patch = { [field]: signed.signedUrl } as Partial<Lido>;
       const { error: updErr } = await supabase
         .from("lidi")
-        .update({ [field]: signed.signedUrl })
+        .update(patch)
         .eq("id", lidoId);
       if (updErr) throw updErr;
       toast.success(`${label} aggiornato`);
