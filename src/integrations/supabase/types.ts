@@ -338,6 +338,18 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      traccia_ordine: {
+        Args: { _cognome: string; _numero: number; _slug: string }
+        Returns: {
+          cognome: string
+          created_at: string
+          id: string
+          numero_ombrellone: string
+          numero_ordine: number
+          stato: string
+          totale: number
+        }[]
+      }
       user_lido_id: { Args: { _user_id: string }; Returns: string }
     }
     Enums: {
