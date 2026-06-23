@@ -47,10 +47,24 @@ function Home() {
             >
               Accedi alla dashboard
             </Link>
-            <a
-              href="#come-funziona"
+            <Link
+              to="/lido/$slug"
+              params={{ slug: "demo" }}
+              search={{ o: "12" } as any}
               className="inline-flex items-center justify-center rounded-full px-6 py-3 font-semibold border border-border bg-card hover:bg-secondary transition"
             >
+              Vedi area cliente demo
+            </Link>
+          </div>
+          <div className="mt-4 text-sm">
+            <Link
+              to="/traccia/$slug"
+              params={{ slug: "demo" }}
+              className="text-[color:var(--teal-deep)] font-medium hover:underline"
+            >
+              Traccia ordine demo →
+            </Link>
+            <a href="#come-funziona" className="ml-4 text-muted-foreground hover:underline">
               Come funziona
             </a>
           </div>
