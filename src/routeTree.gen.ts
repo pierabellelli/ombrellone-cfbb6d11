@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedProdottiRouteImport } from './routes/_authenticated/prodotti'
 import { Route as AuthenticatedOrdiniRouteImport } from './routes/_authenticated/ordini'
+import { Route as AuthenticatedImpostazioniRouteImport } from './routes/_authenticated/impostazioni'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -39,16 +40,24 @@ const AuthenticatedOrdiniRoute = AuthenticatedOrdiniRouteImport.update({
   path: '/ordini',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedImpostazioniRoute =
+  AuthenticatedImpostazioniRouteImport.update({
+    id: '/impostazioni',
+    path: '/impostazioni',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/impostazioni': typeof AuthenticatedImpostazioniRoute
   '/ordini': typeof AuthenticatedOrdiniRoute
   '/prodotti': typeof AuthenticatedProdottiRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/impostazioni': typeof AuthenticatedImpostazioniRoute
   '/ordini': typeof AuthenticatedOrdiniRoute
   '/prodotti': typeof AuthenticatedProdottiRoute
 }
@@ -57,19 +66,21 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/login': typeof LoginRoute
+  '/_authenticated/impostazioni': typeof AuthenticatedImpostazioniRoute
   '/_authenticated/ordini': typeof AuthenticatedOrdiniRoute
   '/_authenticated/prodotti': typeof AuthenticatedProdottiRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/ordini' | '/prodotti'
+  fullPaths: '/' | '/login' | '/impostazioni' | '/ordini' | '/prodotti'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/ordini' | '/prodotti'
+  to: '/' | '/login' | '/impostazioni' | '/ordini' | '/prodotti'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/login'
+    | '/_authenticated/impostazioni'
     | '/_authenticated/ordini'
     | '/_authenticated/prodotti'
   fileRoutesById: FileRoutesById
@@ -117,15 +128,24 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOrdiniRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/impostazioni': {
+      id: '/_authenticated/impostazioni'
+      path: '/impostazioni'
+      fullPath: '/impostazioni'
+      preLoaderRoute: typeof AuthenticatedImpostazioniRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedImpostazioniRoute: typeof AuthenticatedImpostazioniRoute
   AuthenticatedOrdiniRoute: typeof AuthenticatedOrdiniRoute
   AuthenticatedProdottiRoute: typeof AuthenticatedProdottiRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedImpostazioniRoute: AuthenticatedImpostazioniRoute,
   AuthenticatedOrdiniRoute: AuthenticatedOrdiniRoute,
   AuthenticatedProdottiRoute: AuthenticatedProdottiRoute,
 }
