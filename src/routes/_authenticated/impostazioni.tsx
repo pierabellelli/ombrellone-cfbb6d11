@@ -257,7 +257,8 @@ function ImageUploader({
 
   const handleRemove = async () => {
     setBusy(true);
-    const { error } = await supabase.from("lidi").update({ [field]: null }).eq("id", lidoId);
+    const patch = { [field]: null } as Partial<Lido>;
+    const { error } = await supabase.from("lidi").update(patch).eq("id", lido.id);
     setBusy(false);
     if (error) { toast.error("Impossibile rimuovere", { description: error.message }); return; }
     toast.success(`${label} rimosso`);
