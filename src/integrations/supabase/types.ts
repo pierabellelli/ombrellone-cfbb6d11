@@ -14,16 +14,335 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      categorie_prodotto: {
+        Row: {
+          created_at: string
+          id: string
+          lido_id: string
+          nome: string
+          ordine: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lido_id: string
+          nome: string
+          ordine?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lido_id?: string
+          nome?: string
+          ordine?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "categorie_prodotto_lido_id_fkey"
+            columns: ["lido_id"]
+            isOneToOne: false
+            referencedRelation: "lidi"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lidi: {
+        Row: {
+          created_at: string
+          finestra_controllo_minuti: number | null
+          foto_copertina_url: string | null
+          id: string
+          logo_url: string | null
+          max_ordini_ravvicinati: number | null
+          nome: string
+          orario_apertura: string | null
+          orario_chiusura: string | null
+          servizio_bar_attivo: boolean
+          slug: string
+          soglia_ordine_libero: number | null
+          stripe_account_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          finestra_controllo_minuti?: number | null
+          foto_copertina_url?: string | null
+          id?: string
+          logo_url?: string | null
+          max_ordini_ravvicinati?: number | null
+          nome: string
+          orario_apertura?: string | null
+          orario_chiusura?: string | null
+          servizio_bar_attivo?: boolean
+          slug: string
+          soglia_ordine_libero?: number | null
+          stripe_account_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          finestra_controllo_minuti?: number | null
+          foto_copertina_url?: string | null
+          id?: string
+          logo_url?: string | null
+          max_ordini_ravvicinati?: number | null
+          nome?: string
+          orario_apertura?: string | null
+          orario_chiusura?: string | null
+          servizio_bar_attivo?: boolean
+          slug?: string
+          soglia_ordine_libero?: number | null
+          stripe_account_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ordine_items: {
+        Row: {
+          created_at: string
+          id: string
+          nome_snapshot: string
+          ordine_id: string
+          prezzo_snapshot: number
+          prodotto_id: string | null
+          quantita: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome_snapshot: string
+          ordine_id: string
+          prezzo_snapshot: number
+          prodotto_id?: string | null
+          quantita?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome_snapshot?: string
+          ordine_id?: string
+          prezzo_snapshot?: number
+          prodotto_id?: string | null
+          quantita?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ordine_items_ordine_id_fkey"
+            columns: ["ordine_id"]
+            isOneToOne: false
+            referencedRelation: "ordini"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ordine_items_prodotto_id_fkey"
+            columns: ["prodotto_id"]
+            isOneToOne: false
+            referencedRelation: "prodotti"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ordini: {
+        Row: {
+          cognome: string
+          created_at: string
+          id: string
+          lido_id: string
+          note: string | null
+          numero_ombrellone: string
+          numero_ordine: number
+          stato: Database["public"]["Enums"]["ordine_stato"]
+          stripe_payment_id: string | null
+          totale: number
+          updated_at: string
+        }
+        Insert: {
+          cognome: string
+          created_at?: string
+          id?: string
+          lido_id: string
+          note?: string | null
+          numero_ombrellone: string
+          numero_ordine: number
+          stato?: Database["public"]["Enums"]["ordine_stato"]
+          stripe_payment_id?: string | null
+          totale?: number
+          updated_at?: string
+        }
+        Update: {
+          cognome?: string
+          created_at?: string
+          id?: string
+          lido_id?: string
+          note?: string | null
+          numero_ombrellone?: string
+          numero_ordine?: number
+          stato?: Database["public"]["Enums"]["ordine_stato"]
+          stripe_payment_id?: string | null
+          totale?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ordini_lido_id_fkey"
+            columns: ["lido_id"]
+            isOneToOne: false
+            referencedRelation: "lidi"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prodotti: {
+        Row: {
+          categoria_id: string | null
+          created_at: string
+          descrizione: string | null
+          disponibile: boolean
+          foto_url: string | null
+          id: string
+          lido_id: string
+          nome: string
+          prezzo: number
+          updated_at: string
+        }
+        Insert: {
+          categoria_id?: string | null
+          created_at?: string
+          descrizione?: string | null
+          disponibile?: boolean
+          foto_url?: string | null
+          id?: string
+          lido_id: string
+          nome: string
+          prezzo?: number
+          updated_at?: string
+        }
+        Update: {
+          categoria_id?: string | null
+          created_at?: string
+          descrizione?: string | null
+          disponibile?: boolean
+          foto_url?: string | null
+          id?: string
+          lido_id?: string
+          nome?: string
+          prezzo?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prodotti_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "categorie_prodotto"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prodotti_lido_id_fkey"
+            columns: ["lido_id"]
+            isOneToOne: false
+            referencedRelation: "lidi"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          cognome: string | null
+          created_at: string
+          email: string | null
+          id: string
+          lido_id: string | null
+          nome: string | null
+          updated_at: string
+        }
+        Insert: {
+          cognome?: string | null
+          created_at?: string
+          email?: string | null
+          id: string
+          lido_id?: string | null
+          nome?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cognome?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          lido_id?: string | null
+          nome?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_lido_id_fkey"
+            columns: ["lido_id"]
+            isOneToOne: false
+            referencedRelation: "lidi"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          lido_id: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lido_id?: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lido_id?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_lido_id_fkey"
+            columns: ["lido_id"]
+            isOneToOne: false
+            referencedRelation: "lidi"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      bootstrap_super_admin: { Args: { _email: string }; Returns: string }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      has_role_in_lido: {
+        Args: {
+          _lido_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      user_lido_id: { Args: { _user_id: string }; Returns: string }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "cliente" | "staff" | "gestore" | "super_admin"
+      ordine_stato: "arrivati" | "da_evadere" | "consegnati" | "annullato"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +469,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["cliente", "staff", "gestore", "super_admin"],
+      ordine_stato: ["arrivati", "da_evadere", "consegnati", "annullato"],
+    },
   },
 } as const
