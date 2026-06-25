@@ -390,6 +390,7 @@ function CartView({
   const [telefono, setTelefono] = useState("");
   const [cognome, setCognome] = useState("");
   const [note, setNote] = useState("");
+  const [metodoPagamento, setMetodoPagamento] = useState<"contanti" | "carta">("contanti");
   const [sending, setSending] = useState(false);
 
   useEffect(() => { setOmbrellone(defaultOmbrellone); }, [defaultOmbrellone]);
