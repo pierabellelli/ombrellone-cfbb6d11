@@ -39,6 +39,20 @@ function AuthLayout() {
   const isStaff = roles.some((r) => r.role === "staff");
   const canSeeMap = isGestore || isSuper || isStaff;
 
+  const lidoId = roles.find((r) => r.lido_id)?.lido_id ?? null;
+  const { data: lidoBranding } = useQuery({
+    queryKey: ["lidoBranding", lidoId],
+    enabled: !!lidoId,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("lidi")
+        .select("nome, logo_url")
+        .eq("id", lidoId!)
+        .maybeSingle();
+      return data as { nome: string; logo_url: string | null } | null;
+    },
+  });
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate({ to: "/login", replace: true });
@@ -51,7 +65,17 @@ function AuthLayout() {
       <header className="border-b border-border bg-card/80 backdrop-blur sticky top-0 z-30">
         <div className="max-w-[1400px] mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-6">
-            <Link to="/ordini" className="shrink-0"><Logo /></Link>
+            <Link to="/ordini" className="shrink-0 flex items-center gap-2">
+              {lidoBranding?.logo_url ? (
+                <>
+                  <img src={lidoBranding.logo_url} alt={lidoBranding.nome}
+                    className="w-9 h-9 rounded-lg object-cover border border-border" />
+                  <span className="font-bold text-primary hidden sm:inline">{lidoBranding.nome}</span>
+                </>
+              ) : (
+                <Logo />
+              )}
+            </Link>
             {!isAdminArea && (
               <nav className="hidden md:flex items-center gap-1">
                 <NavLink to="/ordini" icon={<ClipboardList className="w-4 h-4" />} label={t("nav.orders")} />
