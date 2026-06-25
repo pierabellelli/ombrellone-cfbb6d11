@@ -127,14 +127,21 @@ function OrdiniPage() {
   });
 
   const enabled = !!lidoId;
-  const queries = (["arrivati", "da_evadere", "consegnati"] as Stato[]).map((s) =>
-    useQuery({
-      queryKey: ["ordini-col", s, lidoId],
-      queryFn: () => loadColonna(s, lidoId!),
-      enabled,
-    }),
-  );
-  const [nuovi, prep, consegnati] = queries;
+  const nuovi = useQuery({
+    queryKey: ["ordini-col", "arrivati", lidoId],
+    queryFn: () => loadColonna("arrivati", lidoId!),
+    enabled,
+  });
+  const prep = useQuery({
+    queryKey: ["ordini-col", "da_evadere", lidoId],
+    queryFn: () => loadColonna("da_evadere", lidoId!),
+    enabled,
+  });
+  const consegnati = useQuery({
+    queryKey: ["ordini-col", "consegnati", lidoId],
+    queryFn: () => loadColonna("consegnati", lidoId!),
+    enabled,
+  });
 
   // Beep on new arrivals
   const knownNewIds = useRef<Set<string> | null>(null);
