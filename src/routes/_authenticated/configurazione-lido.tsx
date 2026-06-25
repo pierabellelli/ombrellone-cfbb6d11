@@ -66,7 +66,7 @@ function BeachConfigPage() {
       setFile((cur) => buildAutoFile(numFile, perRow, numerazione, cur));
       return;
     }
-    const cfg = data.config as { numero_file: number; numerazione: Numerazione; file: Fila[] };
+    const cfg = data.config as unknown as { numero_file: number; numerazione: Numerazione; file: Fila[] };
     setNumFile(cfg.numero_file);
     setNumerazione(cfg.numerazione);
     setFile(cfg.file ?? []);
@@ -120,7 +120,7 @@ function BeachConfigPage() {
           lido_id: data.lidoId,
           numero_file: numFile,
           numerazione,
-          file: file as unknown as object,
+          file: file as unknown as never,
         },
         { onConflict: "lido_id" }
       );
