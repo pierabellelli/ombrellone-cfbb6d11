@@ -503,6 +503,25 @@ function CartView({
           <Textarea id="note" value={note} onChange={(e) => setNote(e.target.value)}
             maxLength={300} rows={2} className="mt-1.5" placeholder="Es. senza ghiaccio…" />
         </div>
+        <div>
+          <Label>Metodo di pagamento</Label>
+          {lido.accetta_carta ? (
+            <div className="mt-1.5 grid grid-cols-2 gap-2">
+              <button type="button" onClick={() => setMetodoPagamento("contanti")}
+                className={`h-11 rounded-xl border text-sm font-medium transition ${metodoPagamento === "contanti" ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border"}`}>
+                Contanti
+              </button>
+              <button type="button" onClick={() => setMetodoPagamento("carta")}
+                className={`h-11 rounded-xl border text-sm font-medium transition ${metodoPagamento === "carta" ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border"}`}>
+                Carta
+              </button>
+            </div>
+          ) : (
+            <p className="mt-1.5 text-sm text-muted-foreground rounded-xl bg-secondary px-3 py-2">
+              Pagamento in contanti alla consegna
+            </p>
+          )}
+        </div>
       </div>
 
       <Button onClick={handleSubmit} disabled={sending} className="w-full h-12 text-base rounded-full">
