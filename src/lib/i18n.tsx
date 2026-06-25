@@ -182,6 +182,15 @@ const DICT = {
     "cliente.status.da_evadere": "In preparation",
     "cliente.status.consegnati": "Delivered",
     "cliente.status.annullato": "Cancelled",
+    "kanban.new": "New",
+    "kanban.preparing": "In preparation",
+    "kanban.delivered": "Delivered",
+    "kanban.takeOver": "Take over",
+    "kanban.markDelivered": "Mark delivered",
+    "kanban.noOrders": "No orders",
+    "kanban.total": "Total",
+    "kanban.notes": "Notes",
+    "kanban.updateError": "Update error",
   },
 } as const;
 
