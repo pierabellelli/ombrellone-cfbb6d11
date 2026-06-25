@@ -166,6 +166,13 @@ const DICT = {
     "map.elapsed": "Elapsed",
     "map.close": "Close",
     "common.cancel": "Cancel",
+    "cliente.history": "Your recent orders",
+    "cliente.noHistory": "No previous orders at this beach",
+    "cliente.historyCollapsed": "Show recent orders",
+    "cliente.status.arrivati": "Received",
+    "cliente.status.da_evadere": "In preparation",
+    "cliente.status.consegnati": "Delivered",
+    "cliente.status.annullato": "Cancelled",
   },
 } as const;
 
