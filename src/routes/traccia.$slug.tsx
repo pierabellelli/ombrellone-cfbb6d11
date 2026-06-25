@@ -141,41 +141,44 @@ function TracciaPage() {
                 </div>
 
                 <div className="mt-6">
-                  <div className="flex items-center justify-between">
-                    {STEPS.map((s, i) => {
-                      const Icon = s.icon;
-                      const done = i <= activeIdx;
-                      const current = i === activeIdx;
-                      return (
-                        <div key={s.key} className="flex-1 flex flex-col items-center">
-                          <div
-                            className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition ${
-                              done
-                                ? "bg-[color:var(--teal-deep)] border-[color:var(--teal-deep)] text-white"
-                                : "bg-card border-border text-muted-foreground"
-                            } ${current ? "ring-4 ring-[color:var(--teal)]/30 animate-pulse" : ""}`}
-                          >
-                            {done && i < activeIdx ? <CheckCircle2 className="w-5 h-5" /> : <Icon className="w-5 h-5" />}
+                  <div className="relative">
+                    <div className="absolute left-12 right-12 top-5 h-0.5 bg-border -z-0">
+                      <div
+                        className="h-full bg-[color:var(--teal-deep)] transition-all"
+                        style={{ width: `${Math.max(0, activeIdx) * 50}%` }}
+                      />
+                    </div>
+                    <div className="relative flex items-start justify-between z-10">
+                      {STEPS.map((s, i) => {
+                        const Icon = s.icon;
+                        const done = i <= activeIdx;
+                        const current = i === activeIdx;
+                        return (
+                          <div key={s.key} className="flex-1 flex flex-col items-center">
+                            <div
+                              className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition bg-card ${
+                                done
+                                  ? "bg-[color:var(--teal-deep)] border-[color:var(--teal-deep)] text-white"
+                                  : "border-border text-muted-foreground"
+                              } ${current ? "ring-4 ring-[color:var(--teal)]/30 animate-pulse" : ""}`}
+                            >
+                              {done && i < activeIdx ? <CheckCircle2 className="w-5 h-5" /> : <Icon className="w-5 h-5" />}
+                            </div>
+                            <div className={`text-xs mt-2 text-center ${done ? "text-primary font-semibold" : "text-muted-foreground"}`}>
+                              {s.label}
+                            </div>
                           </div>
-                          <div className={`text-xs mt-2 text-center ${done ? "text-primary font-semibold" : "text-muted-foreground"}`}>
-                            {s.label}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <div className="relative mt-[-44px] mx-12 h-0.5 bg-border -z-10">
-                    <div
-                      className="h-full bg-[color:var(--teal-deep)] transition-all"
-                      style={{ width: `${Math.max(0, activeIdx) * 50}%` }}
-                    />
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
 
-                <p className="text-xs text-muted-foreground text-center mt-6 inline-flex items-center justify-center gap-1.5 w-full">
+                <p className="text-xs text-muted-foreground text-center mt-6 flex items-center justify-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-[color:var(--teal-deep)] animate-pulse" />
                   Aggiornamento automatico ogni 5 secondi
                 </p>
+
               </>
             )}
           </div>
