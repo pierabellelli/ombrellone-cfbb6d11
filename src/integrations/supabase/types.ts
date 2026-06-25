@@ -83,6 +83,7 @@ export type Database = {
       }
       lidi: {
         Row: {
+          accetta_carta: boolean
           created_at: string
           finestra_controllo_minuti: number | null
           foto_copertina_url: string | null
@@ -99,6 +100,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          accetta_carta?: boolean
           created_at?: string
           finestra_controllo_minuti?: number | null
           foto_copertina_url?: string | null
@@ -115,6 +117,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          accetta_carta?: boolean
           created_at?: string
           finestra_controllo_minuti?: number | null
           foto_copertina_url?: string | null
@@ -244,6 +247,7 @@ export type Database = {
           disponibile: boolean
           foto_url: string | null
           id: string
+          immagine_url: string | null
           lido_id: string
           nome: string
           prezzo: number
@@ -256,6 +260,7 @@ export type Database = {
           disponibile?: boolean
           foto_url?: string | null
           id?: string
+          immagine_url?: string | null
           lido_id: string
           nome: string
           prezzo?: number
@@ -268,6 +273,7 @@ export type Database = {
           disponibile?: boolean
           foto_url?: string | null
           id?: string
+          immagine_url?: string | null
           lido_id?: string
           nome?: string
           prezzo?: number
