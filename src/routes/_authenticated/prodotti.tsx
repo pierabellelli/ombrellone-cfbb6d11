@@ -127,6 +127,8 @@ function ProdottiPage() {
   const [editing, setEditing] = useState<Prodotto | "new" | null>(null);
   const [deleting, setDeleting] = useState<Prodotto | null>(null);
   const [catDialogOpen, setCatDialogOpen] = useState(false);
+  const [csvOpen, setCsvOpen] = useState(false);
+  const [batchOpen, setBatchOpen] = useState(false);
 
   const toggleDisponibile = async (p: Prodotto) => {
     const { error } = await supabase
