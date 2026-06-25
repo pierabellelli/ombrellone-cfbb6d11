@@ -42,6 +42,7 @@ type Lido = {
   orario_apertura: string | null;
   orario_chiusura: string | null;
   soglia_ordine_libero: number | null;
+  accetta_carta: boolean;
 };
 
 type Categoria = { id: string; nome: string; ordine: number };
@@ -51,6 +52,7 @@ type Prodotto = {
   descrizione: string | null;
   prezzo: number;
   foto_url: string | null;
+  immagine_url: string | null;
   categoria_id: string | null;
   disponibile: boolean;
 };
@@ -66,7 +68,7 @@ function LidoClientPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("lidi")
-        .select("id, nome, slug, logo_url, foto_copertina_url, servizio_bar_attivo, orario_apertura, orario_chiusura, soglia_ordine_libero")
+        .select("id, nome, slug, logo_url, foto_copertina_url, servizio_bar_attivo, orario_apertura, orario_chiusura, soglia_ordine_libero, accetta_carta")
         .eq("slug", slug)
         .maybeSingle();
       if (error) throw error;
@@ -94,7 +96,7 @@ function LidoClientPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("prodotti")
-        .select("id, nome, descrizione, prezzo, foto_url, categoria_id, disponibile")
+        .select("id, nome, descrizione, prezzo, foto_url, immagine_url, categoria_id, disponibile")
         .eq("lido_id", lido!.id)
         .eq("disponibile", true)
         .order("nome");
@@ -340,8 +342,8 @@ function ProdottoRow({
   return (
     <div className="card-soft p-3 flex items-center gap-3">
       <div className="w-16 h-16 rounded-lg bg-secondary overflow-hidden shrink-0">
-        {prodotto.foto_url ? (
-          <img src={prodotto.foto_url} alt={prodotto.nome} className="w-full h-full object-cover" />
+        {(prodotto.immagine_url ?? prodotto.foto_url) ? (
+          <img src={(prodotto.immagine_url ?? prodotto.foto_url)!} alt={prodotto.nome} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full" />
         )}
@@ -388,6 +390,7 @@ function CartView({
   const [telefono, setTelefono] = useState("");
   const [cognome, setCognome] = useState("");
   const [note, setNote] = useState("");
+  const [metodoPagamento, setMetodoPagamento] = useState<"contanti" | "carta">("contanti");
   const [sending, setSending] = useState(false);
 
   useEffect(() => { setOmbrellone(defaultOmbrellone); }, [defaultOmbrellone]);
@@ -415,6 +418,7 @@ function CartView({
         totale,
         numero_ordine: 0, // assegnato dal trigger
         note: note.trim() ? note.trim().slice(0, 300) : null,
+        metodo_pagamento: lido.accetta_carta ? metodoPagamento : "contanti",
       })
       .select("id, numero_ordine")
       .single();
@@ -498,6 +502,25 @@ function CartView({
           <Label htmlFor="note">Note (opzionale)</Label>
           <Textarea id="note" value={note} onChange={(e) => setNote(e.target.value)}
             maxLength={300} rows={2} className="mt-1.5" placeholder="Es. senza ghiaccio…" />
+        </div>
+        <div>
+          <Label>Metodo di pagamento</Label>
+          {lido.accetta_carta ? (
+            <div className="mt-1.5 grid grid-cols-2 gap-2">
+              <button type="button" onClick={() => setMetodoPagamento("contanti")}
+                className={`h-11 rounded-xl border text-sm font-medium transition ${metodoPagamento === "contanti" ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border"}`}>
+                Contanti
+              </button>
+              <button type="button" onClick={() => setMetodoPagamento("carta")}
+                className={`h-11 rounded-xl border text-sm font-medium transition ${metodoPagamento === "carta" ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border"}`}>
+                Carta
+              </button>
+            </div>
+          ) : (
+            <p className="mt-1.5 text-sm text-muted-foreground rounded-xl bg-secondary px-3 py-2">
+              Pagamento in contanti alla consegna
+            </p>
+          )}
         </div>
       </div>
 
