@@ -94,6 +94,7 @@ function ImpostazioniPage() {
       <DatiGeneraliCard lido={lido} onSaved={() => qc.invalidateQueries({ queryKey: ["myLido"] })} />
       <BrandingCard lido={lido} onSaved={() => qc.invalidateQueries({ queryKey: ["myLido"] })} />
       <RegoleServizioCard lido={lido} onSaved={() => qc.invalidateQueries({ queryKey: ["myLido"] })} />
+      <PagamentiCard lido={lido} onSaved={() => qc.invalidateQueries({ queryKey: ["myLido"] })} />
     </div>
   );
 }
