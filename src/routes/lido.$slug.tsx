@@ -413,9 +413,10 @@ function CartView({
   onRemove: (id: string) => void;
   onSubmitted: (numero: number) => void;
 }) {
+  const stored = readStoredCustomer();
   const [ombrellone, setOmbrellone] = useState(defaultOmbrellone);
-  const [telefono, setTelefono] = useState("");
-  const [cognome, setCognome] = useState("");
+  const [telefono, setTelefono] = useState(stored?.telefono ?? "");
+  const [cognome, setCognome] = useState(stored?.cognome ?? "");
   const [note, setNote] = useState("");
   const [metodoPagamento, setMetodoPagamento] = useState<"contanti" | "carta">("contanti");
   const [sending, setSending] = useState(false);
