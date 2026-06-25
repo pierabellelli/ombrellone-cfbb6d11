@@ -342,8 +342,8 @@ function ProdottoRow({
   return (
     <div className="card-soft p-3 flex items-center gap-3">
       <div className="w-16 h-16 rounded-lg bg-secondary overflow-hidden shrink-0">
-        {prodotto.foto_url ? (
-          <img src={prodotto.foto_url} alt={prodotto.nome} className="w-full h-full object-cover" />
+        {(prodotto.immagine_url ?? prodotto.foto_url) ? (
+          <img src={(prodotto.immagine_url ?? prodotto.foto_url)!} alt={prodotto.nome} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full" />
         )}
