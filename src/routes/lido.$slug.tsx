@@ -68,7 +68,7 @@ function LidoClientPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("lidi")
-        .select("id, nome, slug, logo_url, foto_copertina_url, servizio_bar_attivo, orario_apertura, orario_chiusura, soglia_ordine_libero")
+        .select("id, nome, slug, logo_url, foto_copertina_url, servizio_bar_attivo, orario_apertura, orario_chiusura, soglia_ordine_libero, accetta_carta")
         .eq("slug", slug)
         .maybeSingle();
       if (error) throw error;
