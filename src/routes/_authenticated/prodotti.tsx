@@ -459,6 +459,7 @@ function ProdottoDialog({
       categoria_id: categoriaId || null,
       disponibile,
       foto_url: fotoUrl,
+      immagine_url: fotoUrl,
     };
     const { error } = isNew
       ? await supabase.from("prodotti").insert(payload)
