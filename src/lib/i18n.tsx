@@ -7,7 +7,7 @@ const DICT = {
     "nav.orders": "Ordini",
     "nav.products": "Prodotti",
     "nav.settings": "Impostazioni",
-    "nav.map": "Mappa stato ordini",
+    "nav.map": "Dashboard",
     "nav.beachConfig": "Configurazione Lido",
     // Products
     "prod.importCsv": "Importa da CSV",
@@ -104,7 +104,7 @@ const DICT = {
     "nav.orders": "Orders",
     "nav.products": "Products",
     "nav.settings": "Settings",
-    "nav.map": "Order status map",
+    "nav.map": "Dashboard",
     "nav.beachConfig": "Beach configuration",
     "prod.importCsv": "Import from CSV",
     "prod.importCsvTitle": "Import products from CSV",
