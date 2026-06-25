@@ -1,8 +1,9 @@
 import { createFileRoute, Outlet, redirect, Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { Logo } from "@/components/Logo";
-import { LogOut, ClipboardList, Package, Settings } from "lucide-react";
+import { LogOut, ClipboardList, Package, Settings, Map as MapIcon, LayoutPanelTop } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -26,6 +27,7 @@ function AuthLayout() {
   const { user } = Route.useRouteContext();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { lang, setLang, t } = useI18n();
 
   const { data: roles = [] } = useQuery({
     queryKey: ["user_roles", user.id],
@@ -34,6 +36,8 @@ function AuthLayout() {
 
   const isGestore = roles.some((r) => r.role === "gestore");
   const isSuper = roles.some((r) => r.role === "super_admin");
+  const isStaff = roles.some((r) => r.role === "staff");
+  const canSeeMap = isGestore || isSuper || isStaff;
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -46,27 +50,41 @@ function AuthLayout() {
     <div className="min-h-screen flex flex-col">
       <header className="border-b border-border bg-card/80 backdrop-blur sticky top-0 z-30">
         <div className="max-w-[1400px] mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-8">
+          <div className="flex items-center gap-6">
             <Link to="/ordini" className="shrink-0"><Logo /></Link>
             {!isAdminArea && (
               <nav className="hidden md:flex items-center gap-1">
-                <NavLink to="/ordini" icon={<ClipboardList className="w-4 h-4" />} label="Ordini" />
+                <NavLink to="/ordini" icon={<ClipboardList className="w-4 h-4" />} label={t("nav.orders")} />
+                {canSeeMap && (
+                  <NavLink to="/mappa" icon={<MapIcon className="w-4 h-4" />} label={t("nav.map")} />
+                )}
                 {(isGestore || isSuper) && (
                   <>
-                    <NavLink to="/prodotti" icon={<Package className="w-4 h-4" />} label="Prodotti" />
-                    <NavLink to="/impostazioni" icon={<Settings className="w-4 h-4" />} label="Impostazioni" />
+                    <NavLink to="/prodotti" icon={<Package className="w-4 h-4" />} label={t("nav.products")} />
+                    <NavLink to="/configurazione-lido" icon={<LayoutPanelTop className="w-4 h-4" />} label={t("nav.beachConfig")} />
+                    <NavLink to="/impostazioni" icon={<Settings className="w-4 h-4" />} label={t("nav.settings")} />
                   </>
                 )}
               </nav>
             )}
           </div>
           <div className="flex items-center gap-3">
+            <div className="inline-flex rounded-full border border-border bg-card p-0.5 text-xs font-semibold">
+              <button
+                onClick={() => setLang("it")}
+                className={`px-2.5 py-1 rounded-full transition ${lang === "it" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+              >IT</button>
+              <button
+                onClick={() => setLang("en")}
+                className={`px-2.5 py-1 rounded-full transition ${lang === "en" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+              >EN</button>
+            </div>
             <span className="text-sm text-muted-foreground hidden sm:block">{user.email}</span>
             <button
               onClick={handleLogout}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm border border-border hover:bg-secondary transition"
             >
-              <LogOut className="w-4 h-4" /> Esci
+              <LogOut className="w-4 h-4" /> {t("logout")}
             </button>
           </div>
         </div>
