@@ -385,6 +385,7 @@ function CartView({
   onSubmitted: (numero: number) => void;
 }) {
   const [ombrellone, setOmbrellone] = useState(defaultOmbrellone);
+  const [telefono, setTelefono] = useState("");
   const [cognome, setCognome] = useState("");
   const [note, setNote] = useState("");
   const [sending, setSending] = useState(false);
@@ -397,7 +398,9 @@ function CartView({
   const handleSubmit = async () => {
     const ombrTrim = ombrellone.trim();
     const cogTrim = cognome.trim();
+    const telTrim = telefono.trim();
     if (!ombrTrim) { toast.error("Inserisci il numero dell'ombrellone"); return; }
+    if (!telTrim || telTrim.replace(/\D/g, "").length < 6) { toast.error("Inserisci un numero di telefono valido"); return; }
     if (!cogTrim) { toast.error("Inserisci il cognome"); return; }
     if (items.length === 0) { toast.error("Carrello vuoto"); return; }
 
@@ -408,6 +411,7 @@ function CartView({
         lido_id: lido.id,
         numero_ombrellone: ombrTrim.slice(0, 20),
         cognome: cogTrim.slice(0, 60),
+        telefono: telTrim.slice(0, 30),
         totale,
         numero_ordine: 0, // assegnato dal trigger
         note: note.trim() ? note.trim().slice(0, 300) : null,
@@ -477,8 +481,13 @@ function CartView({
       <div className="space-y-3 pt-2">
         <div>
           <Label htmlFor="omb">Numero ombrellone *</Label>
-          <Input id="omb" inputMode="numeric" value={ombrellone} onChange={(e) => setOmbrellone(e.target.value)}
+          <Input id="omb" type="number" inputMode="numeric" value={ombrellone} onChange={(e) => setOmbrellone(e.target.value)}
             maxLength={20} className="mt-1.5" placeholder="es. 42" />
+        </div>
+        <div>
+          <Label htmlFor="tel">Numero di telefono *</Label>
+          <Input id="tel" type="tel" inputMode="tel" value={telefono} onChange={(e) => setTelefono(e.target.value)}
+            maxLength={30} className="mt-1.5" placeholder="es. 333 1234567" />
         </div>
         <div>
           <Label htmlFor="cog">Cognome *</Label>

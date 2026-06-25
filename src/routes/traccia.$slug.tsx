@@ -1,8 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, CheckCircle2, ChefHat, PackageCheck, Clock } from "lucide-react";
+import { Search, CheckCircle2, ChefHat, PackageCheck, Clock, ArrowLeft } from "lucide-react";
 
 export const Route = createFileRoute("/traccia/$slug")({
   head: () => ({ meta: [{ title: "Traccia ordine · LidoSmart" }] }),
@@ -62,6 +62,12 @@ function TracciaPage() {
   return (
     <div className="min-h-screen bg-[color:var(--bg-soft)] py-10 px-4">
       <div className="max-w-xl mx-auto">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline mb-4"
+        >
+          <ArrowLeft className="w-4 h-4" /> Torna alla home
+        </Link>
         <div className="text-center mb-6">
           <h1 className="text-3xl font-bold text-primary">Traccia il tuo ordine</h1>
           <p className="text-sm text-muted-foreground mt-1">
