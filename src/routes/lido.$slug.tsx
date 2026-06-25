@@ -385,6 +385,7 @@ function CartView({
   onSubmitted: (numero: number) => void;
 }) {
   const [ombrellone, setOmbrellone] = useState(defaultOmbrellone);
+  const [telefono, setTelefono] = useState("");
   const [cognome, setCognome] = useState("");
   const [note, setNote] = useState("");
   const [sending, setSending] = useState(false);
@@ -397,7 +398,9 @@ function CartView({
   const handleSubmit = async () => {
     const ombrTrim = ombrellone.trim();
     const cogTrim = cognome.trim();
+    const telTrim = telefono.trim();
     if (!ombrTrim) { toast.error("Inserisci il numero dell'ombrellone"); return; }
+    if (!telTrim || telTrim.replace(/\D/g, "").length < 6) { toast.error("Inserisci un numero di telefono valido"); return; }
     if (!cogTrim) { toast.error("Inserisci il cognome"); return; }
     if (items.length === 0) { toast.error("Carrello vuoto"); return; }
 
