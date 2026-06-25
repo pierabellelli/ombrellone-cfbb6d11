@@ -267,6 +267,8 @@ function LidoClientPage() {
             })}
           </div>
         )}
+
+        <OrderHistorySection lidoId={lido.id} />
       </main>
 
       {itemCount > 0 && lido.servizio_bar_attivo && (
