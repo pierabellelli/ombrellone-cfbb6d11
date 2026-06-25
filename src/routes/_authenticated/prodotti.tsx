@@ -428,11 +428,11 @@ function ProdottoDialog({
       const ext = file.name.split(".").pop() || "jpg";
       const path = `${lidoId}/${crypto.randomUUID()}.${ext}`;
       const { error: upErr } = await supabase.storage
-        .from("prodotti-foto")
+        .from("prodotti-immagini")
         .upload(path, file, { contentType: file.type, upsert: false });
       if (upErr) throw upErr;
       const { data: signed, error: sErr } = await supabase.storage
-        .from("prodotti-foto")
+        .from("prodotti-immagini")
         .createSignedUrl(path, SIGNED_TTL);
       if (sErr) throw sErr;
       setFotoUrl(signed.signedUrl);
