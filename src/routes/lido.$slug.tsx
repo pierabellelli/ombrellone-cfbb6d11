@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
   ShoppingCart, Plus, Minus, X, Search, Loader2, CheckCircle2, Clock,
-  AlertTriangle, MapPin, ArrowLeft,
+  AlertTriangle, MapPin, ArrowLeft, ChevronDown, ChevronUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,31 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger,
 } from "@/components/ui/sheet";
+import { useI18n } from "@/lib/i18n";
+
+const LS_KEY = "ombrellone_cliente";
+type StoredCustomer = { telefono: string; cognome: string };
+
+function readStoredCustomer(): StoredCustomer | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return null;
+    const p = JSON.parse(raw);
+    if (p && typeof p.telefono === "string" && typeof p.cognome === "string") return p;
+  } catch { /* ignore */ }
+  return null;
+}
+function writeStoredCustomer(telefono: string, cognome: string) {
+  if (typeof window === "undefined") return;
+  const existing = readStoredCustomer();
+  // keep first saved name; only update phone
+  const next: StoredCustomer = {
+    telefono,
+    cognome: existing?.cognome?.trim() ? existing.cognome : cognome,
+  };
+  try { localStorage.setItem(LS_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+}
 
 const searchSchema = z.object({
   o: z.string().optional(),
