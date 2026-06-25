@@ -590,3 +590,112 @@ function OrdineConfermato({
     </div>
   );
 }
+
+type StoricoOrdine = {
+  id: string;
+  numero_ordine: number;
+  numero_ombrellone: string;
+  totale: number;
+  stato: string;
+  created_at: string;
+  ordine_items: { nome_snapshot: string; quantita: number }[];
+};
+
+function OrderHistorySection({ lidoId }: { lidoId: string }) {
+  const { t, lang } = useI18n();
+  const [open, setOpen] = useState(false);
+  const stored = typeof window !== "undefined" ? readStoredCustomer() : null;
+
+  const { data: orders = [], isLoading } = useQuery({
+    queryKey: ["cliente-storico", lidoId, stored?.telefono],
+    enabled: !!stored?.telefono && !!lidoId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("ordini")
+        .select("id, numero_ordine, numero_ombrellone, totale, stato, created_at, ordine_items(nome_snapshot, quantita)")
+        .eq("lido_id", lidoId)
+        .eq("telefono", stored!.telefono)
+        .order("created_at", { ascending: false })
+        .limit(5);
+      if (error) throw error;
+      return (data ?? []) as unknown as StoricoOrdine[];
+    },
+  });
+
+  if (!stored) return null;
+
+  const locale = lang === "it" ? "it-IT" : "en-GB";
+  const fmtDate = (iso: string) => {
+    const d = new Date(iso);
+    return d.toLocaleString(locale, { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+  };
+
+  const statoColor = (s: string) => {
+    switch (s) {
+      case "arrivati": return "bg-blue-100 text-blue-800 border-blue-200";
+      case "da_evadere": return "bg-amber-100 text-amber-900 border-amber-200";
+      case "consegnati": return "bg-emerald-100 text-emerald-800 border-emerald-200";
+      case "annullato": return "bg-red-100 text-red-800 border-red-200";
+      default: return "bg-secondary text-foreground border-border";
+    }
+  };
+  const statoLabel = (s: string) => {
+    const k = `cliente.status.${s}` as Parameters<typeof t>[0];
+    try { return t(k); } catch { return s; }
+  };
+
+  return (
+    <section className="mt-6">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full card-soft px-4 py-3 flex items-center justify-between text-left"
+      >
+        <span className="font-semibold text-primary">{t("cliente.history")}</span>
+        {open ? <ChevronUp className="w-5 h-5 text-muted-foreground" /> : <ChevronDown className="w-5 h-5 text-muted-foreground" />}
+      </button>
+
+      {open && (
+        <div className="mt-2 space-y-2">
+          {isLoading ? (
+            <div className="card-soft p-4 text-sm text-muted-foreground inline-flex items-center gap-2">
+              <Loader2 className="w-4 h-4 animate-spin" /> …
+            </div>
+          ) : orders.length === 0 ? (
+            <div className="card-soft p-4 text-sm text-muted-foreground text-center">
+              {t("cliente.noHistory")}
+            </div>
+          ) : (
+            orders.map((o) => (
+              <div key={o.id} className="card-soft p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="text-sm">
+                    <p className="font-semibold text-foreground">
+                      #{o.numero_ordine} · {fmtDate(o.created_at)}
+                    </p>
+                    <p className="text-xs text-muted-foreground inline-flex items-center gap-1">
+                      <MapPin className="w-3 h-3" /> {t("map.umbrella")} {o.numero_ombrellone}
+                    </p>
+                  </div>
+                  <span className={`text-xs px-2 py-0.5 rounded-full border ${statoColor(o.stato)}`}>
+                    {statoLabel(o.stato)}
+                  </span>
+                </div>
+                {o.ordine_items?.length > 0 && (
+                  <ul className="mt-2 text-xs text-muted-foreground space-y-0.5">
+                    {o.ordine_items.map((it, i) => (
+                      <li key={i}>{it.quantita}× {it.nome_snapshot}</li>
+                    ))}
+                  </ul>
+                )}
+                <div className="mt-2 text-sm font-semibold text-primary text-right">
+                  € {Number(o.totale).toFixed(2)}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
