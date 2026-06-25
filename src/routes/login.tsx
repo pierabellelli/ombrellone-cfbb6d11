@@ -24,7 +24,7 @@ function LoginPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/ordini" });
+      if (data.session) navigate({ to: "/mappa" });
     });
   }, [navigate]);
 
@@ -38,7 +38,7 @@ function LoginPage() {
       return;
     }
     toast.success("Bentornato!");
-    navigate({ to: "/ordini" });
+    navigate({ to: "/mappa" });
   };
 
   return (
