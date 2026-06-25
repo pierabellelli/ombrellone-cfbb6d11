@@ -37,8 +37,14 @@ type Prodotto = {
   descrizione: string | null;
   prezzo: number;
   foto_url: string | null;
+  immagine_url: string | null;
   disponibile: boolean;
 };
+
+function normalizeProductName(s: string) {
+  return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "");
+}
 
 const SIGNED_TTL = 60 * 60 * 24 * 365; // ~1 anno
 
