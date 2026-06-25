@@ -64,7 +64,7 @@ const DICT = {
     "map.noConfig": "Configurazione spiaggia mancante. Chiedi al gestore di impostare file e ombrelloni.",
     "map.legend": "Legenda",
     "map.legend.free": "Libero",
-    "map.legend.active": "Ordine attivo",
+    "map.legend.active": "Ordine inviato",
     "map.legend.warn": "Ritardo > 10 min",
     "map.legend.late": "Ritardo > 15 min",
     "map.noOrder": "Nessun ordine attivo",
