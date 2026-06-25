@@ -96,7 +96,7 @@ function LidoClientPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("prodotti")
-        .select("id, nome, descrizione, prezzo, foto_url, categoria_id, disponibile")
+        .select("id, nome, descrizione, prezzo, foto_url, immagine_url, categoria_id, disponibile")
         .eq("lido_id", lido!.id)
         .eq("disponibile", true)
         .order("nome");
