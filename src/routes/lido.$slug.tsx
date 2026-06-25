@@ -42,6 +42,7 @@ type Lido = {
   orario_apertura: string | null;
   orario_chiusura: string | null;
   soglia_ordine_libero: number | null;
+  accetta_carta: boolean;
 };
 
 type Categoria = { id: string; nome: string; ordine: number };
@@ -51,6 +52,7 @@ type Prodotto = {
   descrizione: string | null;
   prezzo: number;
   foto_url: string | null;
+  immagine_url: string | null;
   categoria_id: string | null;
   disponibile: boolean;
 };
