@@ -307,11 +307,34 @@ function LidoClientPage() {
 function Header({ lido, ombrellone }: { lido: Lido; ombrellone?: string }) {
   return (
     <header className="relative">
+      <div className="sticky top-0 z-20 bg-card/95 backdrop-blur border-b border-border">
+        <div className="max-w-2xl mx-auto px-3 h-12 flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              if (typeof window !== "undefined" && window.history.length > 1) window.history.back();
+              else window.location.href = "/";
+            }}
+            aria-label="Indietro"
+            className="w-9 h-9 -ml-1 inline-flex items-center justify-center rounded-full hover:bg-secondary transition"
+          >
+            <ArrowLeft className="w-5 h-5 text-primary" />
+          </button>
+          <div className="flex-1 min-w-0 flex items-center justify-center gap-2">
+            {lido.logo_url ? (
+              <img src={lido.logo_url} alt={lido.nome} className="w-6 h-6 rounded-full object-cover" />
+            ) : null}
+            <span className="text-sm font-semibold text-primary truncate">{lido.nome}</span>
+          </div>
+          <div className="w-9" aria-hidden />
+        </div>
+      </div>
       <div className="h-40 bg-gradient-to-br from-[color:var(--primary)] to-[color:var(--teal-deep)] overflow-hidden">
         {lido.foto_copertina_url && (
           <img src={lido.foto_copertina_url} alt="" className="w-full h-full object-cover opacity-80" />
         )}
       </div>
+
       <div className="max-w-2xl mx-auto px-4 -mt-10 relative">
         <div className="card-soft p-4 flex items-center gap-3">
           <div className="w-14 h-14 rounded-full bg-secondary overflow-hidden shrink-0 ring-2 ring-card">
