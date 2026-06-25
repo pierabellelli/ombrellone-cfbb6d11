@@ -65,7 +65,7 @@ function AuthLayout() {
       <header className="border-b border-border bg-card/80 backdrop-blur sticky top-0 z-30">
         <div className="max-w-[1400px] mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-6">
-            <Link to="/ordini" className="shrink-0 flex items-center gap-2">
+            <Link to="/mappa" className="shrink-0 flex items-center gap-2">
               {lidoBranding?.logo_url ? (
                 <>
                   <img src={lidoBranding.logo_url} alt={lidoBranding.nome}
@@ -78,10 +78,10 @@ function AuthLayout() {
             </Link>
             {!isAdminArea && (
               <nav className="hidden md:flex items-center gap-1">
-                <NavLink to="/ordini" icon={<ClipboardList className="w-4 h-4" />} label={t("nav.orders")} />
                 {canSeeMap && (
                   <NavLink to="/mappa" icon={<MapIcon className="w-4 h-4" />} label={t("nav.map")} />
                 )}
+                <NavLink to="/ordini" icon={<ClipboardList className="w-4 h-4" />} label={t("nav.orders")} />
                 {(isGestore || isSuper) && (
                   <>
                     <NavLink to="/prodotti" icon={<Package className="w-4 h-4" />} label={t("nav.products")} />
