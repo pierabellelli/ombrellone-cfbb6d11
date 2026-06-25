@@ -172,7 +172,13 @@ function ProdottiPage() {
             Gestisci il menu del bar: categorie, prodotti, prezzi e disponibilità.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button variant="outline" onClick={() => setBatchOpen(true)}>
+            <ImagePlus className="w-4 h-4 mr-1.5" /> Foto in blocco
+          </Button>
+          <Button variant="outline" onClick={() => setCsvOpen(true)}>
+            <Upload className="w-4 h-4 mr-1.5" /> Importa da CSV
+          </Button>
           <Button variant="outline" onClick={() => setCatDialogOpen(true)}>
             <Tag className="w-4 h-4 mr-1.5" /> Categorie
           </Button>
