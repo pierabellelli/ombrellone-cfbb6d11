@@ -470,6 +470,7 @@ function CartView({
       toast.error("Errore nel salvataggio degli articoli", { description: itemsErr.message });
       return;
     }
+    writeStoredCustomer(telTrim.slice(0, 30), cogTrim.slice(0, 60));
     onSubmitted(ord.numero_ordine);
   };
 
