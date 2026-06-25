@@ -411,6 +411,7 @@ function CartView({
         lido_id: lido.id,
         numero_ombrellone: ombrTrim.slice(0, 20),
         cognome: cogTrim.slice(0, 60),
+        telefono: telTrim.slice(0, 30),
         totale,
         numero_ordine: 0, // assegnato dal trigger
         note: note.trim() ? note.trim().slice(0, 300) : null,
