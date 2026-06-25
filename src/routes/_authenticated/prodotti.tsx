@@ -348,10 +348,8 @@ function ProdottoCard({
     <div className={`card-soft overflow-hidden flex flex-col ${!prodotto.disponibile ? "opacity-60" : ""}`}>
       <div className="aspect-[4/3] bg-secondary relative">
         {(prodotto.immagine_url ?? prodotto.foto_url) ? (
-          <img src={prodotto.immagine_url ?? prodotto.foto_url!} alt={prodotto.nome} className="w-full h-full object-cover" />
-        ) : null}
-        {!(prodotto.immagine_url ?? prodotto.foto_url) && null}
-        {/* placeholder slot below preserved by original layout */}
+          <img src={(prodotto.immagine_url ?? prodotto.foto_url)!} alt={prodotto.nome} className="w-full h-full object-cover" />
+        ) : (
           <div className="w-full h-full flex items-center justify-center text-muted-foreground">
             <ImagePlus className="w-8 h-8" />
           </div>
