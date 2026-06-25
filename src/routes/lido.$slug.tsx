@@ -481,8 +481,13 @@ function CartView({
       <div className="space-y-3 pt-2">
         <div>
           <Label htmlFor="omb">Numero ombrellone *</Label>
-          <Input id="omb" inputMode="numeric" value={ombrellone} onChange={(e) => setOmbrellone(e.target.value)}
+          <Input id="omb" type="number" inputMode="numeric" value={ombrellone} onChange={(e) => setOmbrellone(e.target.value)}
             maxLength={20} className="mt-1.5" placeholder="es. 42" />
+        </div>
+        <div>
+          <Label htmlFor="tel">Numero di telefono *</Label>
+          <Input id="tel" type="tel" inputMode="tel" value={telefono} onChange={(e) => setTelefono(e.target.value)}
+            maxLength={30} className="mt-1.5" placeholder="es. 333 1234567" />
         </div>
         <div>
           <Label htmlFor="cog">Cognome *</Label>
