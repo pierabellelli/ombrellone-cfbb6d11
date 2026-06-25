@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
   Plus, Search, Pencil, Trash2, ImagePlus, X, Loader2, Tag, EuroIcon,
-  Eye, EyeOff, GripVertical,
+  Eye, EyeOff, GripVertical, Upload, Download, FileSpreadsheet,
 } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
