@@ -432,3 +432,46 @@ function RegoleServizioCard({ lido, onSaved }: { lido: Lido; onSaved: () => void
     </Section>
   );
 }
+
+function PagamentiCard({ lido, onSaved }: { lido: Lido; onSaved: () => void }) {
+  const [accettaCarta, setAccettaCarta] = useState<boolean>(!!lido.accetta_carta);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => { setAccettaCarta(!!lido.accetta_carta); }, [lido.id, lido.accetta_carta]);
+
+  const dirty = accettaCarta !== !!lido.accetta_carta;
+
+  const onSave = async () => {
+    setSaving(true);
+    const patch = { accetta_carta: accettaCarta } as Partial<Lido>;
+    const { error } = await supabase.from("lidi").update(patch).eq("id", lido.id);
+    setSaving(false);
+    if (error) { toast.error("Impossibile salvare", { description: error.message }); return; }
+    toast.success("Metodi di pagamento aggiornati");
+    onSaved();
+  };
+
+  return (
+    <Section
+      icon={<ShieldCheck className="w-5 h-5" />}
+      title="Metodi di pagamento"
+      description="Scegli come i clienti possono pagare alla consegna."
+    >
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <p className="font-medium text-primary">Accetta pagamento con carta alla consegna</p>
+          <p className="text-sm text-muted-foreground">
+            Quando attivo, il cliente può scegliere tra contanti e carta in fase d'ordine.
+          </p>
+        </div>
+        <Switch checked={accettaCarta} onCheckedChange={setAccettaCarta} />
+      </div>
+      <div className="pt-5 flex justify-end">
+        <Button onClick={onSave} disabled={!dirty || saving}>
+          {saving ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Save className="w-4 h-4 mr-1.5" />}
+          Salva
+        </Button>
+      </div>
+    </Section>
+  );
+}
