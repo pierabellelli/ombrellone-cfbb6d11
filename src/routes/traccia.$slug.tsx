@@ -1,8 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, CheckCircle2, ChefHat, PackageCheck, Clock } from "lucide-react";
+import { Search, CheckCircle2, ChefHat, PackageCheck, Clock, ArrowLeft } from "lucide-react";
 
 export const Route = createFileRoute("/traccia/$slug")({
   head: () => ({ meta: [{ title: "Traccia ordine · LidoSmart" }] }),
