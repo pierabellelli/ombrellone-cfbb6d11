@@ -8,7 +8,7 @@ const DICT = {
     "nav.products": "Prodotti",
     "nav.settings": "Impostazioni",
     "nav.map": "Dashboard",
-    "nav.beachConfig": "Configurazione Lido",
+    "nav.beachConfig": "Spiaggia",
     // Products
     "prod.importCsv": "Importa da CSV",
     "prod.importCsvTitle": "Importa prodotti da CSV",
@@ -105,7 +105,7 @@ const DICT = {
     "nav.products": "Products",
     "nav.settings": "Settings",
     "nav.map": "Dashboard",
-    "nav.beachConfig": "Beach configuration",
+    "nav.beachConfig": "Beach",
     "prod.importCsv": "Import from CSV",
     "prod.importCsvTitle": "Import products from CSV",
     "prod.importCsvDesc": "Upload a CSV with columns: nome, descrizione, prezzo, categoria, disponibile. Rows are always inserted as new products.",
