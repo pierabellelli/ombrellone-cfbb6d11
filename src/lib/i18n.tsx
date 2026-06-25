@@ -83,6 +83,13 @@ const DICT = {
     "map.elapsed": "Tempo trascorso",
     "map.close": "Chiudi",
     "common.cancel": "Annulla",
+    "cliente.history": "I tuoi ordini recenti",
+    "cliente.noHistory": "Nessun ordine precedente in questo lido",
+    "cliente.historyCollapsed": "Mostra ordini recenti",
+    "cliente.status.arrivati": "Ricevuto",
+    "cliente.status.da_evadere": "In preparazione",
+    "cliente.status.consegnati": "Consegnato",
+    "cliente.status.annullato": "Annullato",
   },
   en: {
     "nav.orders": "Orders",
