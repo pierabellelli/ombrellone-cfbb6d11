@@ -156,7 +156,7 @@ const DICT = {
     "map.noConfig": "Beach configuration is missing. Ask the manager to set up rows and umbrellas.",
     "map.legend": "Legend",
     "map.legend.free": "Free",
-    "map.legend.active": "Active order",
+    "map.legend.active": "Order sent",
     "map.legend.warn": "Late > 10 min",
     "map.legend.late": "Late > 15 min",
     "map.noOrder": "No active order",
