@@ -313,6 +313,25 @@ function ProdottiPage() {
         categorie={categorie}
         onChange={() => queryClient.invalidateQueries({ queryKey: ["categorie"] })}
       />
+
+      <CsvImportDialog
+        open={csvOpen}
+        onOpenChange={setCsvOpen}
+        lidoId={lidoId}
+        categorie={categorie}
+        onImported={() => {
+          queryClient.invalidateQueries({ queryKey: ["prodotti"] });
+          queryClient.invalidateQueries({ queryKey: ["categorie"] });
+        }}
+      />
+
+      <BatchPhotoDialog
+        open={batchOpen}
+        onOpenChange={setBatchOpen}
+        lidoId={lidoId}
+        prodotti={prodotti}
+        onDone={() => queryClient.invalidateQueries({ queryKey: ["prodotti"] })}
+      />
     </div>
   );
 }
