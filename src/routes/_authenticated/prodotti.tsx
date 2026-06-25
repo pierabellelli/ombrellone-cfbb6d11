@@ -409,7 +409,7 @@ function ProdottoDialog({
   const [prezzo, setPrezzo] = useState<string>(prodotto?.prezzo.toFixed(2) ?? "0.00");
   const [categoriaId, setCategoriaId] = useState<string>(prodotto?.categoria_id ?? "");
   const [disponibile, setDisponibile] = useState(prodotto?.disponibile ?? true);
-  const [fotoUrl, setFotoUrl] = useState<string | null>(prodotto?.foto_url ?? null);
+  const [fotoUrl, setFotoUrl] = useState<string | null>(prodotto?.immagine_url ?? prodotto?.foto_url ?? null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
