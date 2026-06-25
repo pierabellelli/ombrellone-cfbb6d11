@@ -1,0 +1,10 @@
+DROP POLICY IF EXISTS "ordini_anon_insert" ON public.ordini;
+CREATE POLICY "ordini_anon_insert" ON public.ordini FOR INSERT TO anon WITH CHECK (true);
+DROP POLICY IF EXISTS "ordini_anon_select" ON public.ordini;
+CREATE POLICY "ordini_anon_select" ON public.ordini FOR SELECT TO anon USING (true);
+DROP POLICY IF EXISTS "ordine_items_anon_insert" ON public.ordine_items;
+CREATE POLICY "ordine_items_anon_insert" ON public.ordine_items FOR INSERT TO anon WITH CHECK (true);
+DROP POLICY IF EXISTS "ordine_items_anon_select" ON public.ordine_items;
+CREATE POLICY "ordine_items_anon_select" ON public.ordine_items FOR SELECT TO anon USING (true);
+GRANT INSERT, SELECT ON public.ordini TO anon;
+GRANT INSERT, SELECT ON public.ordine_items TO anon;

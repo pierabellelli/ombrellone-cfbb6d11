@@ -83,6 +83,13 @@ const DICT = {
     "map.elapsed": "Tempo trascorso",
     "map.close": "Chiudi",
     "common.cancel": "Annulla",
+    "cliente.history": "I tuoi ordini recenti",
+    "cliente.noHistory": "Nessun ordine precedente in questo lido",
+    "cliente.historyCollapsed": "Mostra ordini recenti",
+    "cliente.status.arrivati": "Ricevuto",
+    "cliente.status.da_evadere": "In preparazione",
+    "cliente.status.consegnati": "Consegnato",
+    "cliente.status.annullato": "Annullato",
   },
   en: {
     "nav.orders": "Orders",
@@ -159,6 +166,13 @@ const DICT = {
     "map.elapsed": "Elapsed",
     "map.close": "Close",
     "common.cancel": "Cancel",
+    "cliente.history": "Your recent orders",
+    "cliente.noHistory": "No previous orders at this beach",
+    "cliente.historyCollapsed": "Show recent orders",
+    "cliente.status.arrivati": "Received",
+    "cliente.status.da_evadere": "In preparation",
+    "cliente.status.consegnati": "Delivered",
+    "cliente.status.annullato": "Cancelled",
   },
 } as const;
 
