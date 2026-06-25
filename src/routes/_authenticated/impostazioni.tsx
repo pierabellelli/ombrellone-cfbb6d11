@@ -28,6 +28,7 @@ type Lido = {
   soglia_ordine_libero: number | null;
   max_ordini_ravvicinati: number | null;
   finestra_controllo_minuti: number | null;
+  accetta_carta: boolean;
 };
 
 const SIGNED_TTL = 60 * 60 * 24 * 365;
