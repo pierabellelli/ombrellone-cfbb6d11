@@ -16,7 +16,9 @@ import { Route as TracciaSlugRouteImport } from './routes/traccia.$slug'
 import { Route as LidoSlugRouteImport } from './routes/lido.$slug'
 import { Route as AuthenticatedProdottiRouteImport } from './routes/_authenticated/prodotti'
 import { Route as AuthenticatedOrdiniRouteImport } from './routes/_authenticated/ordini'
+import { Route as AuthenticatedMappaRouteImport } from './routes/_authenticated/mappa'
 import { Route as AuthenticatedImpostazioniRouteImport } from './routes/_authenticated/impostazioni'
+import { Route as AuthenticatedConfigurazioneLidoRouteImport } from './routes/_authenticated/configurazione-lido'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -52,17 +54,30 @@ const AuthenticatedOrdiniRoute = AuthenticatedOrdiniRouteImport.update({
   path: '/ordini',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedMappaRoute = AuthenticatedMappaRouteImport.update({
+  id: '/mappa',
+  path: '/mappa',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedImpostazioniRoute =
   AuthenticatedImpostazioniRouteImport.update({
     id: '/impostazioni',
     path: '/impostazioni',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedConfigurazioneLidoRoute =
+  AuthenticatedConfigurazioneLidoRouteImport.update({
+    id: '/configurazione-lido',
+    path: '/configurazione-lido',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/configurazione-lido': typeof AuthenticatedConfigurazioneLidoRoute
   '/impostazioni': typeof AuthenticatedImpostazioniRoute
+  '/mappa': typeof AuthenticatedMappaRoute
   '/ordini': typeof AuthenticatedOrdiniRoute
   '/prodotti': typeof AuthenticatedProdottiRoute
   '/lido/$slug': typeof LidoSlugRoute
@@ -71,7 +86,9 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/configurazione-lido': typeof AuthenticatedConfigurazioneLidoRoute
   '/impostazioni': typeof AuthenticatedImpostazioniRoute
+  '/mappa': typeof AuthenticatedMappaRoute
   '/ordini': typeof AuthenticatedOrdiniRoute
   '/prodotti': typeof AuthenticatedProdottiRoute
   '/lido/$slug': typeof LidoSlugRoute
@@ -82,7 +99,9 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/login': typeof LoginRoute
+  '/_authenticated/configurazione-lido': typeof AuthenticatedConfigurazioneLidoRoute
   '/_authenticated/impostazioni': typeof AuthenticatedImpostazioniRoute
+  '/_authenticated/mappa': typeof AuthenticatedMappaRoute
   '/_authenticated/ordini': typeof AuthenticatedOrdiniRoute
   '/_authenticated/prodotti': typeof AuthenticatedProdottiRoute
   '/lido/$slug': typeof LidoSlugRoute
@@ -93,7 +112,9 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/configurazione-lido'
     | '/impostazioni'
+    | '/mappa'
     | '/ordini'
     | '/prodotti'
     | '/lido/$slug'
@@ -102,7 +123,9 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/configurazione-lido'
     | '/impostazioni'
+    | '/mappa'
     | '/ordini'
     | '/prodotti'
     | '/lido/$slug'
@@ -112,7 +135,9 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/login'
+    | '/_authenticated/configurazione-lido'
     | '/_authenticated/impostazioni'
+    | '/_authenticated/mappa'
     | '/_authenticated/ordini'
     | '/_authenticated/prodotti'
     | '/lido/$slug'
@@ -178,6 +203,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOrdiniRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/mappa': {
+      id: '/_authenticated/mappa'
+      path: '/mappa'
+      fullPath: '/mappa'
+      preLoaderRoute: typeof AuthenticatedMappaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/impostazioni': {
       id: '/_authenticated/impostazioni'
       path: '/impostazioni'
@@ -185,17 +217,28 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedImpostazioniRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/configurazione-lido': {
+      id: '/_authenticated/configurazione-lido'
+      path: '/configurazione-lido'
+      fullPath: '/configurazione-lido'
+      preLoaderRoute: typeof AuthenticatedConfigurazioneLidoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedConfigurazioneLidoRoute: typeof AuthenticatedConfigurazioneLidoRoute
   AuthenticatedImpostazioniRoute: typeof AuthenticatedImpostazioniRoute
+  AuthenticatedMappaRoute: typeof AuthenticatedMappaRoute
   AuthenticatedOrdiniRoute: typeof AuthenticatedOrdiniRoute
   AuthenticatedProdottiRoute: typeof AuthenticatedProdottiRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedConfigurazioneLidoRoute: AuthenticatedConfigurazioneLidoRoute,
   AuthenticatedImpostazioniRoute: AuthenticatedImpostazioniRoute,
+  AuthenticatedMappaRoute: AuthenticatedMappaRoute,
   AuthenticatedOrdiniRoute: AuthenticatedOrdiniRoute,
   AuthenticatedProdottiRoute: AuthenticatedProdottiRoute,
 }

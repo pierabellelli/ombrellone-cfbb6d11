@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      beach_config: {
+        Row: {
+          created_at: string
+          file: Json
+          lido_id: string
+          numerazione: string
+          numero_file: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          file?: Json
+          lido_id: string
+          numerazione?: string
+          numero_file?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          file?: Json
+          lido_id?: string
+          numerazione?: string
+          numero_file?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "beach_config_lido_id_fkey"
+            columns: ["lido_id"]
+            isOneToOne: true
+            referencedRelation: "lidi"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categorie_prodotto: {
         Row: {
           created_at: string
@@ -146,39 +181,48 @@ export type Database = {
         Row: {
           cognome: string
           created_at: string
+          fila: string | null
           id: string
           lido_id: string
+          metodo_pagamento: string | null
           note: string | null
           numero_ombrellone: string
           numero_ordine: number
           stato: Database["public"]["Enums"]["ordine_stato"]
           stripe_payment_id: string | null
+          telefono: string | null
           totale: number
           updated_at: string
         }
         Insert: {
           cognome: string
           created_at?: string
+          fila?: string | null
           id?: string
           lido_id: string
+          metodo_pagamento?: string | null
           note?: string | null
           numero_ombrellone: string
           numero_ordine: number
           stato?: Database["public"]["Enums"]["ordine_stato"]
           stripe_payment_id?: string | null
+          telefono?: string | null
           totale?: number
           updated_at?: string
         }
         Update: {
           cognome?: string
           created_at?: string
+          fila?: string | null
           id?: string
           lido_id?: string
+          metodo_pagamento?: string | null
           note?: string | null
           numero_ombrellone?: string
           numero_ordine?: number
           stato?: Database["public"]["Enums"]["ordine_stato"]
           stripe_payment_id?: string | null
+          telefono?: string | null
           totale?: number
           updated_at?: string
         }
