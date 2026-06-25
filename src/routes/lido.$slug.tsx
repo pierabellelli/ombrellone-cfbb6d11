@@ -418,6 +418,7 @@ function CartView({
         totale,
         numero_ordine: 0, // assegnato dal trigger
         note: note.trim() ? note.trim().slice(0, 300) : null,
+        metodo_pagamento: lido.accetta_carta ? metodoPagamento : "contanti",
       })
       .select("id, numero_ordine")
       .single();
