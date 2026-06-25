@@ -1,18 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import {
-  DndContext,
-  DragEndEvent,
-  PointerSensor,
-  useDroppable,
-  useDraggable,
-  useSensor,
-  useSensors,
-} from "@dnd-kit/core";
-import { Search, ChevronLeft, ChevronRight, Clock, Radio, LayoutGrid, Rows3 } from "lucide-react";
+import { Clock, Phone, MapPin, Banknote, CreditCard, StickyNote, ArrowRight, CheckCircle2 } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 
 type Stato = "arrivati" | "da_evadere" | "consegnati";
 
@@ -27,7 +19,11 @@ type Ordine = {
   id: string;
   numero_ordine: number;
   numero_ombrellone: string;
+  fila: string | null;
   cognome: string;
+  telefono: string | null;
+  metodo_pagamento: string | null;
+  note: string | null;
   totale: number;
   stato: Stato | "annullato";
   created_at: string;
@@ -39,272 +35,293 @@ export const Route = createFileRoute("/_authenticated/ordini")({
   component: OrdiniPage,
 });
 
-const COLONNE: { id: Stato; titolo: string; tint: string }[] = [
-  { id: "arrivati", titolo: "Arrivati", tint: "bg-[color:var(--teal)]/15 border-[color:var(--teal-deep)]/30" },
-  { id: "da_evadere", titolo: "Da evadere", tint: "bg-amber-100/60 border-amber-300/60" },
-  { id: "consegnati", titolo: "Consegnati", tint: "bg-emerald-100/50 border-emerald-300/50" },
-];
+const SELECT_COLS =
+  "id, numero_ordine, numero_ombrellone, fila, cognome, telefono, metodo_pagamento, note, totale, stato, created_at, ordine_items(id, nome_snapshot, prezzo_snapshot, quantita)";
 
-const NEXT: Record<Stato, Stato | null> = {
-  arrivati: "da_evadere",
-  da_evadere: "consegnati",
-  consegnati: null,
-};
-const PREV: Record<Stato, Stato | null> = {
-  arrivati: null,
-  da_evadere: "arrivati",
-  consegnati: "da_evadere",
-};
+function startOfTodayISO() {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d.toISOString();
+}
 
-async function loadOrdini(scope: "coda" | "storico"): Promise<Ordine[]> {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+async function fetchUserLidoId(): Promise<string | null> {
+  const { data: u } = await supabase.auth.getUser();
+  if (!u.user) return null;
+  const { data, error } = await supabase.rpc("user_lido_id", { _user_id: u.user.id });
+  if (error) return null;
+  return (data as string | null) ?? null;
+}
+
+async function loadColonna(stato: Stato, lidoId: string): Promise<Ordine[]> {
   let q = supabase
     .from("ordini")
-    .select("id, numero_ordine, numero_ombrellone, cognome, totale, stato, created_at, ordine_items(id, nome_snapshot, prezzo_snapshot, quantita)")
-    .order("created_at", { ascending: false });
-  if (scope === "coda") {
-    q = q.gte("created_at", today.toISOString()).neq("stato", "annullato");
-  } else {
-    q = q.limit(200);
-  }
+    .select(SELECT_COLS)
+    .eq("lido_id", lidoId)
+    .eq("stato", stato)
+    .order("created_at", { ascending: stato !== "consegnati" });
+  if (stato === "consegnati") q = q.gte("created_at", startOfTodayISO());
   const { data, error } = await q;
   if (error) throw error;
   return (data ?? []) as unknown as Ordine[];
 }
 
-function OrdiniPage() {
-  const queryClient = useQueryClient();
-  const [scope, setScope] = useState<"coda" | "storico">("coda");
-  const [density, setDensity] = useState<"compatta" | "comoda">("comoda");
-  const [search, setSearch] = useState("");
+function playBeep() {
+  if (typeof window === "undefined") return;
+  try {
+    const Ctx = (window.AudioContext || (window as any).webkitAudioContext) as typeof AudioContext | undefined;
+    if (!Ctx) return;
+    const ctx = new Ctx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(880, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(1320, ctx.currentTime + 0.12);
+    gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.35);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.36);
+    setTimeout(() => ctx.close(), 500);
+  } catch { /* ignore */ }
+}
 
-  const { data: ordini = [], isLoading } = useQuery({
-    queryKey: ["ordini", scope],
-    queryFn: () => loadOrdini(scope),
+function useTick(ms = 1000) {
+  const [, set] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => set((n) => n + 1), ms);
+    return () => clearInterval(id);
+  }, [ms]);
+}
+
+function elapsedMinutes(iso: string) {
+  return (Date.now() - new Date(iso).getTime()) / 60000;
+}
+
+function formatElapsed(iso: string) {
+  const totSec = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 1000));
+  const m = Math.floor(totSec / 60);
+  const s = totSec % 60;
+  if (m >= 60) {
+    const h = Math.floor(m / 60);
+    return `${h}h ${m % 60}m`;
+  }
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
+function urgencyTone(iso: string) {
+  const m = elapsedMinutes(iso);
+  if (m >= 15) return { border: "border-l-red-500", text: "text-red-600", bg: "bg-red-50" };
+  if (m >= 10) return { border: "border-l-amber-500", text: "text-amber-700", bg: "bg-amber-50" };
+  return { border: "border-l-emerald-500", text: "text-emerald-700", bg: "bg-emerald-50" };
+}
+
+function OrdiniPage() {
+  const { t } = useI18n();
+  const queryClient = useQueryClient();
+
+  const { data: lidoId } = useQuery({
+    queryKey: ["user-lido-id"],
+    queryFn: fetchUserLidoId,
+    staleTime: 60_000,
   });
+
+  const enabled = !!lidoId;
+  const nuovi = useQuery({
+    queryKey: ["ordini-col", "arrivati", lidoId],
+    queryFn: () => loadColonna("arrivati", lidoId!),
+    enabled,
+  });
+  const prep = useQuery({
+    queryKey: ["ordini-col", "da_evadere", lidoId],
+    queryFn: () => loadColonna("da_evadere", lidoId!),
+    enabled,
+  });
+  const consegnati = useQuery({
+    queryKey: ["ordini-col", "consegnati", lidoId],
+    queryFn: () => loadColonna("consegnati", lidoId!),
+    enabled,
+  });
+
+  // Beep on new arrivals
+  const knownNewIds = useRef<Set<string> | null>(null);
+  useEffect(() => {
+    const list = nuovi.data ?? [];
+    const ids = new Set(list.map((o) => o.id));
+    if (knownNewIds.current === null) {
+      knownNewIds.current = ids;
+      return;
+    }
+    const hasNew = list.some((o) => !knownNewIds.current!.has(o.id));
+    if (hasNew) playBeep();
+    knownNewIds.current = ids;
+  }, [nuovi.data]);
 
   // Realtime
   useEffect(() => {
+    if (!lidoId) return;
     const channel = supabase
-      .channel("ordini-live")
-      .on("postgres_changes", { event: "*", schema: "public", table: "ordini" }, () => {
-        queryClient.invalidateQueries({ queryKey: ["ordini"] });
-      })
+      .channel(`ordini-kanban-${lidoId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "ordini", filter: `lido_id=eq.${lidoId}` },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["ordini-col"] });
+        },
+      )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [queryClient]);
+  }, [lidoId, queryClient]);
 
-  const filtered = useMemo(() => {
-    const t = search.trim().toLowerCase();
-    if (!t) return ordini;
-    return ordini.filter(
-      (o) =>
-        o.numero_ombrellone.toLowerCase().includes(t) ||
-        o.cognome.toLowerCase().includes(t) ||
-        String(o.numero_ordine).includes(t),
-    );
-  }, [ordini, search]);
-
-  const oggi = ordini.filter((o) => {
-    const d = new Date(o.created_at); const t = new Date(); t.setHours(0,0,0,0);
-    return d >= t && o.stato !== "annullato";
-  });
-
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
-
-  const moveOrdine = async (id: string, nuovoStato: Stato) => {
+  const move = async (id: string, nuovoStato: Stato) => {
     const { error } = await supabase.from("ordini").update({ stato: nuovoStato }).eq("id", id);
-    if (error) { toast.error("Impossibile aggiornare", { description: error.message }); return; }
-    queryClient.invalidateQueries({ queryKey: ["ordini"] });
+    if (error) { toast.error(t("kanban.updateError"), { description: error.message }); return; }
+    queryClient.invalidateQueries({ queryKey: ["ordini-col"] });
   };
 
-  const onDragEnd = (e: DragEndEvent) => {
-    const id = String(e.active.id);
-    const over = e.over?.id ? String(e.over.id) : null;
-    if (!over) return;
-    if (COLONNE.some((c) => c.id === over)) moveOrdine(id, over as Stato);
-  };
+  const columns: { stato: Stato; title: string; headerCls: string }[] = [
+    { stato: "arrivati", title: t("kanban.new"), headerCls: "bg-blue-100 text-blue-800 border-blue-200" },
+    { stato: "da_evadere", title: t("kanban.preparing"), headerCls: "bg-amber-100 text-amber-900 border-amber-200" },
+    { stato: "consegnati", title: t("kanban.delivered"), headerCls: "bg-emerald-100 text-emerald-800 border-emerald-200" },
+  ];
 
-  const dateLabel = new Date().toLocaleDateString("it-IT", { day: "2-digit", month: "long", year: "numeric" });
+  const dataByStato: Record<Stato, Ordine[]> = {
+    arrivati: nuovi.data ?? [],
+    da_evadere: prep.data ?? [],
+    consegnati: consegnati.data ?? [],
+  };
 
   return (
-    <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-6">
-      <div className="flex items-start justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-primary">Ordini</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Coda operativa in tempo reale e storico completo degli ordini del lido.
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="inline-flex rounded-full border border-border bg-card p-1">
-            <button
-              onClick={() => setScope("coda")}
-              className={`px-4 py-1.5 text-sm font-medium rounded-full transition ${scope === "coda" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
-            >Coda</button>
-            <button
-              onClick={() => setScope("storico")}
-              className={`px-4 py-1.5 text-sm font-medium rounded-full transition ${scope === "storico" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
-            >Storico</button>
-          </div>
-          <div className="text-sm text-muted-foreground inline-flex items-center gap-1.5">
-            <Clock className="w-4 h-4" /> {dateLabel}
-          </div>
-        </div>
+    <div className="max-w-[1600px] mx-auto px-4 md:px-6 py-6">
+      <div className="mb-5">
+        <h1 className="text-2xl md:text-3xl font-bold text-primary">Ordini</h1>
+        <p className="text-sm text-muted-foreground mt-1">Kanban in tempo reale degli ordini del lido.</p>
       </div>
 
-      <div className="mt-6 card-soft p-4 md:p-5">
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <div className="flex items-center gap-3">
-            <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[color:var(--teal-deep)]">
-              <Radio className="w-4 h-4 animate-pulse" /> {scope === "coda" ? "Coda attiva · LIVE" : "Storico"}
-            </span>
-            <span className="text-sm text-muted-foreground">
-              {oggi.length} ordini di oggi {scope === "coda" ? "da gestire" : ""}
-            </span>
-          </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className="inline-flex rounded-lg border border-border bg-card p-0.5">
-              <button
-                onClick={() => setDensity("compatta")}
-                className={`px-2.5 py-1 text-xs rounded-md inline-flex items-center gap-1 ${density === "compatta" ? "bg-secondary" : ""}`}
-              ><Rows3 className="w-3.5 h-3.5" /> Compatta</button>
-              <button
-                onClick={() => setDensity("comoda")}
-                className={`px-2.5 py-1 text-xs rounded-md inline-flex items-center gap-1 ${density === "comoda" ? "bg-secondary" : ""}`}
-              ><LayoutGrid className="w-3.5 h-3.5" /> Comoda</button>
-            </div>
-            <div className="relative">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Ombrellone, cognome o #numero"
-                className="pl-9 pr-3 py-2 rounded-lg border border-input bg-card text-sm w-72 focus:outline-none focus:ring-2 focus:ring-ring/40"
-              />
-            </div>
-          </div>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 overflow-x-auto">
+        {columns.map((col) => (
+          <KanbanColumn
+            key={col.stato}
+            stato={col.stato}
+            title={col.title}
+            headerCls={col.headerCls}
+            orders={dataByStato[col.stato]}
+            onMove={move}
+          />
+        ))}
       </div>
+    </div>
+  );
+}
 
-      <div className="mt-6">
-        {isLoading ? (
-          <div className="text-center text-muted-foreground py-20">Caricamento...</div>
+function KanbanColumn({
+  stato, title, headerCls, orders, onMove,
+}: {
+  stato: Stato;
+  title: string;
+  headerCls: string;
+  orders: Ordine[];
+  onMove: (id: string, s: Stato) => void;
+}) {
+  const { t } = useI18n();
+  return (
+    <div className="rounded-2xl bg-secondary/40 border border-border p-3 min-w-[280px]">
+      <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-sm font-semibold ${headerCls}`}>
+        <span>{title}</span>
+        <span className="bg-white/70 text-foreground text-xs px-1.5 py-0.5 rounded-full">{orders.length}</span>
+      </div>
+      <div className="mt-3 space-y-2.5 transition-all">
+        {orders.length === 0 ? (
+          <div className="text-xs text-muted-foreground py-10 text-center">{t("kanban.noOrders")}</div>
         ) : (
-          <DndContext sensors={sensors} onDragEnd={onDragEnd}>
-            <div className="grid md:grid-cols-3 gap-4">
-              {COLONNE.map((col) => {
-                const cards = filtered.filter((o) => o.stato === col.id);
-                return (
-                  <Colonna key={col.id} col={col} count={cards.length}>
-                    {cards.length === 0 ? (
-                      <div className="text-xs text-muted-foreground py-8 text-center">
-                        Nessun ordine
-                      </div>
-                    ) : (
-                      cards.map((o) => (
-                        <CardOrdine
-                          key={o.id}
-                          ordine={o}
-                          density={density}
-                          onMove={moveOrdine}
-                        />
-                      ))
-                    )}
-                  </Colonna>
-                );
-              })}
-            </div>
-          </DndContext>
+          orders.map((o) => <OrderCard key={o.id} ordine={o} stato={stato} onMove={onMove} />)
         )}
       </div>
     </div>
   );
 }
 
-function Colonna({
-  col, count, children,
-}: { col: { id: Stato; titolo: string; tint: string }; count: number; children: React.ReactNode }) {
-  const { setNodeRef, isOver } = useDroppable({ id: col.id });
-  return (
-    <div
-      ref={setNodeRef}
-      className={`rounded-2xl border ${col.tint} p-3 min-h-[300px] transition ${isOver ? "ring-2 ring-[color:var(--teal-deep)]" : ""}`}
-    >
-      <div className="flex items-center justify-between px-1 py-2">
-        <h3 className="font-semibold text-primary">{col.titolo}</h3>
-        <span className="text-xs font-bold bg-white/70 px-2 py-0.5 rounded-full">{count}</span>
-      </div>
-      <div className="space-y-2.5">{children}</div>
-    </div>
-  );
-}
-
-function CardOrdine({
-  ordine, density, onMove,
-}: { ordine: Ordine; density: "compatta" | "comoda"; onMove: (id: string, s: Stato) => void }) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: ordine.id });
-  const style = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : undefined;
-  const stato = ordine.stato as Stato;
-  const next = NEXT[stato];
-  const prev = PREV[stato];
-  const ora = new Date(ordine.created_at).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
+function OrderCard({ ordine, stato, onMove }: { ordine: Ordine; stato: Stato; onMove: (id: string, s: Stato) => void }) {
+  const { t } = useI18n();
+  useTick(1000);
+  const tone = urgencyTone(ordine.created_at);
+  const pagamento = (ordine.metodo_pagamento ?? "contanti").toLowerCase();
+  const isCarta = pagamento === "carta";
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={`bg-white rounded-xl border border-border p-3 shadow-sm hover:shadow-md transition cursor-grab active:cursor-grabbing ${isDragging ? "opacity-50" : ""}`}
-      {...listeners}
-      {...attributes}
-    >
+    <div className={`bg-white rounded-2xl border border-border border-l-4 ${tone.border} shadow-sm p-3 transition`}>
       <div className="flex items-start justify-between gap-2">
-        <div>
-          <div className="inline-flex items-center gap-1.5">
-            <span className="text-xs font-bold text-[color:var(--teal-deep)]">#{String(ordine.numero_ordine).padStart(3, "0")}</span>
-            <span className="text-xs text-muted-foreground">{ora}</span>
-          </div>
-          <div className="mt-1 font-semibold text-primary leading-tight">
-            🏖️ Omb. {ordine.numero_ombrellone} · {ordine.cognome}
-          </div>
-        </div>
-        <div className="text-right font-bold text-primary">
-          {Number(ordine.totale).toFixed(2)} €
+        <div className="font-bold text-primary">#{String(ordine.numero_ordine).padStart(3, "0")}</div>
+        <div className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${tone.bg} ${tone.text}`}>
+          <Clock className="w-3.5 h-3.5" /> {formatElapsed(ordine.created_at)}
         </div>
       </div>
 
-      {density === "comoda" && (
-        <ul className="mt-2.5 space-y-0.5 text-xs text-foreground/80">
-          {ordine.ordine_items?.map((it) => (
+      <div className="mt-1.5 text-sm font-semibold text-foreground leading-tight">
+        {ordine.cognome}
+      </div>
+      <div className="text-xs text-muted-foreground mt-0.5 inline-flex items-center gap-1">
+        <MapPin className="w-3.5 h-3.5" /> Omb. {ordine.numero_ombrellone}
+        {ordine.fila ? <span> · Fila {ordine.fila}</span> : null}
+      </div>
+
+      {ordine.telefono && (
+        <a
+          href={`tel:${ordine.telefono}`}
+          className="mt-1.5 inline-flex items-center gap-1 text-xs text-primary hover:underline"
+        >
+          <Phone className="w-3.5 h-3.5" /> {ordine.telefono}
+        </a>
+      )}
+
+      <div className="mt-2">
+        <span className={`inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full border ${
+          isCarta ? "bg-indigo-50 text-indigo-700 border-indigo-200" : "bg-emerald-50 text-emerald-700 border-emerald-200"
+        }`}>
+          {isCarta ? <CreditCard className="w-3 h-3" /> : <Banknote className="w-3 h-3" />}
+          {isCarta ? "Carta" : "Contanti"}
+        </span>
+      </div>
+
+      {ordine.ordine_items?.length > 0 && (
+        <ul className="mt-2.5 space-y-0.5 text-xs text-foreground/85 border-t border-border pt-2">
+          {ordine.ordine_items.map((it) => (
             <li key={it.id} className="flex justify-between gap-2">
               <span className="truncate">{it.quantita}× {it.nome_snapshot}</span>
-              <span className="text-muted-foreground shrink-0">
-                {(it.prezzo_snapshot * it.quantita).toFixed(2)} €
-              </span>
+              <span className="text-muted-foreground shrink-0">{(it.prezzo_snapshot * it.quantita).toFixed(2)} €</span>
             </li>
           ))}
         </ul>
       )}
 
-      <div className="mt-3 flex items-center justify-between gap-2">
-        <button
-          disabled={!prev}
-          onClick={(e) => { e.stopPropagation(); if (prev) onMove(ordine.id, prev); }}
-          onPointerDown={(e) => e.stopPropagation()}
-          className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md border border-border bg-card hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          <ChevronLeft className="w-3.5 h-3.5" /> Indietro
-        </button>
-        <button
-          disabled={!next}
-          onClick={(e) => { e.stopPropagation(); if (next) onMove(ordine.id, next); }}
-          onPointerDown={(e) => e.stopPropagation()}
-          className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md brand-gradient text-white disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          Avanza <ChevronRight className="w-3.5 h-3.5" />
-        </button>
+      <div className="mt-2 flex items-center justify-between text-sm font-bold">
+        <span className="text-muted-foreground text-xs font-medium">{t("kanban.total")}</span>
+        <span className="text-primary">€ {Number(ordine.totale).toFixed(2)}</span>
       </div>
+
+      {ordine.note && (
+        <div className="mt-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 text-xs p-2 flex gap-1.5">
+          <StickyNote className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+          <div><span className="font-semibold">{t("kanban.notes")}:</span> {ordine.note}</div>
+        </div>
+      )}
+
+      {stato === "arrivati" && (
+        <button
+          onClick={() => onMove(ordine.id, "da_evadere")}
+          className="mt-3 w-full inline-flex items-center justify-center gap-1.5 text-sm font-semibold rounded-xl bg-primary text-primary-foreground h-10 hover:opacity-95"
+        >
+          {t("kanban.takeOver")} <ArrowRight className="w-4 h-4" />
+        </button>
+      )}
+      {stato === "da_evadere" && (
+        <button
+          onClick={() => onMove(ordine.id, "consegnati")}
+          className="mt-3 w-full inline-flex items-center justify-center gap-1.5 text-sm font-semibold rounded-xl bg-emerald-600 text-white h-10 hover:bg-emerald-700"
+        >
+          <CheckCircle2 className="w-4 h-4" /> {t("kanban.markDelivered")}
+        </button>
+      )}
     </div>
   );
 }
