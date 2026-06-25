@@ -685,3 +685,277 @@ function CategorieDialog({
     </Dialog>
   );
 }
+
+// ---------- CSV IMPORT ----------
+
+type CsvRow = { nome: string; descrizione: string; prezzo: number; categoria: string; disponibile: boolean };
+
+function parseCsv(text: string): CsvRow[] {
+  const lines = text.split(/\r?\n/).filter((l) => l.trim() !== "");
+  if (lines.length === 0) return [];
+  const split = (line: string): string[] => {
+    const out: string[] = [];
+    let cur = ""; let q = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (q) {
+        if (ch === '"' && line[i + 1] === '"') { cur += '"'; i++; }
+        else if (ch === '"') q = false;
+        else cur += ch;
+      } else {
+        if (ch === '"') q = true;
+        else if (ch === ",") { out.push(cur); cur = ""; }
+        else cur += ch;
+      }
+    }
+    out.push(cur);
+    return out.map((s) => s.trim());
+  };
+  const header = split(lines[0]).map((h) => h.toLowerCase());
+  const idx = (k: string) => header.indexOf(k);
+  const iN = idx("nome"), iD = idx("descrizione"), iP = idx("prezzo"),
+        iC = idx("categoria"), iA = idx("disponibile");
+  if (iN < 0 || iP < 0) throw new Error("CSV: colonne richieste mancanti (nome, prezzo)");
+  const rows: CsvRow[] = [];
+  for (let r = 1; r < lines.length; r++) {
+    const cells = split(lines[r]);
+    const nome = (cells[iN] ?? "").trim();
+    if (!nome) continue;
+    const prezzoRaw = (cells[iP] ?? "0").replace(",", ".").trim();
+    const prezzo = Number(prezzoRaw);
+    if (!Number.isFinite(prezzo) || prezzo < 0) throw new Error(`Riga ${r + 1}: prezzo non valido`);
+    const dispRaw = iA >= 0 ? (cells[iA] ?? "").toLowerCase().trim() : "true";
+    const disponibile = dispRaw === "true" || dispRaw === "1" || dispRaw === "si" || dispRaw === "sì" || dispRaw === "yes";
+    rows.push({
+      nome,
+      descrizione: iD >= 0 ? (cells[iD] ?? "").trim() : "",
+      prezzo,
+      categoria: iC >= 0 ? (cells[iC] ?? "").trim() : "",
+      disponibile,
+    });
+  }
+  return rows;
+}
+
+function CsvImportDialog({
+  open, onOpenChange, lidoId, categorie, onImported,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  lidoId: string;
+  categorie: Categoria[];
+  onImported: () => void;
+}) {
+  const [file, setFile] = useState<File | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const downloadTemplate = () => {
+    const csv = "nome,descrizione,prezzo,categoria,disponibile\nCoca Cola,Lattina 33cl,3.50,Bibite,true\nSpritz,Aperol Spritz,6.00,Cocktail,true\n";
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "modello-prodotti.csv";
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImport = async () => {
+    if (!file) { toast.error("Seleziona un file CSV"); return; }
+    setBusy(true);
+    try {
+      const text = await file.text();
+      const rows = parseCsv(text);
+      if (rows.length === 0) throw new Error("Il CSV non contiene righe valide");
+
+      // ensure categories exist (create new on the fly)
+      const catByName = new Map(categorie.map((c) => [c.nome.toLowerCase(), c.id]));
+      const newCatNames = Array.from(new Set(
+        rows.map((r) => r.categoria).filter((c) => c && !catByName.has(c.toLowerCase())),
+      ));
+      for (const cn of newCatNames) {
+        const { data, error } = await supabase
+          .from("categorie_prodotto")
+          .insert({ lido_id: lidoId, nome: cn, ordine: 999 })
+          .select("id, nome").single();
+        if (error) throw error;
+        if (data) catByName.set(data.nome.toLowerCase(), data.id);
+      }
+
+      const payload = rows.map((r) => ({
+        lido_id: lidoId,
+        nome: r.nome.slice(0, 100),
+        descrizione: r.descrizione ? r.descrizione.slice(0, 300) : null,
+        prezzo: r.prezzo,
+        categoria_id: r.categoria ? (catByName.get(r.categoria.toLowerCase()) ?? null) : null,
+        disponibile: r.disponibile,
+      }));
+      const { error } = await supabase.from("prodotti").insert(payload);
+      if (error) throw error;
+      toast.success(`${payload.length} prodotti importati`);
+      onImported();
+      onOpenChange(false);
+      setFile(null);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Errore importazione";
+      toast.error("Importazione non riuscita", { description: msg });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Importa prodotti da CSV</DialogTitle>
+          <DialogDescription>
+            Colonne richieste: <code>nome, descrizione, prezzo, categoria, disponibile</code>. I prodotti vengono sempre aggiunti come nuovi.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <Button type="button" variant="outline" onClick={downloadTemplate} className="w-full">
+            <Download className="w-4 h-4 mr-1.5" /> Scarica modello CSV
+          </Button>
+          <div>
+            <Label htmlFor="csv">File CSV</Label>
+            <Input id="csv" type="file" accept=".csv,text/csv" className="mt-1.5"
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Annulla</Button>
+          <Button onClick={handleImport} disabled={busy || !file}>
+            {busy && <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />}
+            <FileSpreadsheet className="w-4 h-4 mr-1.5" /> Importa
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ---------- BATCH PHOTO UPLOAD ----------
+
+function BatchPhotoDialog({
+  open, onOpenChange, lidoId, prodotti, onDone,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  lidoId: string;
+  prodotti: Prodotto[];
+  onDone: () => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [results, setResults] = useState<{ matched: string[]; unmatched: string[] } | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const processFiles = async (files: FileList | File[]) => {
+    const list = Array.from(files);
+    if (list.length === 0) return;
+    setBusy(true);
+    setResults(null);
+    const byNorm = new Map<string, Prodotto>();
+    for (const p of prodotti) byNorm.set(normalizeProductName(p.nome), p);
+
+    const matched: string[] = [];
+    const unmatched: string[] = [];
+
+    for (const file of list) {
+      if (!file.type.startsWith("image/")) { unmatched.push(file.name); continue; }
+      const base = file.name.replace(/\.[^.]+$/, "");
+      const norm = normalizeProductName(base);
+      const target = byNorm.get(norm);
+      if (!target) { unmatched.push(file.name); continue; }
+      try {
+        const ext = file.name.split(".").pop() || "jpg";
+        const path = `${lidoId}/${crypto.randomUUID()}.${ext}`;
+        const { error: upErr } = await supabase.storage
+          .from("prodotti-immagini")
+          .upload(path, file, { contentType: file.type, upsert: false });
+        if (upErr) throw upErr;
+        const { data: signed, error: sErr } = await supabase.storage
+          .from("prodotti-immagini")
+          .createSignedUrl(path, SIGNED_TTL);
+        if (sErr) throw sErr;
+        const { error: updErr } = await supabase.from("prodotti")
+          .update({ immagine_url: signed.signedUrl, foto_url: signed.signedUrl })
+          .eq("id", target.id);
+        if (updErr) throw updErr;
+        matched.push(`${file.name} → ${target.nome}`);
+      } catch (e: unknown) {
+        unmatched.push(file.name);
+      }
+    }
+    setResults({ matched, unmatched });
+    setBusy(false);
+    if (matched.length > 0) {
+      toast.success(`${matched.length} foto associate`);
+      onDone();
+    }
+  };
+
+  const onDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (e.dataTransfer.files?.length) processFiles(e.dataTransfer.files);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => { onOpenChange(o); if (!o) setResults(null); }}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Carica foto in blocco</DialogTitle>
+          <DialogDescription>
+            Trascina più immagini: il nome del file (senza estensione) viene abbinato al nome del prodotto, ignorando accenti e simboli.
+          </DialogDescription>
+        </DialogHeader>
+        <div
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={onDrop}
+          onClick={() => fileRef.current?.click()}
+          className="border-2 border-dashed border-border rounded-xl p-8 text-center cursor-pointer hover:bg-secondary/40 transition"
+        >
+          <ImagePlus className="w-8 h-8 mx-auto text-muted-foreground" />
+          <p className="text-sm mt-2 text-muted-foreground">
+            Trascina qui le immagini o clicca per selezionarle
+          </p>
+          <input
+            ref={fileRef}
+            type="file"
+            multiple
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => { if (e.target.files) processFiles(e.target.files); e.target.value = ""; }}
+          />
+        </div>
+        {busy && (
+          <div className="text-sm text-muted-foreground flex items-center">
+            <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> Caricamento…
+          </div>
+        )}
+        {results && (
+          <div className="space-y-2 text-sm max-h-60 overflow-auto">
+            {results.matched.length > 0 && (
+              <div>
+                <p className="font-medium text-[color:var(--teal-deep)]">Associate ({results.matched.length})</p>
+                <ul className="text-xs text-muted-foreground list-disc pl-5">
+                  {results.matched.map((m) => <li key={m}>{m}</li>)}
+                </ul>
+              </div>
+            )}
+            {results.unmatched.length > 0 && (
+              <div>
+                <p className="font-medium text-destructive">Senza corrispondenza ({results.unmatched.length})</p>
+                <ul className="text-xs text-muted-foreground list-disc pl-5">
+                  {results.unmatched.map((m) => <li key={m}>{m}</li>)}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Chiudi</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
