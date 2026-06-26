@@ -31,7 +31,7 @@ type Ordine = {
 };
 
 export const Route = createFileRoute("/_authenticated/ordini")({
-  head: () => ({ meta: [{ title: "Ordini · LidoSmart" }] }),
+  head: () => ({ meta: [{ title: "Ordini · OmbrellOne" }] }),
   component: OrdiniPage,
 });
 

@@ -12,7 +12,7 @@ export function Logo({ size = 36, withText = true }: { size?: number; withText?:
         </svg>
       </div>
       {withText && (
-        <span className="font-display font-bold text-lg text-primary">LidoSmart</span>
+        <span className="font-display font-bold text-lg text-primary">OmbrellOne</span>
       )}
     </div>
   );

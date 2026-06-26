@@ -9,8 +9,8 @@ import { ArrowLeft, Loader2 } from "lucide-react";
 export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
-      { title: "Accedi · LidoSmart" },
-      { name: "description", content: "Area staff LidoSmart. Accedi per gestire ordini, menu e ombrelloni del tuo lido." },
+      { title: "Accedi · OmbrellOne" },
+      { name: "description", content: "Area staff OmbrellOne. Accedi per gestire ordini, menu e ombrelloni del tuo lido." },
     ],
   }),
   component: LoginPage,

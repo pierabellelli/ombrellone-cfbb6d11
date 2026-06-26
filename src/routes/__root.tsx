@@ -78,8 +78,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "LidoSmart — Ordini QR per stabilimenti balneari" },
-      { name: "description", content: "LidoSmart: sistema di ordinazione QR per stabilimenti balneari. Gestisci ordini, menu e ombrelloni in tempo reale." },
+      { title: "OmbrellOne — Ordini QR per stabilimenti balneari" },
+      { name: "description", content: "OmbrellOne: sistema di ordinazione QR per stabilimenti balneari. Gestisci ordini, menu e ombrelloni in tempo reale." },
     ],
   }),
   component: RootComponent,

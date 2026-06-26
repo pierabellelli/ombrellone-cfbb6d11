@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/prodotti")({
-  head: () => ({ meta: [{ title: "Prodotti · LidoSmart" }] }),
+  head: () => ({ meta: [{ title: "Prodotti · OmbrellOne" }] }),
   component: ProdottiPage,
 });
 

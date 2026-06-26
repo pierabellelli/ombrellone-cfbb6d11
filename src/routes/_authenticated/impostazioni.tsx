@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 
 export const Route = createFileRoute("/_authenticated/impostazioni")({
-  head: () => ({ meta: [{ title: "Impostazioni · LidoSmart" }] }),
+  head: () => ({ meta: [{ title: "Impostazioni · OmbrellOne" }] }),
   component: ImpostazioniPage,
 });
 

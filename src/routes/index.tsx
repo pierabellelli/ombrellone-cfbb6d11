@@ -4,9 +4,9 @@ import beachHero from "@/assets/beach-hero.jpg";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "LidoSmart — Ordina dal tuo ombrellone" },
-      { name: "description", content: "LidoSmart: ordini dal bar via QR per lidi e stabilimenti balneari italiani. Coda ordini in tempo reale per lo staff." },
-      { property: "og:title", content: "LidoSmart" },
+      { title: "OmbrellOne — Ordina dal tuo ombrellone" },
+      { name: "description", content: "OmbrellOne: ordini dal bar via QR per lidi e stabilimenti balneari italiani. Coda ordini in tempo reale per lo staff." },
+      { property: "og:title", content: "OmbrellOne" },
       { property: "og:description", content: "Ordini dal bar via QR per stabilimenti balneari." },
     ],
   }),
@@ -19,7 +19,7 @@ function Home() {
       <header className="px-6 py-5 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <LogoMark />
-          <span className="font-display font-bold text-lg text-primary">LidoSmart</span>
+          <span className="font-display font-bold text-lg text-primary">OmbrellOne</span>
         </div>
         <Link
           to="/login"
@@ -37,7 +37,7 @@ function Home() {
             <span className="text-[color:var(--teal-deep)]">ombrellone.</span>
           </h1>
           <p className="mt-6 text-lg text-muted-foreground max-w-md">
-            LidoSmart porta il menu del bar direttamente sul telefono dei clienti.
+            OmbrellOne porta il menu del bar direttamente sul telefono dei clienti.
             Niente file, niente attese: lo staff vede ogni ordine in tempo reale.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
@@ -92,7 +92,7 @@ function Home() {
       </section>
 
       <footer className="px-6 py-6 text-center text-xs text-muted-foreground border-t border-border">
-        © {new Date().getFullYear()} LidoSmart — Sistema di ordinazione QR per stabilimenti balneari
+        © {new Date().getFullYear()} OmbrellOne — Sistema di ordinazione QR per stabilimenti balneari
       </footer>
     </div>
   );

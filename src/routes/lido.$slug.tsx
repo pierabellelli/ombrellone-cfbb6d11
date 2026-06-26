@@ -64,7 +64,7 @@ export const Route = createFileRoute("/lido/$slug")({
   validateSearch: searchSchema,
   head: ({ params }) => ({
     meta: [
-      { title: `Menu · ${params.slug} · LidoSmart` },
+      { title: `Menu · ${params.slug} · OmbrellOne` },
       { name: "description", content: "Ordina dal tuo ombrellone tramite il QR del lido." },
       { name: "viewport", content: "width=device-width, initial-scale=1, maximum-scale=1" },
     ],
