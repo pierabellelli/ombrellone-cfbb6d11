@@ -47,7 +47,7 @@ function startOfTodayISO() {
 async function fetchUserLidoId(): Promise<string | null> {
   const { data: u } = await supabase.auth.getUser();
   if (!u.user) return null;
-  const { data, error } = await supabase.rpc("user_lido_id", { _user_id: u.user.id });
+  const { data, error } = await supabase.rpc("user_lido_id");
   if (error) return null;
   return (data as string | null) ?? null;
 }

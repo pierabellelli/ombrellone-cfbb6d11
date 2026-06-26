@@ -31,12 +31,7 @@ export const Route = createFileRoute("/_authenticated/mappa")({
 async function loadCtx() {
   const { data: u } = await supabase.auth.getUser();
   if (!u.user) return { lidoId: null, config: null };
-  const { data: roles } = await supabase
-    .from("user_roles")
-    .select("role, lido_id")
-    .eq("user_id", u.user.id);
-  const r = roles ?? [];
-  const lidoId = r.find((x) => x.lido_id)?.lido_id ?? null;
+  const { data: lidoId } = await supabase.rpc("user_lido_id");
   if (!lidoId) return { lidoId: null, config: null };
   const { data: config } = await supabase
     .from("beach_config")

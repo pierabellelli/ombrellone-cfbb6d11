@@ -387,6 +387,18 @@ export type Database = {
         }
         Returns: boolean
       }
+      get_order_history: {
+        Args: { _lido_id: string; _telefono: string }
+        Returns: {
+          created_at: string
+          id: string
+          items: Json
+          numero_ombrellone: string
+          numero_ordine: number
+          stato: Database["public"]["Enums"]["ordine_stato"]
+          totale: number
+        }[]
+      }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
       traccia_ordine: {
         Args: { _cognome: string; _numero: number; _slug: string }
@@ -400,7 +412,7 @@ export type Database = {
           totale: number
         }[]
       }
-      user_lido_id: { Args: { _user_id: string }; Returns: string }
+      user_lido_id: { Args: Record<PropertyKey, never>; Returns: string }
     }
     Enums: {
       app_role: "cliente" | "staff" | "gestore" | "super_admin"
