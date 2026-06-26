@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n";
-import { Umbrella, X, Check, Phone, Wallet, Clock, AlertTriangle } from "lucide-react";
+import { Umbrella, X, Check, Phone, Wallet, Clock } from "lucide-react";
 
 type Fila = { index: number; label: string; ombrelloni: { numero: number }[] };
 type Stato = "arrivati" | "da_evadere" | "consegnati" | "annullato";
@@ -205,6 +205,13 @@ const STATE_CLASS: Record<UmbrellaState, string> = {
   late: "bg-red-100 border-red-400 text-red-900",
 };
 
+const TILE_CLASS: Record<UmbrellaState, string> = {
+  free: "bg-white border-gray-300 text-foreground",
+  active: "bg-white border-emerald-500 text-foreground",
+  warn: "bg-white border-amber-500 text-foreground",
+  late: "bg-white border-red-500 text-foreground",
+};
+
 function fmtElapsed(ms: number) {
   const totalMin = Math.max(0, Math.floor(ms / 60000));
   const h = Math.floor(totalMin / 60);
@@ -212,34 +219,20 @@ function fmtElapsed(ms: number) {
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
-const STATE_BAR: Record<Exclude<UmbrellaState, "free">, { icon: typeof Check; barClass: string; key: "map.tile.active" | "map.tile.warn" | "map.tile.late" }> = {
-  active: { icon: Check, barClass: "bg-emerald-500 text-white", key: "map.tile.active" },
-  warn: { icon: Clock, barClass: "bg-amber-500 text-white", key: "map.tile.warn" },
-  late: { icon: AlertTriangle, barClass: "bg-red-600 text-white", key: "map.tile.late" },
-};
-
 function UmbrellaTile({ numero, rowLabel, orders, state, now, onClick }: {
   numero: number; rowLabel: string; orders: Ordine[]; state: UmbrellaState; now: number; onClick: () => void;
 }) {
-  const { t } = useI18n();
   const oldest = orders[0];
   const elapsed = oldest ? now - new Date(oldest.created_at).getTime() : 0;
-  const bar = state === "free" ? null : STATE_BAR[state];
   return (
     <button
       onClick={onClick}
-      className={`relative w-[88px] min-h-[88px] rounded-2xl border-2 ${STATE_CLASS[state]} flex flex-col items-center transition active:scale-95 shadow-sm overflow-hidden`}
+      className={`relative w-[88px] min-h-[88px] rounded-2xl border-2 ${TILE_CLASS[state]} flex flex-col items-center transition active:scale-95 shadow-sm`}
     >
       {orders.length > 1 && (
-        <span className="absolute top-1 right-1 z-20 w-5 h-5 rounded-full bg-red-600 text-white text-[10px] font-bold flex items-center justify-center shadow-sm">
+        <span className="absolute top-1 right-1 z-20 w-5 h-5 rounded-full bg-gray-500 text-white text-[10px] font-bold flex items-center justify-center shadow-sm">
           {orders.length}
         </span>
-      )}
-      {bar && (
-        <div className={`w-full py-0.5 flex items-center justify-center gap-0.5 ${bar.barClass}`}>
-          <bar.icon className="w-2 h-2 shrink-0" />
-          <span className="text-[6px] font-bold uppercase tracking-tight leading-none">{t(bar.key)}</span>
-        </div>
       )}
       <div className="px-1.5 py-1.5 flex flex-col items-center w-full">
         <Umbrella className="w-4 h-4 opacity-70" />
