@@ -390,6 +390,19 @@ export type Database = {
         }
         Returns: boolean
       }
+      create_ordine: {
+        Args: {
+          _cognome: string
+          _items: Json
+          _lido_id: string
+          _metodo_pagamento: string
+          _note: string | null
+          _numero_ombrellone: string
+          _telefono: string
+          _totale: number
+        }
+        Returns: { id: string; numero_ordine: number }[]
+      }
       get_order_history: {
         Args: { _lido_id: string; _telefono: string }
         Returns: {

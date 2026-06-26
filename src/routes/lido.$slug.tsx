@@ -545,40 +545,29 @@ function CartView({
     if (items.length === 0) { toast.error(t("cliente.errEmptyCart")); return; }
 
     setSending(true);
-    const { data: ord, error } = await supabase
-      .from("ordini")
-      .insert({
-        lido_id: lido.id,
-        numero_ombrellone: ombrTrim.slice(0, 20),
-        cognome: cogTrim.slice(0, 60),
-        telefono: telTrim.slice(0, 30),
-        totale,
-        numero_ordine: 0, // assegnato dal trigger
-        note: note.trim() ? note.trim().slice(0, 300) : null,
-        metodo_pagamento: lido.accetta_carta ? metodoPagamento : "contanti",
-      })
-      .select("id, numero_ordine")
-      .single();
+    const { data, error } = await supabase.rpc("create_ordine", {
+      _lido_id: lido.id,
+      _numero_ombrellone: ombrTrim.slice(0, 20),
+      _cognome: cogTrim.slice(0, 60),
+      _telefono: telTrim.slice(0, 30),
+      _totale: totale,
+      _note: note.trim() ? note.trim().slice(0, 300) : null,
+      _metodo_pagamento: lido.accetta_carta ? metodoPagamento : "contanti",
+      _items: items.map((it) => ({
+        prodotto_id: it.prodotto.id,
+        nome_snapshot: it.prodotto.nome,
+        prezzo_snapshot: it.prodotto.prezzo,
+        quantita: it.quantita,
+      })),
+    });
+    setSending(false);
 
+    const ord = data?.[0];
     if (error || !ord) {
-      setSending(false);
       toast.error(t("cliente.errSubmitFailed"), { description: error?.message });
       return;
     }
 
-    const payload = items.map((it) => ({
-      ordine_id: ord.id,
-      prodotto_id: it.prodotto.id,
-      nome_snapshot: it.prodotto.nome,
-      prezzo_snapshot: it.prodotto.prezzo,
-      quantita: it.quantita,
-    }));
-    const { error: itemsErr } = await supabase.from("ordine_items").insert(payload);
-    setSending(false);
-    if (itemsErr) {
-      toast.error(t("cliente.errItemsSaveFailed"), { description: itemsErr.message });
-      return;
-    }
     writeStoredCustomer(telTrim.slice(0, 30), cogTrim.slice(0, 60), items.map((it) => ({ prodotto_id: it.prodotto.id, quantita: it.quantita })));
     onSubmitted(ord.numero_ordine);
   };
