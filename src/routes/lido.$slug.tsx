@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
   ShoppingCart, Plus, Minus, X, Search, Loader2, CheckCircle2, Clock,
-  AlertTriangle, MapPin, ArrowLeft, ChevronDown, ChevronUp,
+  AlertTriangle, MapPin, ArrowLeft, ChevronDown, ChevronUp, Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,8 +17,9 @@ import {
 } from "@/components/ui/sheet";
 import { useI18n } from "@/lib/i18n";
 
-const LS_KEY = "ombrellone_cliente";
-type StoredCustomer = { telefono: string; cognome: string };
+const LS_KEY = "ombrellone.cliente";
+type Preferito = { prodotto_id: string; count: number };
+type StoredCustomer = { telefono: string; cognome: string; preferiti: Preferito[] };
 
 function readStoredCustomer(): StoredCustomer | null {
   if (typeof window === "undefined") return null;
@@ -26,17 +27,31 @@ function readStoredCustomer(): StoredCustomer | null {
     const raw = localStorage.getItem(LS_KEY);
     if (!raw) return null;
     const p = JSON.parse(raw);
-    if (p && typeof p.telefono === "string" && typeof p.cognome === "string") return p;
+    if (p && typeof p.telefono === "string" && typeof p.cognome === "string") {
+      const preferiti: Preferito[] = Array.isArray(p.preferiti)
+        ? p.preferiti.filter((x: any) => x && typeof x.prodotto_id === "string" && typeof x.count === "number")
+        : [];
+      return { telefono: p.telefono, cognome: p.cognome, preferiti };
+    }
   } catch { /* ignore */ }
   return null;
 }
-function writeStoredCustomer(telefono: string, cognome: string) {
+function writeStoredCustomer(telefono: string, cognome: string, orderedItems: { prodotto_id: string; quantita: number }[] = []) {
   if (typeof window === "undefined") return;
   const existing = readStoredCustomer();
+  const preferitiMap = new Map(existing?.preferiti.map((p) => [p.prodotto_id, p.count]) ?? []);
+  for (const it of orderedItems) {
+    preferitiMap.set(it.prodotto_id, (preferitiMap.get(it.prodotto_id) ?? 0) + it.quantita);
+  }
+  const preferiti = [...preferitiMap.entries()]
+    .map(([prodotto_id, count]) => ({ prodotto_id, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 20);
   // keep first saved name; only update phone
   const next: StoredCustomer = {
     telefono,
     cognome: existing?.cognome?.trim() ? existing.cognome : cognome,
+    preferiti,
   };
   try { localStorage.setItem(LS_KEY, JSON.stringify(next)); } catch { /* ignore */ }
 }
@@ -175,6 +190,16 @@ function LidoClientPage() {
     return map;
   }, [filtered]);
 
+  const stored = typeof window !== "undefined" ? readStoredCustomer() : null;
+  const favoriti = useMemo(() => {
+    if (!stored?.preferiti?.length || prodotti.length === 0) return [];
+    const byId = new Map(prodotti.map((p) => [p.id, p]));
+    return stored.preferiti
+      .map((pref) => byId.get(pref.prodotto_id))
+      .filter((p): p is Prodotto => !!p)
+      .slice(0, 5);
+  }, [stored, prodotti]);
+
   if (lidoLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-muted-foreground">
@@ -236,6 +261,10 @@ function LidoClientPage() {
             })}
           </div>
         </div>
+
+        {lido.servizio_bar_attivo && favoriti.length > 0 && (
+          <FavoritesSection favoriti={favoriti} cart={cart} onAdd={add} onDec={dec} />
+        )}
 
         {prodLoading ? (
           <div className="py-10 text-center text-muted-foreground">
@@ -379,6 +408,51 @@ function Header({ lido, ombrellone }: { lido: Lido; ombrellone?: string }) {
   );
 }
 
+function FavoritesSection({ favoriti, cart, onAdd, onDec }: {
+  favoriti: Prodotto[];
+  cart: Record<string, CartItem>;
+  onAdd: (p: Prodotto) => void;
+  onDec: (id: string) => void;
+}) {
+  const { t } = useI18n();
+  return (
+    <section className="mb-5">
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="text-sm font-bold uppercase tracking-wider text-primary">{t("cliente.favorites")}</h2>
+        <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
+          <Zap className="w-3 h-3" /> {t("cliente.quickOrder")}
+        </span>
+      </div>
+      <div className="flex gap-2.5 overflow-x-auto pb-1 -mx-1 px-1">
+        {favoriti.map((p) => {
+          const quantita = cart[p.id]?.quantita ?? 0;
+          return (
+            <div key={p.id} className="card-soft p-3 w-32 shrink-0 flex flex-col">
+              <h3 className="text-xs font-semibold text-foreground leading-tight line-clamp-2 min-h-[2.2em]">{p.nome}</h3>
+              <p className="text-xs font-bold text-primary mt-1">€ {p.prezzo.toFixed(2)}</p>
+              {quantita === 0 ? (
+                <Button onClick={() => onAdd(p)} size="sm" className="mt-2 rounded-full h-8 w-8 p-0 self-center">
+                  <Plus className="w-3.5 h-3.5" />
+                </Button>
+              ) : (
+                <div className="mt-2 inline-flex items-center justify-center gap-1 bg-primary text-primary-foreground rounded-full p-1 self-center">
+                  <button onClick={() => onDec(p.id)} className="w-6 h-6 inline-flex items-center justify-center rounded-full hover:bg-white/15">
+                    <Minus className="w-3.5 h-3.5" />
+                  </button>
+                  <span className="min-w-[1.25rem] text-center font-semibold text-xs">{quantita}</span>
+                  <button onClick={() => onAdd(p)} className="w-6 h-6 inline-flex items-center justify-center rounded-full hover:bg-white/15">
+                    <Plus className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 function CatChip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
   return (
     <button
@@ -505,7 +579,7 @@ function CartView({
       toast.error(t("cliente.errItemsSaveFailed"), { description: itemsErr.message });
       return;
     }
-    writeStoredCustomer(telTrim.slice(0, 30), cogTrim.slice(0, 60));
+    writeStoredCustomer(telTrim.slice(0, 30), cogTrim.slice(0, 60), items.map((it) => ({ prodotto_id: it.prodotto.id, quantita: it.quantita })));
     onSubmitted(ord.numero_ordine);
   };
 
