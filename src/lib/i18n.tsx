@@ -99,6 +99,11 @@ const DICT = {
     "kanban.total": "Totale",
     "kanban.notes": "Note",
     "kanban.updateError": "Errore aggiornamento",
+    "kanban.selectAll": "Seleziona tutti",
+    "kanban.selectedCount": "selezionati",
+    "kanban.archiveSelected": "Archivia selezionati",
+    "kanban.archiveOk": "Ordini archiviati",
+    "kanban.archiveError": "Archiviazione non riuscita",
   },
   en: {
     "nav.orders": "Orders",
@@ -191,6 +196,11 @@ const DICT = {
     "kanban.total": "Total",
     "kanban.notes": "Notes",
     "kanban.updateError": "Update error",
+    "kanban.selectAll": "Select all",
+    "kanban.selectedCount": "selected",
+    "kanban.archiveSelected": "Archive selected",
+    "kanban.archiveOk": "Orders archived",
+    "kanban.archiveError": "Archiving failed",
   },
 } as const;
 

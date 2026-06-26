@@ -182,6 +182,7 @@ export type Database = {
       }
       ordini: {
         Row: {
+          archiviato: boolean
           cognome: string
           created_at: string
           fila: string | null
@@ -198,6 +199,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          archiviato?: boolean
           cognome: string
           created_at?: string
           fila?: string | null
@@ -214,6 +216,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          archiviato?: boolean
           cognome?: string
           created_at?: string
           fila?: string | null

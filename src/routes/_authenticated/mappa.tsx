@@ -54,12 +54,20 @@ async function loadOrdiniAttivi(lidoId: string): Promise<Ordine[]> {
 }
 
 type UmbrellaState = "free" | "active" | "warn" | "late";
-function stateOf(order: Ordine | undefined, now: number): UmbrellaState {
-  if (!order) return "free";
+const STATE_RANK: Record<UmbrellaState, number> = { free: 0, active: 1, warn: 2, late: 3 };
+function stateOfOrder(order: Ordine, now: number): UmbrellaState {
   const minutes = (now - new Date(order.created_at).getTime()) / 60000;
   if (minutes >= 15) return "late";
   if (minutes >= 10) return "warn";
   return "active";
+}
+function worstState(orders: Ordine[], now: number): UmbrellaState {
+  let worst: UmbrellaState = "free";
+  for (const o of orders) {
+    const s = stateOfOrder(o, now);
+    if (STATE_RANK[s] > STATE_RANK[worst]) worst = s;
+  }
+  return worst;
 }
 
 function MappaPage() {
@@ -103,20 +111,22 @@ function MappaPage() {
   const config = ctx?.config as { file: Fila[] } | null | undefined;
   const file = config?.file ?? [];
 
-  // Map ombrellone number -> latest active order
-  const orderByNumero = useMemo(() => {
-    const map = new Map<string, Ordine>();
+  // Map ombrellone number -> all active orders, oldest first
+  const ordersByNumero = useMemo(() => {
+    const map = new Map<string, Ordine[]>();
     for (const o of ordini) {
-      const existing = map.get(o.numero_ombrellone);
-      if (!existing || new Date(o.created_at) > new Date(existing.created_at)) {
-        map.set(o.numero_ombrellone, o);
-      }
+      const list = map.get(o.numero_ombrellone);
+      if (list) list.push(o);
+      else map.set(o.numero_ombrellone, [o]);
+    }
+    for (const list of map.values()) {
+      list.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
     }
     return map;
   }, [ordini]);
 
   const [selected, setSelected] = useState<{ numero: number; fila: string } | null>(null);
-  const selectedOrder = selected ? orderByNumero.get(String(selected.numero)) : undefined;
+  const selectedOrders = selected ? ordersByNumero.get(String(selected.numero)) ?? [] : [];
 
   const markDelivered = async (id: string) => {
     const { error } = await supabase.from("ordini").update({ stato: "consegnati" }).eq("id", id);
@@ -150,14 +160,14 @@ function MappaPage() {
               <div className="text-xs font-semibold text-muted-foreground mb-2 px-1">{row.label}</div>
               <div className="flex flex-wrap gap-2.5">
                 {row.ombrelloni.map((u) => {
-                  const order = orderByNumero.get(String(u.numero));
-                  const s = stateOf(order, now);
+                  const orders = ordersByNumero.get(String(u.numero)) ?? [];
+                  const s = worstState(orders, now);
                   return (
                     <UmbrellaTile
                       key={`${row.index}-${u.numero}`}
                       numero={u.numero}
                       rowLabel={row.label}
-                      order={order}
+                      orders={orders}
                       state={s}
                       now={now}
                       onClick={() => setSelected({ numero: u.numero, fila: row.label })}
@@ -178,7 +188,7 @@ function MappaPage() {
         <DetailSheet
           numero={selected.numero}
           fila={selected.fila}
-          order={selectedOrder}
+          orders={selectedOrders}
           now={now}
           onClose={() => setSelected(null)}
           onDelivered={markDelivered}
@@ -202,21 +212,27 @@ function fmtElapsed(ms: number) {
   return `${m}:${ss}`;
 }
 
-function UmbrellaTile({ numero, rowLabel, order, state, now, onClick }: {
-  numero: number; rowLabel: string; order?: Ordine; state: UmbrellaState; now: number; onClick: () => void;
+function UmbrellaTile({ numero, rowLabel, orders, state, now, onClick }: {
+  numero: number; rowLabel: string; orders: Ordine[]; state: UmbrellaState; now: number; onClick: () => void;
 }) {
-  const elapsed = order ? now - new Date(order.created_at).getTime() : 0;
+  const oldest = orders[0];
+  const elapsed = oldest ? now - new Date(oldest.created_at).getTime() : 0;
   return (
     <button
       onClick={onClick}
       className={`relative w-[88px] min-h-[88px] rounded-2xl border-2 ${STATE_CLASS[state]} px-1.5 py-2 flex flex-col items-center justify-start transition active:scale-95 shadow-sm`}
     >
+      {orders.length > 1 && (
+        <span className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-emerald-600 text-white text-xs font-bold flex items-center justify-center shadow-sm">
+          {orders.length}
+        </span>
+      )}
       <Umbrella className="w-4 h-4 opacity-70" />
       <div className="text-lg font-extrabold leading-tight">{numero}</div>
       <div className="text-[10px] opacity-70 truncate w-full text-center">{rowLabel}</div>
-      {order && (
+      {oldest && (
         <div className="mt-1 w-full">
-          <div className="text-[11px] font-semibold truncate">{order.cognome}</div>
+          <div className="text-[11px] font-semibold truncate">{oldest.cognome}</div>
           <div className="text-[10px] tabular-nums opacity-80">{fmtElapsed(elapsed)}</div>
         </div>
       )}
@@ -243,11 +259,10 @@ function Legend({ t }: { t: (k: any) => string }) {
   );
 }
 
-function DetailSheet({ numero, fila, order, now, onClose, onDelivered }: {
-  numero: number; fila: string; order?: Ordine; now: number; onClose: () => void; onDelivered: (id: string) => void;
+function DetailSheet({ numero, fila, orders, now, onClose, onDelivered }: {
+  numero: number; fila: string; orders: Ordine[]; now: number; onClose: () => void; onDelivered: (id: string) => void;
 }) {
   const { t } = useI18n();
-  const elapsed = order ? now - new Date(order.created_at).getTime() : 0;
   return (
     <div className="fixed inset-0 z-40 flex items-end md:items-center md:justify-end">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
@@ -265,57 +280,75 @@ function DetailSheet({ numero, fila, order, now, onClose, onDelivered }: {
           </button>
         </div>
 
-        {!order ? (
+        {orders.length === 0 ? (
           <div className="mt-8 text-center text-muted-foreground py-12">{t("map.noOrder")}</div>
+        ) : orders.length === 1 ? (
+          <div className="mt-5">
+            <OrderDetailCard order={orders[0]} now={now} onDelivered={onDelivered} />
+          </div>
         ) : (
-          <div className="mt-5 space-y-4">
-            <Row label={t("map.customer")} value={order.cognome} />
-            {order.telefono && (
-              <Row label={t("map.phone")} value={<a href={`tel:${order.telefono}`} className="inline-flex items-center gap-1.5 text-primary underline"><Phone className="w-3.5 h-3.5" />{order.telefono}</a>} />
-            )}
-            <Row
-              label={t("map.elapsed")}
-              value={<span className="inline-flex items-center gap-1.5 tabular-nums font-semibold"><Clock className="w-3.5 h-3.5" />{fmtElapsed(elapsed)}</span>}
-            />
-            <Row label={t("map.status")} value={<StatusBadge stato={order.stato} />} />
-            {order.metodo_pagamento && (
-              <Row
-                label={t("map.payment")}
-                value={
-                  <span className="inline-flex items-center gap-1.5">
-                    <Wallet className="w-3.5 h-3.5" />
-                    {order.metodo_pagamento === "carta" ? t("map.payment.card") : t("map.payment.cash")}
-                  </span>
-                }
-              />
-            )}
-
-            <div>
-              <div className="text-xs text-muted-foreground mb-1.5">{t("map.items")}</div>
-              <ul className="rounded-xl border border-border divide-y divide-border">
-                {(order.ordine_items ?? []).map((it) => (
-                  <li key={it.id} className="flex justify-between px-3 py-2 text-sm">
-                    <span>{it.quantita}× {it.nome_snapshot}</span>
-                    <span className="text-muted-foreground tabular-nums">{(it.prezzo_snapshot * it.quantita).toFixed(2)} €</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="flex items-center justify-between pt-2 border-t border-border">
-              <span className="text-sm text-muted-foreground">{t("map.total")}</span>
-              <span className="text-xl font-bold text-primary tabular-nums">{Number(order.totale).toFixed(2)} €</span>
-            </div>
-
-            <button
-              onClick={() => onDelivered(order.id)}
-              className="w-full mt-2 inline-flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl brand-gradient text-white font-semibold"
-            >
-              <Check className="w-4 h-4" /> {t("map.markDelivered")}
-            </button>
+          <div className="mt-5 space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+            {orders.map((o) => (
+              <div key={o.id} className="rounded-2xl border border-border p-3">
+                <OrderDetailCard order={o} now={now} onDelivered={onDelivered} />
+              </div>
+            ))}
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function OrderDetailCard({ order, now, onDelivered }: { order: Ordine; now: number; onDelivered: (id: string) => void }) {
+  const { t } = useI18n();
+  const elapsed = now - new Date(order.created_at).getTime();
+  return (
+    <div className="space-y-4">
+      <Row label={t("map.customer")} value={order.cognome} />
+      {order.telefono && (
+        <Row label={t("map.phone")} value={<a href={`tel:${order.telefono}`} className="inline-flex items-center gap-1.5 text-primary underline"><Phone className="w-3.5 h-3.5" />{order.telefono}</a>} />
+      )}
+      <Row
+        label={t("map.elapsed")}
+        value={<span className="inline-flex items-center gap-1.5 tabular-nums font-semibold"><Clock className="w-3.5 h-3.5" />{fmtElapsed(elapsed)}</span>}
+      />
+      <Row label={t("map.status")} value={<StatusBadge stato={order.stato} />} />
+      {order.metodo_pagamento && (
+        <Row
+          label={t("map.payment")}
+          value={
+            <span className="inline-flex items-center gap-1.5">
+              <Wallet className="w-3.5 h-3.5" />
+              {order.metodo_pagamento === "carta" ? t("map.payment.card") : t("map.payment.cash")}
+            </span>
+          }
+        />
+      )}
+
+      <div>
+        <div className="text-xs text-muted-foreground mb-1.5">{t("map.items")}</div>
+        <ul className="rounded-xl border border-border divide-y divide-border">
+          {(order.ordine_items ?? []).map((it) => (
+            <li key={it.id} className="flex justify-between px-3 py-2 text-sm">
+              <span>{it.quantita}× {it.nome_snapshot}</span>
+              <span className="text-muted-foreground tabular-nums">{(it.prezzo_snapshot * it.quantita).toFixed(2)} €</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div className="flex items-center justify-between pt-2 border-t border-border">
+        <span className="text-sm text-muted-foreground">{t("map.total")}</span>
+        <span className="text-xl font-bold text-primary tabular-nums">{Number(order.totale).toFixed(2)} €</span>
+      </div>
+
+      <button
+        onClick={() => onDelivered(order.id)}
+        className="w-full mt-2 inline-flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl brand-gradient text-white font-semibold"
+      >
+        <Check className="w-4 h-4" /> {t("map.markDelivered")}
+      </button>
     </div>
   );
 }

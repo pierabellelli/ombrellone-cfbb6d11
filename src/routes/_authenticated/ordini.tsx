@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Clock, Phone, MapPin, Banknote, CreditCard, StickyNote, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Clock, Phone, MapPin, Banknote, CreditCard, StickyNote, ArrowRight, CheckCircle2, Archive } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 
 type Stato = "arrivati" | "da_evadere" | "consegnati";
@@ -59,7 +59,7 @@ async function loadColonna(stato: Stato, lidoId: string): Promise<Ordine[]> {
     .eq("lido_id", lidoId)
     .eq("stato", stato)
     .order("created_at", { ascending: stato !== "consegnati" });
-  if (stato === "consegnati") q = q.gte("created_at", startOfTodayISO());
+  if (stato === "consegnati") q = q.gte("created_at", startOfTodayISO()).eq("archiviato", false);
   const { data, error } = await q;
   if (error) throw error;
   return (data ?? []) as unknown as Ordine[];
@@ -179,6 +179,32 @@ function OrdiniPage() {
     queryClient.invalidateQueries({ queryKey: ["ordini-col"] });
   };
 
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const toggleSelected = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+  const consegnatiIds = useMemo(() => (consegnati.data ?? []).map((o) => o.id), [consegnati.data]);
+  const allConsegnatiSelected = consegnatiIds.length > 0 && consegnatiIds.every((id) => selectedIds.has(id));
+  const toggleSelectAll = () => {
+    setSelectedIds((prev) => {
+      if (allConsegnatiSelected) return new Set();
+      return new Set(consegnatiIds);
+    });
+  };
+  const archiveSelected = async () => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    const { error } = await supabase.from("ordini").update({ archiviato: true }).in("id", ids);
+    if (error) { toast.error(t("kanban.archiveError"), { description: error.message }); return; }
+    toast.success(t("kanban.archiveOk"));
+    setSelectedIds(new Set());
+    queryClient.invalidateQueries({ queryKey: ["ordini-col"] });
+  };
+
   const columns: { stato: Stato; title: string; headerCls: string }[] = [
     { stato: "arrivati", title: t("kanban.new"), headerCls: "bg-blue-100 text-blue-800 border-blue-200" },
     { stato: "da_evadere", title: t("kanban.preparing"), headerCls: "bg-amber-100 text-amber-900 border-amber-200" },
@@ -207,6 +233,11 @@ function OrdiniPage() {
             headerCls={col.headerCls}
             orders={dataByStato[col.stato]}
             onMove={move}
+            selectedIds={col.stato === "consegnati" ? selectedIds : undefined}
+            onToggleSelected={col.stato === "consegnati" ? toggleSelected : undefined}
+            allSelected={allConsegnatiSelected}
+            onToggleSelectAll={toggleSelectAll}
+            onArchiveSelected={archiveSelected}
           />
         ))}
       </div>
@@ -215,33 +246,74 @@ function OrdiniPage() {
 }
 
 function KanbanColumn({
-  stato, title, headerCls, orders, onMove,
+  stato, title, headerCls, orders, onMove, selectedIds, onToggleSelected, allSelected, onToggleSelectAll, onArchiveSelected,
 }: {
   stato: Stato;
   title: string;
   headerCls: string;
   orders: Ordine[];
   onMove: (id: string, s: Stato) => void;
+  selectedIds?: Set<string>;
+  onToggleSelected?: (id: string) => void;
+  allSelected: boolean;
+  onToggleSelectAll: () => void;
+  onArchiveSelected: () => void;
 }) {
   const { t } = useI18n();
+  const selectable = stato === "consegnati";
+  const selectedCount = selectable ? (selectedIds?.size ?? 0) : 0;
   return (
     <div className="rounded-2xl bg-secondary/40 border border-border p-3 min-w-[280px]">
       <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-sm font-semibold ${headerCls}`}>
         <span>{title}</span>
         <span className="bg-white/70 text-foreground text-xs px-1.5 py-0.5 rounded-full">{orders.length}</span>
       </div>
+
+      {selectable && selectedCount > 0 && (
+        <div className="sticky top-0 z-10 mt-3 rounded-xl bg-white border border-border shadow-sm p-2.5 flex items-center justify-between gap-2">
+          <label className="inline-flex items-center gap-2 text-xs font-medium text-foreground">
+            <input type="checkbox" checked={allSelected} onChange={onToggleSelectAll} className="w-4 h-4" />
+            {t("kanban.selectAll")}
+          </label>
+          <span className="text-xs text-muted-foreground">{selectedCount} {t("kanban.selectedCount")}</span>
+          <button
+            onClick={onArchiveSelected}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-gray-200 text-gray-800 hover:bg-gray-300"
+          >
+            <Archive className="w-3.5 h-3.5" /> {t("kanban.archiveSelected")}
+          </button>
+        </div>
+      )}
+
       <div className="mt-3 space-y-2.5 transition-all">
         {orders.length === 0 ? (
           <div className="text-xs text-muted-foreground py-10 text-center">{t("kanban.noOrders")}</div>
         ) : (
-          orders.map((o) => <OrderCard key={o.id} ordine={o} stato={stato} onMove={onMove} />)
+          orders.map((o) => (
+            <OrderCard
+              key={o.id}
+              ordine={o}
+              stato={stato}
+              onMove={onMove}
+              selectable={selectable}
+              selected={selectedIds?.has(o.id) ?? false}
+              onToggleSelected={onToggleSelected}
+            />
+          ))
         )}
       </div>
     </div>
   );
 }
 
-function OrderCard({ ordine, stato, onMove }: { ordine: Ordine; stato: Stato; onMove: (id: string, s: Stato) => void }) {
+function OrderCard({ ordine, stato, onMove, selectable, selected, onToggleSelected }: {
+  ordine: Ordine;
+  stato: Stato;
+  onMove: (id: string, s: Stato) => void;
+  selectable?: boolean;
+  selected?: boolean;
+  onToggleSelected?: (id: string) => void;
+}) {
   const { t } = useI18n();
   useTick(1000);
   const tone = urgencyTone(ordine.created_at);
@@ -249,8 +321,16 @@ function OrderCard({ ordine, stato, onMove }: { ordine: Ordine; stato: Stato; on
   const isCarta = pagamento === "carta";
 
   return (
-    <div className={`bg-white rounded-2xl border border-border border-l-4 ${tone.border} shadow-sm p-3 transition`}>
-      <div className="flex items-start justify-between gap-2">
+    <div className={`relative bg-white rounded-2xl border border-border border-l-4 ${tone.border} shadow-sm p-3 transition`}>
+      {selectable && (
+        <input
+          type="checkbox"
+          checked={selected ?? false}
+          onChange={() => onToggleSelected?.(ordine.id)}
+          className="absolute top-3 left-3 w-4 h-4 z-10"
+        />
+      )}
+      <div className={`flex items-start justify-between gap-2 ${selectable ? "pl-6" : ""}`}>
         <div className="font-bold text-primary">#{String(ordine.numero_ordine).padStart(3, "0")}</div>
         <div className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${tone.bg} ${tone.text}`}>
           <Clock className="w-3.5 h-3.5" /> {formatElapsed(ordine.created_at)}
