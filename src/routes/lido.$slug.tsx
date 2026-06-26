@@ -633,15 +633,14 @@ function OrderHistorySection({ lidoId }: { lidoId: string }) {
     queryKey: ["cliente-storico", lidoId, stored?.telefono],
     enabled: !!stored?.telefono && !!lidoId,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("ordini")
-        .select("id, numero_ordine, numero_ombrellone, totale, stato, created_at, ordine_items(nome_snapshot, quantita)")
-        .eq("lido_id", lidoId)
-        .eq("telefono", stored!.telefono)
-        .order("created_at", { ascending: false })
-        .limit(5);
+      const { data, error } = await supabase.rpc("get_order_history", {
+        _lido_id: lidoId,
+        _telefono: stored!.telefono,
+      });
       if (error) throw error;
-      return (data ?? []) as unknown as StoricoOrdine[];
+      return ((data ?? []) as unknown as Array<Omit<StoricoOrdine, "ordine_items"> & { items: StoricoOrdine["ordine_items"] }>).map(
+        ({ items, ...o }) => ({ ...o, ordine_items: items }),
+      );
     },
   });
 
