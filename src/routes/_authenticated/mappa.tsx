@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n";
-import { Umbrella, X, Check, Phone, Wallet, Clock } from "lucide-react";
+import { Umbrella, X, Check, Phone, Wallet, Clock, Bell } from "lucide-react";
 
 type Fila = { index: number; label: string; ombrelloni: { numero: number }[] };
 type Stato = "arrivati" | "da_evadere" | "consegnati" | "annullato";
@@ -206,10 +206,28 @@ const STATE_CLASS: Record<UmbrellaState, string> = {
 };
 
 const TILE_CLASS: Record<UmbrellaState, string> = {
-  free: "bg-white border-gray-300 text-foreground",
-  active: "bg-white border-emerald-500 text-foreground",
-  warn: "bg-white border-amber-500 text-foreground",
-  late: "bg-white border-red-500 text-foreground",
+  free: "bg-white border-gray-300",
+  active: "bg-emerald-50 border-emerald-400",
+  warn: "bg-amber-50 border-amber-400",
+  late: "bg-red-50 border-red-400",
+};
+
+const TILE_ACCENT: Record<UmbrellaState, string> = {
+  free: "text-foreground",
+  active: "text-emerald-700",
+  warn: "text-amber-700",
+  late: "text-red-700",
+};
+
+const TILE_BAR: Record<Exclude<UmbrellaState, "free">, {
+  icon: typeof Check;
+  barClass: string;
+  labelKey: "map.tile.activeBar" | "map.tile.warnBar" | "map.tile.lateBar";
+  prefixKey: "map.tile.inviato" | "map.tile.arrivo" | "map.tile.ritardo";
+}> = {
+  active: { icon: Check, barClass: "bg-emerald-500", labelKey: "map.tile.activeBar", prefixKey: "map.tile.inviato" },
+  warn: { icon: Clock, barClass: "bg-amber-500", labelKey: "map.tile.warnBar", prefixKey: "map.tile.arrivo" },
+  late: { icon: Bell, barClass: "bg-red-500", labelKey: "map.tile.lateBar", prefixKey: "map.tile.ritardo" },
 };
 
 function fmtElapsed(ms: number) {
@@ -222,32 +240,48 @@ function fmtElapsed(ms: number) {
 function UmbrellaTile({ numero, rowLabel, orders, state, now, onClick }: {
   numero: number; rowLabel: string; orders: Ordine[]; state: UmbrellaState; now: number; onClick: () => void;
 }) {
+  const { t } = useI18n();
   const oldest = orders[0];
   const elapsed = oldest ? now - new Date(oldest.created_at).getTime() : 0;
+  const bar = state === "free" ? null : TILE_BAR[state];
+  const accent = TILE_ACCENT[state];
   return (
     <button
       onClick={onClick}
-      className={`relative w-[88px] min-h-[88px] rounded-2xl border-2 ${TILE_CLASS[state]} flex flex-col items-center transition active:scale-95 shadow-sm`}
+      className={`relative w-[88px] min-h-[88px] rounded-2xl border-2 ${TILE_CLASS[state]} flex flex-col items-center transition active:scale-95 shadow-sm overflow-hidden`}
     >
       {orders.length > 1 && (
         <span className="absolute top-1 right-1 z-20 w-5 h-5 rounded-full bg-gray-500 text-white text-[10px] font-bold flex items-center justify-center shadow-sm">
           {orders.length}
         </span>
       )}
-      <div className="px-1.5 py-1.5 flex flex-col items-center w-full">
-        <Umbrella className="w-4 h-4 opacity-70" />
-        <div className="text-lg font-extrabold leading-tight">{numero}</div>
+      {bar && (
+        <div className={`w-full h-6 flex items-center justify-center gap-1 ${bar.barClass} text-white`}>
+          <bar.icon className="w-3 h-3 shrink-0" />
+          <span className="text-[8px] font-semibold uppercase leading-none">{t(bar.labelKey)}</span>
+        </div>
+      )}
+      <div className="px-1.5 py-1.5 flex flex-col items-center w-full flex-1 justify-center">
+        <Umbrella className={`w-4 h-4 ${accent} ${state === "free" ? "opacity-70" : ""}`} />
+        <div className={`text-lg font-extrabold leading-tight ${accent}`}>{numero}</div>
         <div className="text-[10px] opacity-70 truncate w-full text-center">{rowLabel}</div>
-        {oldest && (
+        {oldest && bar && (
           <div className="mt-1 w-full">
-            <div className="text-[11px] font-semibold truncate text-center">{oldest.cognome}</div>
-            <div className="text-[10px] tabular-nums opacity-80 text-center">{fmtElapsed(elapsed)}</div>
+            <div className={`text-[11px] font-bold truncate text-center ${accent}`}>{oldest.cognome}</div>
+            <div className={`text-[10px] tabular-nums text-center font-medium ${accent}`}>{t(bar.prefixKey)} {fmtElapsed(elapsed)}</div>
           </div>
         )}
       </div>
     </button>
   );
 }
+
+const LEGEND_ICON: Record<UmbrellaState, typeof Check | null> = {
+  free: null,
+  active: Check,
+  warn: Clock,
+  late: Bell,
+};
 
 function Legend({ t }: { t: (k: any) => string }) {
   const items: [UmbrellaState, string][] = [
@@ -258,12 +292,15 @@ function Legend({ t }: { t: (k: any) => string }) {
   ];
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {items.map(([s, lbl]) => (
-        <span key={s} className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border-2 ${STATE_CLASS[s]}`}>
-          <span className="w-2 h-2 rounded-full bg-current opacity-70" />
-          {lbl}
-        </span>
-      ))}
+      {items.map(([s, lbl]) => {
+        const Icon = LEGEND_ICON[s];
+        return (
+          <span key={s} className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border-2 ${STATE_CLASS[s]}`}>
+            {Icon ? <Icon className="w-3 h-3" /> : <span className="w-2 h-2 rounded-full bg-current opacity-70" />}
+            {lbl}
+          </span>
+        );
+      })}
     </div>
   );
 }
