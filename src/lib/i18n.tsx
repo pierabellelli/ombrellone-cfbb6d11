@@ -104,6 +104,9 @@ const DICT = {
     "kanban.archiveSelected": "Archivia selezionati",
     "kanban.archiveOk": "Ordini archiviati",
     "kanban.archiveError": "Archiviazione non riuscita",
+    "kanban.pill.arrivati": "ORDINE INVIATO",
+    "kanban.pill.daEvadere": "IN PREPARAZIONE",
+    "kanban.pill.consegnati": "CONSEGNATO",
   },
   en: {
     "nav.orders": "Orders",
@@ -201,6 +204,9 @@ const DICT = {
     "kanban.archiveSelected": "Archive selected",
     "kanban.archiveOk": "Orders archived",
     "kanban.archiveError": "Archiving failed",
+    "kanban.pill.arrivati": "ORDER SENT",
+    "kanban.pill.daEvadere": "IN PREPARATION",
+    "kanban.pill.consegnati": "DELIVERED",
   },
 } as const;
 

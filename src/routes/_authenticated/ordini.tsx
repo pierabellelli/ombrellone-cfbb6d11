@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Clock, Phone, MapPin, Banknote, CreditCard, StickyNote, ArrowRight, CheckCircle2, Archive } from "lucide-react";
+import { Clock, Phone, MapPin, Banknote, CreditCard, StickyNote, ArrowRight, Check, CheckCheck, Archive } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 
 type Stato = "arrivati" | "da_evadere" | "consegnati";
@@ -94,10 +94,6 @@ function useTick(ms = 1000) {
   }, [ms]);
 }
 
-function elapsedMinutes(iso: string) {
-  return (Date.now() - new Date(iso).getTime()) / 60000;
-}
-
 function formatElapsed(iso: string) {
   const totalMin = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 60000));
   const h = Math.floor(totalMin / 60);
@@ -105,12 +101,17 @@ function formatElapsed(iso: string) {
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
-function urgencyTone(iso: string) {
-  const m = elapsedMinutes(iso);
-  if (m >= 15) return { border: "border-l-red-500", text: "text-red-600", bg: "bg-red-50" };
-  if (m >= 10) return { border: "border-l-amber-500", text: "text-amber-700", bg: "bg-amber-50" };
-  return { border: "border-l-emerald-500", text: "text-emerald-700", bg: "bg-emerald-50" };
-}
+const STATO_STYLE: Record<Stato, {
+  border: string;
+  pillBg: string;
+  pillIcon: typeof Check;
+  pillKey: "kanban.pill.arrivati" | "kanban.pill.daEvadere" | "kanban.pill.consegnati";
+  box: string;
+}> = {
+  arrivati: { border: "border-l-emerald-500", pillBg: "bg-green-100 text-green-800", pillIcon: Check, pillKey: "kanban.pill.arrivati", box: "bg-emerald-50 border-emerald-300 text-emerald-800" },
+  da_evadere: { border: "border-l-amber-500", pillBg: "bg-amber-100 text-amber-800", pillIcon: Clock, pillKey: "kanban.pill.daEvadere", box: "bg-amber-50 border-amber-300 text-amber-800" },
+  consegnati: { border: "border-l-red-500", pillBg: "bg-emerald-100 text-emerald-800", pillIcon: CheckCheck, pillKey: "kanban.pill.consegnati", box: "bg-red-50 border-red-300 text-red-800" },
+};
 
 function OrdiniPage() {
   const { t } = useI18n();
@@ -312,12 +313,13 @@ function OrderCard({ ordine, stato, onMove, selectable, selected, onToggleSelect
 }) {
   const { t } = useI18n();
   useTick(1000);
-  const tone = urgencyTone(ordine.created_at);
+  const style = STATO_STYLE[stato];
+  const PillIcon = style.pillIcon;
   const pagamento = (ordine.metodo_pagamento ?? "contanti").toLowerCase();
   const isCarta = pagamento === "carta";
 
   return (
-    <div className={`relative bg-white rounded-2xl border border-border border-l-4 ${tone.border} shadow-sm p-3 transition`}>
+    <div className={`relative bg-white rounded-2xl border border-border border-l-2 ${style.border} shadow-sm p-3 transition`}>
       {selectable && (
         <input
           type="checkbox"
@@ -326,54 +328,64 @@ function OrderCard({ ordine, stato, onMove, selectable, selected, onToggleSelect
           className="absolute top-3 left-3 w-4 h-4 z-10"
         />
       )}
+
+      {/* Top row */}
       <div className={`flex items-start justify-between gap-2 ${selectable ? "pl-6" : ""}`}>
-        <div className="font-bold text-primary">#{String(ordine.numero_ordine).padStart(3, "0")}</div>
-        <div className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${tone.bg} ${tone.text}`}>
-          <Clock className="w-3.5 h-3.5" /> {formatElapsed(ordine.created_at)}
+        <div>
+          <div className="text-xs text-muted-foreground">Ordine</div>
+          <div className="text-2xl font-bold text-primary leading-none">#{String(ordine.numero_ordine).padStart(3, "0")}</div>
+        </div>
+        <div className="flex flex-col items-end gap-1">
+          <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${style.pillBg}`}>
+            <PillIcon className="w-3 h-3" /> {t(style.pillKey)}
+          </span>
+          <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full border border-border text-foreground">
+            <Clock className="w-3 h-3" /> {formatElapsed(ordine.created_at)}
+          </span>
         </div>
       </div>
 
-      <div className="mt-1.5 text-sm font-semibold text-foreground leading-tight">
-        {ordine.cognome}
-      </div>
-      <div className="text-xs text-muted-foreground mt-0.5 inline-flex items-center gap-1">
-        <MapPin className="w-3.5 h-3.5" /> Omb. {ordine.numero_ombrellone}
-        {ordine.fila ? <span> · Fila {ordine.fila}</span> : null}
+      {/* Middle row */}
+      <div className="mt-3 flex gap-3 items-start">
+        <div className={`shrink-0 w-14 h-14 rounded-xl border flex flex-col items-center justify-center ${style.box}`}>
+          <div className="text-[9px] font-semibold uppercase opacity-80 leading-none">Omb.</div>
+          <div className="text-lg font-extrabold leading-none mt-0.5">{ordine.numero_ombrellone}</div>
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-base font-bold text-foreground truncate">{ordine.cognome}</div>
+          <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1.5 flex-wrap">
+            <span className="inline-flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> Omb. {ordine.numero_ombrellone}</span>
+            {ordine.telefono && (
+              <>
+                <span>·</span>
+                <a href={`tel:${ordine.telefono}`} className="inline-flex items-center gap-1 text-primary hover:underline">
+                  <Phone className="w-3.5 h-3.5" /> {ordine.telefono}
+                </a>
+              </>
+            )}
+          </div>
+          <div className="mt-1.5">
+            <span className={`inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full border ${
+              isCarta ? "bg-indigo-50 text-indigo-700 border-indigo-200" : "bg-emerald-50 text-emerald-700 border-emerald-200"
+            }`}>
+              {isCarta ? <CreditCard className="w-3 h-3" /> : <Banknote className="w-3 h-3" />}
+              {isCarta ? "Carta" : "Contanti"}
+            </span>
+          </div>
+        </div>
       </div>
 
-      {ordine.telefono && (
-        <a
-          href={`tel:${ordine.telefono}`}
-          className="mt-1.5 inline-flex items-center gap-1 text-xs text-primary hover:underline"
-        >
-          <Phone className="w-3.5 h-3.5" /> {ordine.telefono}
-        </a>
-      )}
-
-      <div className="mt-2">
-        <span className={`inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full border ${
-          isCarta ? "bg-indigo-50 text-indigo-700 border-indigo-200" : "bg-emerald-50 text-emerald-700 border-emerald-200"
-        }`}>
-          {isCarta ? <CreditCard className="w-3 h-3" /> : <Banknote className="w-3 h-3" />}
-          {isCarta ? "Carta" : "Contanti"}
-        </span>
-      </div>
-
+      {/* Items */}
       {ordine.ordine_items?.length > 0 && (
-        <ul className="mt-2.5 space-y-0.5 text-xs text-foreground/85 border-t border-border pt-2">
+        <div className="mt-2.5 pt-2 border-t border-border space-y-0.5 text-xs text-foreground/85">
           {ordine.ordine_items.map((it) => (
-            <li key={it.id} className="flex justify-between gap-2">
+            <div key={it.id} className="flex justify-between gap-2">
               <span className="truncate">{it.quantita}× {it.nome_snapshot}</span>
               <span className="text-muted-foreground shrink-0">{(it.prezzo_snapshot * it.quantita).toFixed(2)} €</span>
-            </li>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
-
-      <div className="mt-2 flex items-center justify-between text-sm font-bold">
-        <span className="text-muted-foreground text-xs font-medium">{t("kanban.total")}</span>
-        <span className="text-primary">€ {Number(ordine.totale).toFixed(2)}</span>
-      </div>
 
       {ordine.note && (
         <div className="mt-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 text-xs p-2 flex gap-1.5">
@@ -382,10 +394,16 @@ function OrderCard({ ordine, stato, onMove, selectable, selected, onToggleSelect
         </div>
       )}
 
+      {/* Bottom row */}
+      <div className="mt-2.5 pt-2 border-t border-border flex items-center justify-between text-sm font-bold">
+        <span className="text-muted-foreground text-xs font-medium">{t("kanban.total")}</span>
+        <span className="text-primary">€ {Number(ordine.totale).toFixed(2)}</span>
+      </div>
+
       {stato === "arrivati" && (
         <button
           onClick={() => onMove(ordine.id, "da_evadere")}
-          className="mt-3 w-full inline-flex items-center justify-center gap-1.5 text-sm font-semibold rounded-xl bg-primary text-primary-foreground h-10 hover:opacity-95"
+          className="mt-3 w-full inline-flex items-center justify-center gap-1.5 text-sm font-semibold rounded-xl bg-slate-900 text-white h-10 hover:bg-slate-800"
         >
           {t("kanban.takeOver")} <ArrowRight className="w-4 h-4" />
         </button>
@@ -395,7 +413,7 @@ function OrderCard({ ordine, stato, onMove, selectable, selected, onToggleSelect
           onClick={() => onMove(ordine.id, "consegnati")}
           className="mt-3 w-full inline-flex items-center justify-center gap-1.5 text-sm font-semibold rounded-xl bg-emerald-600 text-white h-10 hover:bg-emerald-700"
         >
-          <CheckCircle2 className="w-4 h-4" /> {t("kanban.markDelivered")}
+          <CheckCheck className="w-4 h-4" /> {t("kanban.markDelivered")}
         </button>
       )}
     </div>
