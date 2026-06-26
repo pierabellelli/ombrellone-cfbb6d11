@@ -85,6 +85,7 @@ type Prodotto = {
 type CartItem = { prodotto: Prodotto; quantita: number };
 
 function LidoClientPage() {
+  const { t } = useI18n();
   const { slug } = Route.useParams();
   const { o: ombrelloneParam } = Route.useSearch();
 
@@ -177,7 +178,7 @@ function LidoClientPage() {
   if (lidoLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-muted-foreground">
-        <Loader2 className="w-6 h-6 animate-spin mr-2" /> Caricamento…
+        <Loader2 className="w-6 h-6 animate-spin mr-2" /> {t("cliente.loading")}
       </div>
     );
   }
@@ -186,9 +187,9 @@ function LidoClientPage() {
       <div className="min-h-screen flex items-center justify-center p-6">
         <div className="card-soft p-6 max-w-md text-center">
           <AlertTriangle className="w-10 h-10 text-amber-500 mx-auto mb-2" />
-          <h1 className="text-xl font-semibold text-primary">Lido non trovato</h1>
+          <h1 className="text-xl font-semibold text-primary">{t("cliente.notFoundTitle")}</h1>
           <p className="text-sm text-muted-foreground mt-2">
-            Il QR potrebbe essere errato o lo stabilimento non è più disponibile.
+            {t("cliente.notFoundDesc")}
           </p>
         </div>
       </div>
@@ -208,8 +209,8 @@ function LidoClientPage() {
           <div className="mb-4 rounded-xl border border-amber-300 bg-amber-50 text-amber-900 p-4 flex items-start gap-2">
             <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
             <div>
-              <p className="font-semibold">Servizio bar non attivo</p>
-              <p className="text-sm">Al momento non è possibile inviare ordini.</p>
+              <p className="font-semibold">{t("cliente.barInactiveTitle")}</p>
+              <p className="text-sm">{t("cliente.barInactiveDesc")}</p>
             </div>
           </div>
         )}
@@ -220,12 +221,12 @@ function LidoClientPage() {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Cerca nel menu…"
+              placeholder={t("cliente.searchPlaceholder")}
               className="w-full pl-9 pr-3 py-2.5 rounded-full border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
             />
           </div>
           <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1">
-            <CatChip label={`Tutte (${prodotti.length})`} active={catSel === "tutte"} onClick={() => setCatSel("tutte")} />
+            <CatChip label={`${t("cliente.allCategories")} (${prodotti.length})`} active={catSel === "tutte"} onClick={() => setCatSel("tutte")} />
             {categorie.map((c) => {
               const count = prodotti.filter((p) => p.categoria_id === c.id).length;
               if (count === 0) return null;
@@ -238,10 +239,10 @@ function LidoClientPage() {
 
         {prodLoading ? (
           <div className="py-10 text-center text-muted-foreground">
-            <Loader2 className="w-5 h-5 animate-spin inline mr-2" /> Caricamento menu…
+            <Loader2 className="w-5 h-5 animate-spin inline mr-2" /> {t("cliente.loadingMenu")}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="card-soft p-8 text-center text-muted-foreground">Nessun prodotto disponibile.</div>
+          <div className="card-soft p-8 text-center text-muted-foreground">{t("cliente.noProducts")}</div>
         ) : (
           <div className="mt-2 space-y-6">
             {[...grouped.entries()].map(([catId, items]) => {
@@ -249,7 +250,7 @@ function LidoClientPage() {
               return (
                 <section key={catId ?? "senza"}>
                   <h2 className="text-sm font-bold uppercase tracking-wider text-primary mb-2">
-                    {cat?.nome ?? "Altro"}
+                    {cat?.nome ?? t("cliente.otherCategory")}
                   </h2>
                   <div className="space-y-2">
                     {items.map((p) => (
@@ -277,13 +278,13 @@ function LidoClientPage() {
             <button className="fixed bottom-4 left-4 right-4 max-w-2xl mx-auto z-30 bg-primary text-primary-foreground rounded-full shadow-lg px-5 py-3.5 flex items-center justify-between font-semibold">
               <span className="inline-flex items-center gap-2">
                 <ShoppingCart className="w-5 h-5" />
-                {itemCount} {itemCount === 1 ? "articolo" : "articoli"}
+                {itemCount} {itemCount === 1 ? t("cliente.item") : t("cliente.items")}
               </span>
-              <span>Vedi carrello · € {totale.toFixed(2)}</span>
+              <span>{t("cliente.viewCart")} · € {totale.toFixed(2)}</span>
             </button>
           </SheetTrigger>
           <SheetContent side="bottom" className="rounded-t-2xl max-h-[92vh] overflow-y-auto">
-            <SheetHeader><SheetTitle>Il tuo ordine</SheetTitle></SheetHeader>
+            <SheetHeader><SheetTitle>{t("cliente.yourOrder")}</SheetTitle></SheetHeader>
             <CartView
               lido={lido}
               cart={cart}
@@ -305,7 +306,7 @@ function LidoClientPage() {
 }
 
 function Header({ lido, ombrellone }: { lido: Lido; ombrellone?: string }) {
-  const { lang, setLang } = useI18n();
+  const { lang, setLang, t } = useI18n();
   return (
     <header className="relative">
       <div className="sticky top-0 z-20 bg-card/95 backdrop-blur border-b border-border">
@@ -316,7 +317,7 @@ function Header({ lido, ombrellone }: { lido: Lido; ombrellone?: string }) {
               if (typeof window !== "undefined" && window.history.length > 1) window.history.back();
               else window.location.href = "/";
             }}
-            aria-label="Indietro"
+            aria-label={t("cliente.back")}
             className="w-9 h-9 -ml-1 inline-flex items-center justify-center rounded-full hover:bg-secondary transition"
           >
             <ArrowLeft className="w-5 h-5 text-primary" />
@@ -361,7 +362,7 @@ function Header({ lido, ombrellone }: { lido: Lido; ombrellone?: string }) {
             <div className="text-xs text-muted-foreground flex items-center gap-3 flex-wrap">
               {ombrellone && (
                 <span className="inline-flex items-center gap-1">
-                  <MapPin className="w-3.5 h-3.5" /> Ombrellone {ombrellone}
+                  <MapPin className="w-3.5 h-3.5" /> {t("map.umbrella")} {ombrellone}
                 </span>
               )}
               {lido.orario_apertura && lido.orario_chiusura && (
@@ -446,6 +447,7 @@ function CartView({
   onRemove: (id: string) => void;
   onSubmitted: (numero: number) => void;
 }) {
+  const { t } = useI18n();
   const stored = readStoredCustomer();
   const [ombrellone, setOmbrellone] = useState(defaultOmbrellone);
   const [telefono, setTelefono] = useState(stored?.telefono ?? "");
@@ -463,10 +465,10 @@ function CartView({
     const ombrTrim = ombrellone.trim();
     const cogTrim = cognome.trim();
     const telTrim = telefono.trim();
-    if (!ombrTrim) { toast.error("Inserisci il numero dell'ombrellone"); return; }
-    if (!telTrim || telTrim.replace(/\D/g, "").length < 6) { toast.error("Inserisci un numero di telefono valido"); return; }
-    if (!cogTrim) { toast.error("Inserisci il cognome"); return; }
-    if (items.length === 0) { toast.error("Carrello vuoto"); return; }
+    if (!ombrTrim) { toast.error(t("cliente.errUmbrellaRequired")); return; }
+    if (!telTrim || telTrim.replace(/\D/g, "").length < 6) { toast.error(t("cliente.errPhoneInvalid")); return; }
+    if (!cogTrim) { toast.error(t("cliente.errLastNameRequired")); return; }
+    if (items.length === 0) { toast.error(t("cliente.errEmptyCart")); return; }
 
     setSending(true);
     const { data: ord, error } = await supabase
@@ -486,7 +488,7 @@ function CartView({
 
     if (error || !ord) {
       setSending(false);
-      toast.error("Impossibile inviare l'ordine", { description: error?.message });
+      toast.error(t("cliente.errSubmitFailed"), { description: error?.message });
       return;
     }
 
@@ -500,7 +502,7 @@ function CartView({
     const { error: itemsErr } = await supabase.from("ordine_items").insert(payload);
     setSending(false);
     if (itemsErr) {
-      toast.error("Errore nel salvataggio degli articoli", { description: itemsErr.message });
+      toast.error(t("cliente.errItemsSaveFailed"), { description: itemsErr.message });
       return;
     }
     writeStoredCustomer(telTrim.slice(0, 30), cogTrim.slice(0, 60));
@@ -514,7 +516,7 @@ function CartView({
           <div key={it.prodotto.id} className="flex items-center gap-3 py-2 border-b border-border last:border-b-0">
             <div className="flex-1 min-w-0">
               <p className="font-medium text-sm truncate">{it.prodotto.nome}</p>
-              <p className="text-xs text-muted-foreground">€ {it.prodotto.prezzo.toFixed(2)} cad.</p>
+              <p className="text-xs text-muted-foreground">€ {it.prodotto.prezzo.toFixed(2)} {t("cliente.each")}</p>
             </div>
             <div className="inline-flex items-center gap-1 bg-secondary rounded-full p-0.5">
               <button onClick={() => onDec(it.prodotto.id)} className="w-7 h-7 inline-flex items-center justify-center rounded-full hover:bg-background">
@@ -534,53 +536,53 @@ function CartView({
       </div>
 
       <div className="flex items-center justify-between text-lg font-bold pt-2 border-t border-border">
-        <span>Totale</span>
+        <span>{t("map.total")}</span>
         <span className="text-primary">€ {totale.toFixed(2)}</span>
       </div>
 
       {sopraSoglia && (
         <div className="text-xs rounded-lg bg-amber-50 border border-amber-200 text-amber-900 p-2.5">
-          L'ordine supera la soglia gratuita di € {Number(lido.soglia_ordine_libero).toFixed(2)}. Il pagamento sarà richiesto alla cassa.
+          {t("cliente.overThresholdPrefix")} {Number(lido.soglia_ordine_libero).toFixed(2)}. {t("cliente.overThresholdSuffix")}
         </div>
       )}
 
       <div className="space-y-3 pt-2">
         <div>
-          <Label htmlFor="omb">Numero ombrellone *</Label>
+          <Label htmlFor="omb">{t("cliente.umbrellaNumberLabel")}</Label>
           <Input id="omb" type="number" inputMode="numeric" value={ombrellone} onChange={(e) => setOmbrellone(e.target.value)}
-            maxLength={20} className="mt-1.5" placeholder="es. 42" />
+            maxLength={20} className="mt-1.5" placeholder={t("cliente.umbrellaPlaceholder")} />
         </div>
         <div>
-          <Label htmlFor="tel">Numero di telefono *</Label>
+          <Label htmlFor="tel">{t("cliente.phoneLabel")}</Label>
           <Input id="tel" type="tel" inputMode="tel" value={telefono} onChange={(e) => setTelefono(e.target.value)}
-            maxLength={30} className="mt-1.5" placeholder="es. 333 1234567" />
+            maxLength={30} className="mt-1.5" placeholder={t("cliente.phonePlaceholder")} />
         </div>
         <div>
-          <Label htmlFor="cog">Cognome *</Label>
+          <Label htmlFor="cog">{t("cliente.lastNameLabel")}</Label>
           <Input id="cog" value={cognome} onChange={(e) => setCognome(e.target.value)}
-            maxLength={60} className="mt-1.5" placeholder="Per riconoscerti alla consegna" />
+            maxLength={60} className="mt-1.5" placeholder={t("cliente.lastNamePlaceholder")} />
         </div>
         <div>
-          <Label htmlFor="note">Note (opzionale)</Label>
+          <Label htmlFor="note">{t("cliente.notesLabel")}</Label>
           <Textarea id="note" value={note} onChange={(e) => setNote(e.target.value)}
-            maxLength={300} rows={2} className="mt-1.5" placeholder="Es. senza ghiaccio…" />
+            maxLength={300} rows={2} className="mt-1.5" placeholder={t("cliente.notesPlaceholder")} />
         </div>
         <div>
-          <Label>Metodo di pagamento</Label>
+          <Label>{t("cust.payment")}</Label>
           {lido.accetta_carta ? (
             <div className="mt-1.5 grid grid-cols-2 gap-2">
               <button type="button" onClick={() => setMetodoPagamento("contanti")}
                 className={`h-11 rounded-xl border text-sm font-medium transition ${metodoPagamento === "contanti" ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border"}`}>
-                Contanti
+                {t("cust.payCash")}
               </button>
               <button type="button" onClick={() => setMetodoPagamento("carta")}
                 className={`h-11 rounded-xl border text-sm font-medium transition ${metodoPagamento === "carta" ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border"}`}>
-                Carta
+                {t("cust.payCard")}
               </button>
             </div>
           ) : (
             <p className="mt-1.5 text-sm text-muted-foreground rounded-xl bg-secondary px-3 py-2">
-              Pagamento in contanti alla consegna
+              {t("cust.payCashOnly")}
             </p>
           )}
         </div>
@@ -588,7 +590,7 @@ function CartView({
 
       <Button onClick={handleSubmit} disabled={sending} className="w-full h-12 text-base rounded-full">
         {sending ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : null}
-        Invia ordine
+        {t("cliente.submitOrder")}
       </Button>
     </div>
   );
@@ -597,27 +599,28 @@ function CartView({
 function OrdineConfermato({
   lido, numero, totale, onReset,
 }: { lido: Lido; numero: number; totale: number; onReset: () => void }) {
+  const { t } = useI18n();
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-[color:var(--background)]">
       <div className="card-soft p-8 max-w-md w-full text-center">
         <div className="w-16 h-16 mx-auto rounded-full bg-[color:var(--teal)]/20 text-[color:var(--teal-deep)] flex items-center justify-center mb-3">
           <CheckCircle2 className="w-9 h-9" />
         </div>
-        <h1 className="text-2xl font-bold text-primary">Ordine inviato!</h1>
-        <p className="text-muted-foreground mt-1">Stiamo preparando il tuo ordine.</p>
+        <h1 className="text-2xl font-bold text-primary">{t("cliente.orderSentTitle")}</h1>
+        <p className="text-muted-foreground mt-1">{t("cliente.orderSentDesc")}</p>
 
         <div className="mt-6 rounded-xl bg-secondary p-4">
-          <p className="text-xs uppercase tracking-wider text-muted-foreground">Numero ordine</p>
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">{t("cliente.orderNumberLabel")}</p>
           <p className="text-4xl font-bold text-primary mt-1">#{numero}</p>
-          <p className="text-sm text-muted-foreground mt-3">Totale: <strong className="text-foreground">€ {totale.toFixed(2)}</strong></p>
+          <p className="text-sm text-muted-foreground mt-3">{t("map.total")}: <strong className="text-foreground">€ {totale.toFixed(2)}</strong></p>
         </div>
 
         <p className="text-xs text-muted-foreground mt-4">
-          Il personale di {lido.nome} ti consegnerà l'ordine direttamente al tuo ombrellone.
+          {t("cliente.deliveryPrefix")} {lido.nome} {t("cliente.deliverySuffix")}
         </p>
 
         <Button onClick={onReset} variant="outline" className="mt-6 rounded-full">
-          <ArrowLeft className="w-4 h-4 mr-1.5" /> Nuovo ordine
+          <ArrowLeft className="w-4 h-4 mr-1.5" /> {t("cliente.newOrder")}
         </Button>
       </div>
     </div>
