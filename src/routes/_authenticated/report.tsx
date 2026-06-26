@@ -10,13 +10,15 @@ import {
   ResponsiveContainer, LineChart, Line, BarChart, Bar, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip,
 } from "recharts";
-import { TrendingUp, ShoppingBag, Flame, Award, Timer } from "lucide-react";
+import { TrendingUp, ShoppingBag, Flame, Award, Timer, X } from "lucide-react";
 
 type Stato = "arrivati" | "da_evadere" | "consegnati" | "annullato";
 type Item = { id: string; nome_snapshot: string; prezzo_snapshot: number; quantita: number };
 type Ordine = {
   id: string;
   numero_ordine: number;
+  numero_ombrellone: string;
+  cognome: string;
   totale: number;
   stato: Stato;
   archiviato: boolean;
@@ -54,7 +56,7 @@ async function fetchUserLidoId(): Promise<string | null> {
 async function loadOrdini(lidoId: string, from: Date, to: Date): Promise<Ordine[]> {
   const { data, error } = await supabase
     .from("ordini")
-    .select("id, numero_ordine, totale, stato, archiviato, created_at, updated_at, ordine_items(id, nome_snapshot, prezzo_snapshot, quantita)")
+    .select("id, numero_ordine, numero_ombrellone, cognome, totale, stato, archiviato, created_at, updated_at, ordine_items(id, nome_snapshot, prezzo_snapshot, quantita)")
     .eq("lido_id", lidoId)
     .gte("created_at", from.toISOString())
     .lte("created_at", to.toISOString())
@@ -97,6 +99,8 @@ function ReportPage() {
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
   const [topN, setTopN] = useState<5 | 10>(10);
+  const [drillProduct, setDrillProduct] = useState<string | null>(null);
+  const [drillVisible, setDrillVisible] = useState(50);
 
   const { from, to, bucket } = useMemo(() => getRange(period, customFrom, customTo), [period, customFrom, customTo]);
 
@@ -182,6 +186,27 @@ function ReportPage() {
       deliverySamples: deliveryMinutes.length,
     };
   }, [orders, from, to, bucket]);
+
+  const drillOrders = useMemo(() => {
+    if (!drillProduct) return [];
+    return orders
+      .filter((o) => (o.ordine_items ?? []).some((it) => it.nome_snapshot === drillProduct))
+      .map((o) => ({
+        id: o.id,
+        numero_ordine: o.numero_ordine,
+        created_at: o.created_at,
+        numero_ombrellone: o.numero_ombrellone,
+        cognome: o.cognome,
+        quantita: (o.ordine_items ?? []).filter((it) => it.nome_snapshot === drillProduct).reduce((s, it) => s + it.quantita, 0),
+        totale: o.totale,
+      }))
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }, [orders, drillProduct]);
+
+  const openDrill = (product: string) => {
+    setDrillProduct(product);
+    setDrillVisible(50);
+  };
 
   return (
     <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-6">
@@ -285,7 +310,13 @@ function ReportPage() {
                       <XAxis type="number" tick={{ fontSize: 11 }} allowDecimals={false} />
                       <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={110} />
                       <Tooltip formatter={(v: number) => [v, "Quantità"]} />
-                      <Bar dataKey="qty" fill="var(--primary)" radius={[0, 4, 4, 0]} />
+                      <Bar
+                        dataKey="qty"
+                        fill="var(--primary)"
+                        radius={[0, 4, 4, 0]}
+                        cursor="pointer"
+                        onClick={(data: { name: string }) => openDrill(data.name)}
+                      />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -300,7 +331,11 @@ function ReportPage() {
                   </thead>
                   <tbody>
                     {metrics.products.slice(0, topN).map((p, i) => (
-                      <tr key={p.name} className="border-b border-border last:border-b-0">
+                      <tr
+                        key={p.name}
+                        onClick={() => openDrill(p.name)}
+                        className="border-b border-border last:border-b-0 cursor-pointer hover:bg-secondary/60 transition"
+                      >
                         <td className="py-1.5 pr-2 text-muted-foreground">{i + 1}</td>
                         <td className="py-1.5 pr-2 truncate">{p.name}</td>
                         <td className="py-1.5 pr-2 text-right tabular-nums">{p.qty}</td>
@@ -335,6 +370,97 @@ function ReportPage() {
           </Card>
         </div>
       )}
+
+      {drillProduct && (
+        <ProductDrillModal
+          product={drillProduct}
+          orders={drillOrders}
+          visible={drillVisible}
+          onShowMore={() => setDrillVisible((v) => v + 50)}
+          onClose={() => setDrillProduct(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+type DrillOrder = {
+  id: string;
+  numero_ordine: number;
+  created_at: string;
+  numero_ombrellone: string;
+  cognome: string;
+  quantita: number;
+  totale: number;
+};
+
+function ProductDrillModal({
+  product, orders, visible, onShowMore, onClose,
+}: {
+  product: string;
+  orders: DrillOrder[];
+  visible: number;
+  onShowMore: () => void;
+  onClose: () => void;
+}) {
+  const shown = orders.slice(0, visible);
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col">
+        <div className="flex items-start justify-between gap-3 p-4 border-b border-border shrink-0">
+          <div>
+            <div className="font-bold text-primary text-lg">{product}</div>
+            <div className="text-sm text-muted-foreground">× {orders.length} ordinazioni</div>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-secondary shrink-0">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="overflow-y-auto p-4">
+          {orders.length === 0 ? (
+            <div className="text-sm text-muted-foreground text-center py-8">Nessun ordine trovato</div>
+          ) : (
+            <>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-xs text-muted-foreground border-b border-border">
+                    <th className="py-1.5 pr-2">#Ordine</th>
+                    <th className="py-1.5 pr-2">Data/ora</th>
+                    <th className="py-1.5 pr-2">Ombrellone</th>
+                    <th className="py-1.5 pr-2">Cognome</th>
+                    <th className="py-1.5 pr-2 text-right">Quantità</th>
+                    <th className="py-1.5 text-right">Totale ordine</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {shown.map((o) => (
+                    <tr key={o.id} className="border-b border-border last:border-b-0">
+                      <td className="py-1.5 pr-2 font-medium">#{String(o.numero_ordine).padStart(3, "0")}</td>
+                      <td className="py-1.5 pr-2 whitespace-nowrap">{format(new Date(o.created_at), "dd/MM/yyyy HH:mm")}</td>
+                      <td className="py-1.5 pr-2">{o.numero_ombrellone}</td>
+                      <td className="py-1.5 pr-2 truncate">{o.cognome}</td>
+                      <td className="py-1.5 pr-2 text-right tabular-nums">{o.quantita}</td>
+                      <td className="py-1.5 text-right tabular-nums">€ {Number(o.totale).toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {orders.length > visible && (
+                <div className="mt-3 text-center">
+                  <button
+                    onClick={onShowMore}
+                    className="px-4 py-2 rounded-full text-sm font-semibold border border-border hover:bg-secondary transition"
+                  >
+                    Mostra altri
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
