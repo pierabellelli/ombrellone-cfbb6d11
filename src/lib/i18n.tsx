@@ -67,7 +67,7 @@ const DICT = {
     "map.legend.active": "Ordine inviato",
     "map.legend.warn": "In arrivo",
     "map.legend.late": "Ritardo",
-    "map.tile.activeBar": "ORDINE INVIATO",
+    "map.tile.activeBar": "INVIATO",
     "map.tile.warnBar": "IN ARRIVO",
     "map.tile.lateBar": "RITARDO",
     "map.tile.inviato": "Inviato",

@@ -250,11 +250,6 @@ function UmbrellaTile({ numero, rowLabel, orders, state, now, onClick }: {
       onClick={onClick}
       className={`relative w-[88px] min-h-[88px] rounded-2xl border-2 ${TILE_CLASS[state]} flex flex-col items-center transition active:scale-95 shadow-sm overflow-hidden`}
     >
-      {orders.length > 1 && (
-        <span className="absolute top-1 right-1 z-20 w-5 h-5 rounded-full bg-gray-500 text-white text-[10px] font-bold flex items-center justify-center shadow-sm">
-          {orders.length}
-        </span>
-      )}
       {bar && (
         <div className={`w-full h-6 flex items-center justify-center gap-1 ${bar.barClass} text-white`}>
           <bar.icon className="w-3 h-3 shrink-0" />
@@ -263,7 +258,14 @@ function UmbrellaTile({ numero, rowLabel, orders, state, now, onClick }: {
       )}
       <div className="px-1.5 py-1.5 flex flex-col items-center w-full flex-1 justify-center">
         <Umbrella className={`w-4 h-4 ${accent} ${state === "free" ? "opacity-70" : ""}`} />
-        <div className={`text-lg font-extrabold leading-tight ${accent}`}>{numero}</div>
+        <div className="flex items-center justify-center gap-1">
+          <div className={`text-lg font-extrabold leading-tight ${accent}`}>{numero}</div>
+          {orders.length > 1 && (
+            <span className="w-5 h-5 rounded-full bg-gray-500 text-white text-[10px] font-bold flex items-center justify-center shadow-sm shrink-0">
+              {orders.length}
+            </span>
+          )}
+        </div>
         <div className="text-[10px] opacity-70 truncate w-full text-center">{rowLabel}</div>
         {oldest && bar && (
           <div className="mt-1 w-full">
