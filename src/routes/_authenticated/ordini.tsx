@@ -99,14 +99,10 @@ function elapsedMinutes(iso: string) {
 }
 
 function formatElapsed(iso: string) {
-  const totSec = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 1000));
-  const m = Math.floor(totSec / 60);
-  const s = totSec % 60;
-  if (m >= 60) {
-    const h = Math.floor(m / 60);
-    return `${h}h ${m % 60}m`;
-  }
-  return `${m}:${String(s).padStart(2, "0")}`;
+  const totalMin = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 60000));
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
 function urgencyTone(iso: string) {

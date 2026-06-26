@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n";
-import { Umbrella, X, Check, Phone, Wallet, Clock } from "lucide-react";
+import { Umbrella, X, Check, Phone, Wallet, Clock, AlertTriangle } from "lucide-react";
 
 type Fila = { index: number; label: string; ombrelloni: { numero: number }[] };
 type Stato = "arrivati" | "da_evadere" | "consegnati" | "annullato";
@@ -206,36 +206,52 @@ const STATE_CLASS: Record<UmbrellaState, string> = {
 };
 
 function fmtElapsed(ms: number) {
-  const s = Math.max(0, Math.floor(ms / 1000));
-  const m = Math.floor(s / 60);
-  const ss = String(s % 60).padStart(2, "0");
-  return `${m}:${ss}`;
+  const totalMin = Math.max(0, Math.floor(ms / 60000));
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
+
+const STATE_BAR: Record<Exclude<UmbrellaState, "free">, { icon: typeof Check; barClass: string; key: "map.tile.active" | "map.tile.warn" | "map.tile.late" }> = {
+  active: { icon: Check, barClass: "bg-emerald-500 text-white", key: "map.tile.active" },
+  warn: { icon: Clock, barClass: "bg-amber-500 text-white", key: "map.tile.warn" },
+  late: { icon: AlertTriangle, barClass: "bg-red-600 text-white", key: "map.tile.late" },
+};
 
 function UmbrellaTile({ numero, rowLabel, orders, state, now, onClick }: {
   numero: number; rowLabel: string; orders: Ordine[]; state: UmbrellaState; now: number; onClick: () => void;
 }) {
+  const { t } = useI18n();
   const oldest = orders[0];
   const elapsed = oldest ? now - new Date(oldest.created_at).getTime() : 0;
+  const bar = state === "free" ? null : STATE_BAR[state];
   return (
     <button
       onClick={onClick}
-      className={`relative w-[88px] min-h-[88px] rounded-2xl border-2 ${STATE_CLASS[state]} px-1.5 py-2 flex flex-col items-center justify-start transition active:scale-95 shadow-sm`}
+      className={`relative w-[88px] min-h-[88px] rounded-2xl border-2 ${STATE_CLASS[state]} flex flex-col items-center transition active:scale-95 shadow-sm overflow-hidden`}
     >
       {orders.length > 1 && (
-        <span className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-emerald-600 text-white text-xs font-bold flex items-center justify-center shadow-sm">
+        <span className="absolute top-1 right-1 z-20 w-5 h-5 rounded-full bg-red-600 text-white text-[10px] font-bold flex items-center justify-center shadow-sm">
           {orders.length}
         </span>
       )}
-      <Umbrella className="w-4 h-4 opacity-70" />
-      <div className="text-lg font-extrabold leading-tight">{numero}</div>
-      <div className="text-[10px] opacity-70 truncate w-full text-center">{rowLabel}</div>
-      {oldest && (
-        <div className="mt-1 w-full">
-          <div className="text-[11px] font-semibold truncate">{oldest.cognome}</div>
-          <div className="text-[10px] tabular-nums opacity-80">{fmtElapsed(elapsed)}</div>
+      {bar && (
+        <div className={`w-full py-0.5 flex items-center justify-center gap-0.5 ${bar.barClass}`}>
+          <bar.icon className="w-2 h-2 shrink-0" />
+          <span className="text-[6px] font-bold uppercase tracking-tight leading-none">{t(bar.key)}</span>
         </div>
       )}
+      <div className="px-1.5 py-1.5 flex flex-col items-center w-full">
+        <Umbrella className="w-4 h-4 opacity-70" />
+        <div className="text-lg font-extrabold leading-tight">{numero}</div>
+        <div className="text-[10px] opacity-70 truncate w-full text-center">{rowLabel}</div>
+        {oldest && (
+          <div className="mt-1 w-full">
+            <div className="text-[11px] font-semibold truncate text-center">{oldest.cognome}</div>
+            <div className="text-[10px] tabular-nums opacity-80 text-center">{fmtElapsed(elapsed)}</div>
+          </div>
+        )}
+      </div>
     </button>
   );
 }
