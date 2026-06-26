@@ -428,6 +428,18 @@ export type Database = {
           totale: number
         }[]
       }
+      traccia_ordini_oggi: {
+        Args: { _lido_id: string; _numero_ombrellone: string; _telefono: string }
+        Returns: {
+          created_at: string
+          id: string
+          items: Json
+          numero_ombrellone: string
+          numero_ordine: number
+          stato: Database["public"]["Enums"]["ordine_stato"]
+          totale: number
+        }[]
+      }
       user_lido_id: { Args: Record<PropertyKey, never>; Returns: string }
     }
     Enums: {

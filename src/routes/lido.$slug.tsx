@@ -103,6 +103,7 @@ function LidoClientPage() {
   const { t } = useI18n();
   const { slug } = Route.useParams();
   const { o: ombrelloneParam } = Route.useSearch();
+  const [view, setView] = useState<"landing" | "order" | "track">(ombrelloneParam ? "order" : "landing");
 
   const { data: lido, isLoading: lidoLoading, error: lidoErr } = useQuery({
     queryKey: ["pub-lido", slug],
@@ -230,6 +231,16 @@ function LidoClientPage() {
       <Header lido={lido} ombrellone={ombrelloneParam} />
 
       <main className="max-w-2xl mx-auto px-4 py-5">
+        {view === "landing" && (
+          <LandingChoice onOrder={() => setView("order")} onTrack={() => setView("track")} />
+        )}
+
+        {view === "track" && (
+          <TrackOrderView lidoId={lido.id} onBack={() => setView("landing")} />
+        )}
+
+        {view === "order" && (
+        <>
         {!lido.servizio_bar_attivo && (
           <div className="mb-4 rounded-xl border border-amber-300 bg-amber-50 text-amber-900 p-4 flex items-start gap-2">
             <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
@@ -299,9 +310,11 @@ function LidoClientPage() {
         )}
 
         <OrderHistorySection lidoId={lido.id} />
+        </>
+        )}
       </main>
 
-      {itemCount > 0 && lido.servizio_bar_attivo && (
+      {view === "order" && itemCount > 0 && lido.servizio_bar_attivo && (
         <Sheet open={cartOpen} onOpenChange={setCartOpen}>
           <SheetTrigger asChild>
             <button className="fixed bottom-4 left-4 right-4 max-w-2xl mx-auto z-30 bg-primary text-primary-foreground rounded-full shadow-lg px-5 py-3.5 flex items-center justify-between font-semibold">
@@ -450,6 +463,209 @@ function FavoritesSection({ favoriti, cart, onAdd, onDec }: {
         })}
       </div>
     </section>
+  );
+}
+
+function LandingChoice({ onOrder, onTrack }: { onOrder: () => void; onTrack: () => void }) {
+  const { t } = useI18n();
+  return (
+    <div className="py-8 flex flex-col gap-3">
+      <button
+        onClick={onOrder}
+        className="card-soft p-6 flex items-center gap-4 text-left hover:bg-secondary/40 transition active:scale-[0.99]"
+      >
+        <span className="text-3xl shrink-0">🛒</span>
+        <span className="text-lg font-bold text-primary">{t("cliente.orderButton")}</span>
+      </button>
+      <button
+        onClick={onTrack}
+        className="card-soft p-6 flex items-center gap-4 text-left hover:bg-secondary/40 transition active:scale-[0.99]"
+      >
+        <span className="text-3xl shrink-0">📦</span>
+        <span className="text-lg font-bold text-primary">{t("cliente.trackButton")}</span>
+      </button>
+    </div>
+  );
+}
+
+const COUNTRY_CODES = [
+  { code: "+39", flag: "🇮🇹" },
+  { code: "+44", flag: "🇬🇧" },
+  { code: "+49", flag: "🇩🇪" },
+  { code: "+33", flag: "🇫🇷" },
+  { code: "+34", flag: "🇪🇸" },
+  { code: "+31", flag: "🇳🇱" },
+  { code: "+32", flag: "🇧🇪" },
+  { code: "+41", flag: "🇨🇭" },
+  { code: "+43", flag: "🇦🇹" },
+  { code: "+351", flag: "🇵🇹" },
+];
+
+function isValidPhoneDigits(prefix: string, digits: string): boolean {
+  if (!digits || !/^\d+$/.test(digits)) return false;
+  if (/^(\d)\1+$/.test(digits)) return false; // all same digit
+  if (prefix === "+39") return digits.length >= 9 && digits.length <= 10 && digits[0] === "3";
+  return digits.length >= 6 && digits.length <= 15;
+}
+
+function elapsedFromNow(iso: string): string {
+  const mins = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 60000));
+  if (mins < 60) return `${mins} min`;
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return `${h}h ${m}m`;
+}
+
+type TrackOrder = {
+  id: string;
+  numero_ordine: number;
+  totale: number;
+  stato: string;
+  created_at: string;
+  items: { nome_snapshot: string; quantita: number }[];
+};
+
+const TRACK_STATO_PILL: Record<string, { bg: string; icon: string; labelKey: "cliente.trackStatusArrivati" | "cliente.status.da_evadere" | "cliente.status.consegnati" }> = {
+  arrivati: { bg: "bg-blue-100 text-blue-800", icon: "🕐", labelKey: "cliente.trackStatusArrivati" },
+  da_evadere: { bg: "bg-amber-100 text-amber-800", icon: "👨‍🍳", labelKey: "cliente.status.da_evadere" },
+  consegnati: { bg: "bg-emerald-100 text-emerald-800", icon: "✓", labelKey: "cliente.status.consegnati" },
+};
+
+function TrackOrderView({ lidoId, onBack }: { lidoId: string; onBack: () => void }) {
+  const { t } = useI18n();
+  const [numeroOmbrellone, setNumeroOmbrellone] = useState("");
+  const [prefix, setPrefix] = useState("+39");
+  const [customPrefix, setCustomPrefix] = useState("");
+  const [phone, setPhone] = useState("");
+  const [phoneError, setPhoneError] = useState(false);
+  const [searching, setSearching] = useState(false);
+  const [results, setResults] = useState<TrackOrder[] | null>(null);
+
+  const effectivePrefix = prefix === "altro" ? customPrefix.trim() : prefix;
+
+  const handleSearch = async () => {
+    if (!numeroOmbrellone.trim()) { toast.error(t("cliente.errUmbrellaRequired")); return; }
+    const digits = phone.replace(/[\s-]/g, "");
+    if (!isValidPhoneDigits(effectivePrefix, digits)) {
+      setPhoneError(true);
+      return;
+    }
+    setPhoneError(false);
+    setSearching(true);
+    const { data, error } = await supabase.rpc("traccia_ordini_oggi", {
+      _lido_id: lidoId,
+      _numero_ombrellone: numeroOmbrellone.trim(),
+      _telefono: digits,
+    });
+    setSearching(false);
+    if (error) {
+      toast.error(t("cliente.errSubmitFailed"), { description: error.message });
+      return;
+    }
+    setResults((data ?? []) as unknown as TrackOrder[]);
+  };
+
+  return (
+    <div className="py-4">
+      <button onClick={onBack} className="inline-flex items-center gap-1 text-sm text-muted-foreground mb-4 hover:text-foreground">
+        <ArrowLeft className="w-4 h-4" /> {t("cliente.back")}
+      </button>
+      <h1 className="text-lg font-bold text-primary mb-4">{t("cliente.trackButton")}</h1>
+
+      <div className="space-y-3">
+        <div>
+          <Label htmlFor="track-omb">{t("cliente.trackUmbrellaLabel")}</Label>
+          <Input
+            id="track-omb"
+            type="number"
+            inputMode="numeric"
+            value={numeroOmbrellone}
+            onChange={(e) => setNumeroOmbrellone(e.target.value)}
+            placeholder={t("cliente.trackUmbrellaPlaceholder")}
+            className="mt-1.5"
+          />
+        </div>
+        <div>
+          <Label htmlFor="track-tel">{t("cliente.trackPhoneLabel")}</Label>
+          <div className="mt-1.5 flex gap-2">
+            <select
+              value={prefix}
+              onChange={(e) => setPrefix(e.target.value)}
+              className="px-2 py-2 rounded-lg border border-border bg-card text-sm shrink-0"
+            >
+              {COUNTRY_CODES.map((c) => (
+                <option key={c.code} value={c.code}>{c.flag} {c.code}</option>
+              ))}
+              <option value="altro">{t("cliente.trackOtherPrefix")}</option>
+            </select>
+            {prefix === "altro" && (
+              <input
+                value={customPrefix}
+                onChange={(e) => setCustomPrefix(e.target.value)}
+                placeholder={t("cliente.trackPrefixPlaceholder")}
+                className="w-24 px-2.5 py-2 rounded-lg border border-border bg-card text-sm"
+              />
+            )}
+            <Input
+              id="track-tel"
+              type="tel"
+              inputMode="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder={t("cliente.trackPhonePlaceholder")}
+              className="flex-1"
+            />
+          </div>
+          {phoneError && <p className="text-xs text-destructive mt-1">{t("cliente.trackInvalidPhone")}</p>}
+        </div>
+
+        <Button onClick={handleSearch} disabled={searching} className="w-full h-11 rounded-full">
+          {searching ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null} {t("cliente.trackSubmit")}
+        </Button>
+      </div>
+
+      {results !== null && (
+        <div className="mt-5 space-y-3">
+          {results.length === 0 ? (
+            <div className="card-soft p-6 text-center text-muted-foreground">{t("cliente.trackNoResults")}</div>
+          ) : (
+            <>
+              {results.every((o) => o.stato === "consegnati") && (
+                <div className="card-soft p-4 text-center font-semibold text-emerald-700 bg-emerald-50">
+                  {t("cliente.trackAllDelivered")}
+                </div>
+              )}
+              {results.map((o) => {
+                const pill = TRACK_STATO_PILL[o.stato] ?? TRACK_STATO_PILL.arrivati;
+                return (
+                  <div key={o.id} className="card-soft p-4">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-bold text-primary">#{String(o.numero_ordine).padStart(3, "0")}</span>
+                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${pill.bg}`}>
+                        {pill.icon} {t(pill.labelKey)}
+                      </span>
+                    </div>
+                    {o.items?.length > 0 && (
+                      <ul className="mt-2 text-sm text-muted-foreground space-y-0.5">
+                        {o.items.map((it, i) => (
+                          <li key={i}>{it.quantita}× {it.nome_snapshot}</li>
+                        ))}
+                      </ul>
+                    )}
+                    <div className="mt-2 flex items-center justify-between text-sm">
+                      <span className="inline-flex items-center gap-1 text-muted-foreground">
+                        <Clock className="w-3.5 h-3.5" /> {elapsedFromNow(o.created_at)}
+                      </span>
+                      <span className="font-bold text-primary">€ {Number(o.totale).toFixed(2)}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
