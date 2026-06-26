@@ -2,7 +2,7 @@ import { createFileRoute, Outlet, redirect, Link, useNavigate, useRouterState } 
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Logo } from "@/components/Logo";
-import { LogOut, ClipboardList, Package, Settings, Map as MapIcon, LayoutPanelTop } from "lucide-react";
+import { LogOut, ClipboardList, Package, Settings, Map as MapIcon, LayoutPanelTop, BarChart3 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useI18n } from "@/lib/i18n";
 
@@ -93,6 +93,9 @@ function AuthLayout() {
                     <NavLink to="/configurazione-lido" icon={<LayoutPanelTop className="w-4 h-4" />} label={t("nav.beachConfig")} />
                     <NavLink to="/impostazioni" icon={<Settings className="w-4 h-4" />} label={t("nav.settings")} />
                   </>
+                )}
+                {isGestore && (
+                  <NavLink to="/report" icon={<BarChart3 className="w-4 h-4" />} label={t("nav.report")} />
                 )}
               </nav>
             )}
