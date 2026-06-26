@@ -1,4 +1,5 @@
 import { createFileRoute, Outlet, redirect, Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Logo } from "@/components/Logo";
 import { LogOut, ClipboardList, Package, Settings, Map as MapIcon, LayoutPanelTop } from "lucide-react";
@@ -27,7 +28,11 @@ function AuthLayout() {
   const { user } = Route.useRouteContext();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const { lang, setLang, t } = useI18n();
+  const { setLang, t } = useI18n();
+
+  useEffect(() => {
+    setLang("it");
+  }, [setLang]);
 
   const { data: roles = [] } = useQuery({
     queryKey: ["user_roles", user.id],
@@ -93,16 +98,6 @@ function AuthLayout() {
             )}
           </div>
           <div className="flex items-center gap-3">
-            <div className="inline-flex rounded-full border border-border bg-card p-0.5 text-xs font-semibold">
-              <button
-                onClick={() => setLang("it")}
-                className={`px-2.5 py-1 rounded-full transition ${lang === "it" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
-              >IT</button>
-              <button
-                onClick={() => setLang("en")}
-                className={`px-2.5 py-1 rounded-full transition ${lang === "en" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
-              >EN</button>
-            </div>
             <span className="text-sm text-muted-foreground hidden sm:block">{user.email}</span>
             <button
               onClick={handleLogout}

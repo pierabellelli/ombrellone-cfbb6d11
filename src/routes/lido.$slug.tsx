@@ -305,6 +305,7 @@ function LidoClientPage() {
 }
 
 function Header({ lido, ombrellone }: { lido: Lido; ombrellone?: string }) {
+  const { lang, setLang } = useI18n();
   return (
     <header className="relative">
       <div className="sticky top-0 z-20 bg-card/95 backdrop-blur border-b border-border">
@@ -326,7 +327,16 @@ function Header({ lido, ombrellone }: { lido: Lido; ombrellone?: string }) {
             ) : null}
             <span className="text-sm font-semibold text-primary truncate">{lido.nome}</span>
           </div>
-          <div className="w-9" aria-hidden />
+          <div className="inline-flex rounded-full border border-border bg-card p-0.5 text-xs font-semibold shrink-0">
+            <button
+              onClick={() => setLang("it")}
+              className={`px-2.5 py-1 rounded-full transition ${lang === "it" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+            >IT</button>
+            <button
+              onClick={() => setLang("en")}
+              className={`px-2.5 py-1 rounded-full transition ${lang === "en" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+            >EN</button>
+          </div>
         </div>
       </div>
       <div className="h-40 bg-gradient-to-br from-[color:var(--primary)] to-[color:var(--teal-deep)] overflow-hidden">
