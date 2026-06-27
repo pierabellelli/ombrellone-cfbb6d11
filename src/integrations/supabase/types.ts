@@ -81,6 +81,36 @@ export type Database = {
           },
         ]
       }
+      contatti: {
+        Row: {
+          citta: string
+          created_at: string | null
+          email: string
+          id: string
+          messaggio: string | null
+          nome: string
+          nome_lido: string
+        }
+        Insert: {
+          citta: string
+          created_at?: string | null
+          email: string
+          id?: string
+          messaggio?: string | null
+          nome: string
+          nome_lido: string
+        }
+        Update: {
+          citta?: string
+          created_at?: string | null
+          email?: string
+          id?: string
+          messaggio?: string | null
+          nome?: string
+          nome_lido?: string
+        }
+        Relationships: []
+      }
       lidi: {
         Row: {
           accetta_carta: boolean

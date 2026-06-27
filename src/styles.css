@@ -97,6 +97,7 @@
   html, body {
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
+    scroll-behavior: smooth;
   }
   body {
     background-color: var(--color-background);
