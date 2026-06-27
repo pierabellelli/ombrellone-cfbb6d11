@@ -116,7 +116,7 @@ function Home() {
 function NavBar() {
   return (
     <header className="px-6 py-5 flex items-center justify-between">
-      <img src="/logo_ombrellOne.png" alt="OmbrellOne" className="h-8 w-auto" />
+      <img src="/logo_ombrellOne.png" alt="OmbrellOne" className="h-14 w-auto" />
       <Link
         to="/login"
         className="text-sm font-medium px-4 py-2 rounded-full border border-border bg-card hover:bg-secondary transition"
@@ -303,7 +303,7 @@ function Footer() {
     <footer className="hero-gradient px-6 py-8">
       <div className="max-w-7xl mx-auto w-full flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <img src="/logo_ombrellOne.png" alt="OmbrellOne" className="h-8 w-auto" />
+          <img src="/logo_ombrellOne.png" alt="OmbrellOne" className="h-16 w-auto" />
           <span className="text-sm text-white/80">© {new Date().getFullYear()} OmbrellOne</span>
         </div>
         <Link to="/login" className="text-sm font-medium text-white hover:underline">
