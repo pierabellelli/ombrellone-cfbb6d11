@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Clock, Phone, MapPin, Banknote, CreditCard, StickyNote, ArrowRight, Check, CheckCheck, Archive } from "lucide-react";
+import { Clock, Phone, MapPin, Banknote, CreditCard, StickyNote, ArrowRight, Check, CheckCheck, Archive, Search, X } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 
 type Stato = "arrivati" | "da_evadere" | "consegnati";
@@ -218,12 +218,54 @@ function OrdiniPage() {
     consegnati: consegnati.data ?? [],
   };
 
+  const [filtroNome, setFiltroNome] = useState("");
+  const [filtroOmbrellone, setFiltroOmbrellone] = useState("");
+  const [filtroOrario, setFiltroOrario] = useState("");
+  const hasActiveFilter = filtroNome.trim() !== "" || filtroOmbrellone.trim() !== "" || filtroOrario.trim() !== "";
+  const resetFiltri = () => {
+    setFiltroNome("");
+    setFiltroOmbrellone("");
+    setFiltroOrario("");
+  };
+
+  const filteredDataByStato: Record<Stato, Ordine[]> = useMemo(() => {
+    const nome = filtroNome.trim().toLowerCase();
+    const ombrellone = filtroOmbrellone.trim().toLowerCase();
+    const orario = filtroOrario.trim();
+    const matches = (o: Ordine) => {
+      if (nome && !o.cognome.toLowerCase().includes(nome)) return false;
+      if (ombrellone && !o.numero_ombrellone.toLowerCase().includes(ombrellone)) return false;
+      if (orario) {
+        const d = new Date(o.created_at);
+        const orderTime = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+        if (orderTime < orario) return false;
+      }
+      return true;
+    };
+    return {
+      arrivati: dataByStato.arrivati.filter(matches),
+      da_evadere: dataByStato.da_evadere.filter(matches),
+      consegnati: dataByStato.consegnati.filter(matches),
+    };
+  }, [dataByStato.arrivati, dataByStato.da_evadere, dataByStato.consegnati, filtroNome, filtroOmbrellone, filtroOrario]);
+
   return (
     <div className="max-w-[1600px] mx-auto px-4 md:px-6 py-6">
       <div className="mb-5">
         <h1 className="text-2xl md:text-3xl font-bold text-primary">Ordini</h1>
         <p className="text-sm text-muted-foreground mt-1">Kanban in tempo reale degli ordini del lido.</p>
       </div>
+
+      <FiltriBar
+        nome={filtroNome}
+        ombrellone={filtroOmbrellone}
+        orario={filtroOrario}
+        onNome={setFiltroNome}
+        onOmbrellone={setFiltroOmbrellone}
+        onOrario={setFiltroOrario}
+        onReset={resetFiltri}
+        hasActiveFilter={hasActiveFilter}
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 overflow-x-auto">
         {columns.map((col) => (
@@ -232,7 +274,7 @@ function OrdiniPage() {
             stato={col.stato}
             title={col.title}
             headerCls={col.headerCls}
-            orders={dataByStato[col.stato]}
+            orders={filteredDataByStato[col.stato]}
             onMove={move}
             selectedIds={col.stato === "consegnati" ? selectedIds : undefined}
             onToggleSelected={col.stato === "consegnati" ? toggleSelected : undefined}
@@ -242,6 +284,65 @@ function OrdiniPage() {
           />
         ))}
       </div>
+    </div>
+  );
+}
+
+function FiltriBar({
+  nome, ombrellone, orario, onNome, onOmbrellone, onOrario, onReset, hasActiveFilter,
+}: {
+  nome: string;
+  ombrellone: string;
+  orario: string;
+  onNome: (v: string) => void;
+  onOmbrellone: (v: string) => void;
+  onOrario: (v: string) => void;
+  onReset: () => void;
+  hasActiveFilter: boolean;
+}) {
+  return (
+    <div className="mb-4 bg-white rounded-xl shadow-sm border border-border p-4 flex flex-col md:flex-row gap-3">
+      <div className="flex-1 relative">
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <input
+          type="text"
+          value={nome}
+          onChange={(e) => onNome(e.target.value)}
+          placeholder="Cerca per cognome..."
+          aria-label="Nome"
+          className="h-9 w-full rounded-lg border border-border pl-8 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+        />
+      </div>
+      <div className="flex-1 relative">
+        <MapPin className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <input
+          type="text"
+          value={ombrellone}
+          onChange={(e) => onOmbrellone(e.target.value)}
+          placeholder="N. ombrellone..."
+          aria-label="Ombrellone"
+          className="h-9 w-full rounded-lg border border-border pl-8 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+        />
+      </div>
+      <div className="flex-1 relative">
+        <Clock className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <input
+          type="time"
+          value={orario}
+          onChange={(e) => onOrario(e.target.value)}
+          placeholder="Es. 14:30"
+          aria-label="Orario"
+          className="h-9 w-full rounded-lg border border-border pl-8 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+        />
+      </div>
+      {hasActiveFilter && (
+        <button
+          onClick={onReset}
+          className="h-9 px-3 rounded-lg border border-border text-sm font-medium text-muted-foreground hover:bg-secondary inline-flex items-center justify-center gap-1.5 shrink-0"
+        >
+          <X className="w-4 h-4" /> Azzera filtri
+        </button>
+      )}
     </div>
   );
 }
