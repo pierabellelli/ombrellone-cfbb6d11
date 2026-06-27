@@ -2,7 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import beachHero from "@/assets/beach-hero.jpg";
 import { supabase } from "@/integrations/supabase/client";
-import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "OmbrellOne — Ordini dal tuo ombrellone" },
+      { title: "OmbrellOne — Ordini QR per stabilimenti balneari" },
       { name: "description", content: "OmbrellOne porta il menu del bar direttamente sul telefono dei clienti. Sistema di ordinazione QR per lidi e stabilimenti balneari italiani." },
       { property: "og:title", content: "OmbrellOne" },
       { property: "og:description", content: "Ordini dal bar via QR per stabilimenti balneari italiani." },
@@ -117,7 +116,7 @@ function Home() {
 function NavBar() {
   return (
     <header className="px-6 py-5 flex items-center justify-between">
-      <Logo />
+      <img src="/logo_ombrellOne.png" alt="OmbrellOne" className="h-8 w-auto" />
       <Link
         to="/login"
         className="text-sm font-medium px-4 py-2 rounded-full border border-border bg-card hover:bg-secondary transition"
@@ -304,7 +303,7 @@ function Footer() {
     <footer className="hero-gradient px-6 py-8">
       <div className="max-w-7xl mx-auto w-full flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <Logo withText={false} />
+          <img src="/logo_ombrellOne.png" alt="OmbrellOne" className="h-8 w-auto" />
           <span className="text-sm text-white/80">© {new Date().getFullYear()} OmbrellOne</span>
         </div>
         <Link to="/login" className="text-sm font-medium text-white hover:underline">
