@@ -96,6 +96,7 @@ export type Database = {
           servizio_bar_attivo: boolean
           slug: string
           soglia_ordine_libero: number | null
+          storico_staff_globale: boolean
           stripe_account_id: string | null
           updated_at: string
         }
@@ -113,6 +114,7 @@ export type Database = {
           servizio_bar_attivo?: boolean
           slug: string
           soglia_ordine_libero?: number | null
+          storico_staff_globale?: boolean
           stripe_account_id?: string | null
           updated_at?: string
         }
@@ -130,6 +132,7 @@ export type Database = {
           servizio_bar_attivo?: boolean
           slug?: string
           soglia_ordine_libero?: number | null
+          storico_staff_globale?: boolean
           stripe_account_id?: string | null
           updated_at?: string
         }
@@ -192,6 +195,8 @@ export type Database = {
           note: string | null
           numero_ombrellone: string
           numero_ordine: number
+          preso_in_carico_at: string | null
+          preso_in_carico_da: string | null
           stato: Database["public"]["Enums"]["ordine_stato"]
           stripe_payment_id: string | null
           telefono: string | null
@@ -209,6 +214,8 @@ export type Database = {
           note?: string | null
           numero_ombrellone: string
           numero_ordine: number
+          preso_in_carico_at?: string | null
+          preso_in_carico_da?: string | null
           stato?: Database["public"]["Enums"]["ordine_stato"]
           stripe_payment_id?: string | null
           telefono?: string | null
@@ -226,6 +233,8 @@ export type Database = {
           note?: string | null
           numero_ombrellone?: string
           numero_ordine?: number
+          preso_in_carico_at?: string | null
+          preso_in_carico_da?: string | null
           stato?: Database["public"]["Enums"]["ordine_stato"]
           stripe_payment_id?: string | null
           telefono?: string | null
@@ -402,6 +411,14 @@ export type Database = {
           _totale: number
         }
         Returns: { id: string; numero_ordine: number }[]
+      }
+      get_user_emails: {
+        Args: { _user_ids: string[] }
+        Returns: { id: string; email: string }[]
+      }
+      prendi_in_carico_ordine: {
+        Args: { _id: string }
+        Returns: undefined
       }
       get_order_history: {
         Args: { _lido_id: string; _telefono: string }

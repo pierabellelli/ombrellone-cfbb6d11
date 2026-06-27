@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useMemo, useState, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,6 +24,13 @@ import {
 } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/prodotti")({
+  beforeLoad: async () => {
+    const { data: u } = await supabase.auth.getUser();
+    if (!u.user) throw redirect({ to: "/login" });
+    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", u.user.id);
+    const allowed = (roles ?? []).some((r) => r.role === "gestore" || r.role === "super_admin");
+    if (!allowed) throw redirect({ to: "/ordini" });
+  },
   head: () => ({ meta: [{ title: "Prodotti · OmbrellOne" }] }),
   component: ProdottiPage,
 });

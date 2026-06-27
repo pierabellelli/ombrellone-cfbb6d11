@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +12,13 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 
 export const Route = createFileRoute("/_authenticated/impostazioni")({
+  beforeLoad: async () => {
+    const { data: u } = await supabase.auth.getUser();
+    if (!u.user) throw redirect({ to: "/login" });
+    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", u.user.id);
+    const allowed = (roles ?? []).some((r) => r.role === "gestore" || r.role === "super_admin");
+    if (!allowed) throw redirect({ to: "/ordini" });
+  },
   head: () => ({ meta: [{ title: "Impostazioni · OmbrellOne" }] }),
   component: ImpostazioniPage,
 });
@@ -29,6 +36,7 @@ type Lido = {
   max_ordini_ravvicinati: number | null;
   finestra_controllo_minuti: number | null;
   accetta_carta: boolean;
+  storico_staff_globale: boolean;
 };
 
 const SIGNED_TTL = 60 * 60 * 24 * 365;
@@ -54,11 +62,22 @@ async function getMyLido(): Promise<Lido | null> {
   return data as Lido | null;
 }
 
+async function getIsGestore(): Promise<boolean> {
+  const { data: u } = await supabase.auth.getUser();
+  if (!u.user) return false;
+  const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", u.user.id);
+  return (roles ?? []).some((r) => r.role === "gestore");
+}
+
 function ImpostazioniPage() {
   const qc = useQueryClient();
   const { data: lido, isLoading } = useQuery({
     queryKey: ["myLido"],
     queryFn: getMyLido,
+  });
+  const { data: isGestore = false } = useQuery({
+    queryKey: ["myRole-isGestore"],
+    queryFn: getIsGestore,
   });
 
   if (isLoading) {
@@ -95,6 +114,9 @@ function ImpostazioniPage() {
       <BrandingCard lido={lido} onSaved={() => qc.invalidateQueries({ queryKey: ["myLido"] })} />
       <RegoleServizioCard lido={lido} onSaved={() => qc.invalidateQueries({ queryKey: ["myLido"] })} />
       <PagamentiCard lido={lido} onSaved={() => qc.invalidateQueries({ queryKey: ["myLido"] })} />
+      {isGestore && (
+        <StoricoStaffCard lido={lido} onSaved={() => qc.invalidateQueries({ queryKey: ["myLido"] })} />
+      )}
     </div>
   );
 }
@@ -471,6 +493,44 @@ function PagamentiCard({ lido, onSaved }: { lido: Lido; onSaved: () => void }) {
           {saving ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Save className="w-4 h-4 mr-1.5" />}
           Salva
         </Button>
+      </div>
+    </Section>
+  );
+}
+
+function StoricoStaffCard({ lido, onSaved }: { lido: Lido; onSaved: () => void }) {
+  const [globale, setGlobale] = useState(lido.storico_staff_globale);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => { setGlobale(lido.storico_staff_globale); }, [lido.id, lido.storico_staff_globale]);
+
+  const onToggle = async (checked: boolean) => {
+    setGlobale(checked);
+    setSaving(true);
+    const { error } = await supabase.from("lidi").update({ storico_staff_globale: checked }).eq("id", lido.id);
+    setSaving(false);
+    if (error) {
+      setGlobale(lido.storico_staff_globale);
+      toast.error("Impossibile salvare", { description: error.message });
+      return;
+    }
+    toast.success("Impostazione aggiornata");
+    onSaved();
+  };
+
+  return (
+    <Section
+      icon={<ShieldCheck className="w-5 h-5" />}
+      title="Storico ordini staff"
+      description="Se attivo, ogni membro dello staff può vedere tutti gli ordini del lido. Se disattivo, ogni staff vede solo gli ordini che ha preso in carico."
+    >
+      <div className="flex items-center justify-between gap-4">
+        <p className="text-sm text-muted-foreground">
+          {globale
+            ? "Lo staff vede tutti gli ordini del lido nella sezione Storico."
+            : "Ogni membro dello staff vede solo gli ordini che ha preso in carico."}
+        </p>
+        <Switch checked={globale} onCheckedChange={onToggle} disabled={saving} />
       </div>
     </Section>
   );

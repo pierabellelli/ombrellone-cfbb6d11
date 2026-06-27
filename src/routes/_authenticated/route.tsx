@@ -43,6 +43,7 @@ function AuthLayout() {
   const isSuper = roles.some((r) => r.role === "super_admin");
   const isStaff = roles.some((r) => r.role === "staff");
   const canSeeMap = isGestore || isSuper || isStaff;
+  const isStaffOnly = isStaff && !isGestore && !isSuper;
 
   const lidoId = roles.find((r) => r.lido_id)?.lido_id ?? null;
   const { data: lidoBranding } = useQuery({
@@ -96,6 +97,9 @@ function AuthLayout() {
                 )}
                 {isGestore && (
                   <NavLink to="/report" icon={<BarChart3 className="w-4 h-4" />} label={t("nav.report")} />
+                )}
+                {isStaffOnly && (
+                  <NavLink to="/report" icon={<BarChart3 className="w-4 h-4" />} label={t("nav.storico")} />
                 )}
               </nav>
             )}

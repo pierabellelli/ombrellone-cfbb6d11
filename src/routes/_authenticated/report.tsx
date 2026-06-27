@@ -39,8 +39,10 @@ export const Route = createFileRoute("/_authenticated/report")({
       .from("user_roles")
       .select("role")
       .eq("user_id", u.user.id);
-    const isGestore = (roles ?? []).some((r) => r.role === "gestore");
-    if (!isGestore) throw redirect({ to: "/ordini" });
+    const isGestore = (roles ?? []).some((r) => r.role === "gestore" || r.role === "super_admin");
+    const isStaff = (roles ?? []).some((r) => r.role === "staff");
+    if (!isGestore && !isStaff) throw redirect({ to: "/ordini" });
+    return { role: (isGestore ? "gestore" : "staff") as "gestore" | "staff", userId: u.user.id };
   },
   head: () => ({ meta: [{ title: "Report · OmbrellOne" }] }),
   component: ReportPage,
@@ -96,6 +98,7 @@ function buildBucketLabels(from: Date, to: Date, bucket: Bucket): { key: string;
 }
 
 function ReportPage() {
+  const { role, userId } = Route.useRouteContext();
   const [period, setPeriod] = useState<Period>("settimana");
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
@@ -111,7 +114,7 @@ function ReportPage() {
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ["report-orders", lidoId, from.toISOString(), to.toISOString()],
     queryFn: () => loadOrdini(lidoId!, from, to),
-    enabled: !!lidoId,
+    enabled: !!lidoId && role === "gestore",
   });
 
   const metrics = useMemo(() => {
@@ -252,6 +255,8 @@ function ReportPage() {
         onCustomTo={setCustomTo}
       />
 
+      {role === "gestore" && (
+      <>
       {isLoading ? (
         <div className="mt-10 text-center text-muted-foreground text-sm">Caricamento dati…</div>
       ) : (
@@ -410,8 +415,6 @@ function ReportPage() {
         </div>
       )}
 
-      {lidoId && <StoricoOrdiniSection lidoId={lidoId} defaultFrom={from} defaultTo={to} />}
-
       {drillProduct && (
         <ProductDrillModal
           product={drillProduct}
@@ -428,6 +431,12 @@ function ReportPage() {
           orders={timeDrillOrders}
           onClose={() => setTimeDrill(null)}
         />
+      )}
+      </>
+      )}
+
+      {lidoId && (
+        <StoricoOrdiniSection lidoId={lidoId} defaultFrom={from} defaultTo={to} role={role} userId={userId} />
       )}
     </div>
   );
@@ -641,7 +650,7 @@ function Card({ title, icon, action, children }: { title: string; icon: React.Re
   );
 }
 
-type StoricoStato = "tutti" | "arrivati" | "da_evadere" | "consegnati" | "annullato";
+type StoricoStato = "" | "arrivati" | "da_evadere" | "consegnati" | "annullato";
 type SortCol = "created_at" | "numero_ordine" | "numero_ombrellone" | "cognome" | "totale" | "stato";
 
 type StoricoRow = {
@@ -649,12 +658,21 @@ type StoricoRow = {
   numero_ordine: number;
   created_at: string;
   numero_ombrellone: string;
-  fila: string | null;
   cognome: string;
-  telefono: string | null;
   totale: number;
   stato: Stato;
+  preso_in_carico_da: string | null;
+  preso_in_carico_at: string | null;
   ordine_items: Item[];
+};
+
+// Canonical stato -> UI label mapping, used throughout this section
+// (table pills and the filter dropdown).
+const STATO_LABEL: Record<Stato, string> = {
+  arrivati: "Nuovi",
+  da_evadere: "In preparazione",
+  consegnati: "Consegnati",
+  annullato: "Annullato",
 };
 
 const STORICO_STATO_PILL: Record<Stato, string> = {
@@ -664,40 +682,51 @@ const STORICO_STATO_PILL: Record<Stato, string> = {
   annullato: "bg-red-100 text-red-800",
 };
 
-const STORICO_STATO_LABEL: Record<Stato, string> = {
-  arrivati: "Arrivati",
-  da_evadere: "In preparazione",
-  consegnati: "Consegnati",
-  annullato: "Annullati",
-};
-
 async function loadStorico(opts: {
   lidoId: string; from: Date; to: Date; ombrellone: string; stato: StoricoStato;
-  sortCol: SortCol; sortAsc: boolean; page: number;
+  sortCol: SortCol; sortAsc: boolean; page: number; presoInCaricoDa: string | null;
 }): Promise<{ rows: StoricoRow[]; count: number }> {
   let q = supabase
     .from("ordini")
     .select(
-      "id, numero_ordine, numero_ombrellone, fila, cognome, telefono, totale, stato, created_at, ordine_items(id, nome_snapshot, prezzo_snapshot, quantita)",
+      "id, numero_ordine, numero_ombrellone, cognome, totale, stato, created_at, preso_in_carico_da, preso_in_carico_at, ordine_items(id, nome_snapshot, prezzo_snapshot, quantita)",
       { count: "exact" },
     )
     .eq("lido_id", opts.lidoId)
     .gte("created_at", opts.from.toISOString())
     .lte("created_at", opts.to.toISOString());
   if (opts.ombrellone.trim()) q = q.ilike("numero_ombrellone", `%${opts.ombrellone.trim()}%`);
-  if (opts.stato !== "tutti") q = q.eq("stato", opts.stato);
+  if (opts.stato !== "") q = q.eq("stato", opts.stato);
+  if (opts.presoInCaricoDa) q = q.eq("preso_in_carico_da", opts.presoInCaricoDa);
   q = q.order(opts.sortCol, { ascending: opts.sortAsc }).range(opts.page * 25, (opts.page + 1) * 25 - 1);
   const { data, error, count } = await q;
   if (error) throw error;
   return { rows: (data ?? []) as unknown as StoricoRow[], count: count ?? 0 };
 }
 
-function StoricoOrdiniSection({ lidoId, defaultFrom, defaultTo }: { lidoId: string; defaultFrom: Date; defaultTo: Date }) {
+async function loadStoricoStaffGlobale(lidoId: string): Promise<boolean> {
+  const { data, error } = await supabase.from("lidi").select("storico_staff_globale").eq("id", lidoId).maybeSingle();
+  if (error) throw error;
+  return !!data?.storico_staff_globale;
+}
+
+async function loadUserEmails(userIds: string[]): Promise<Map<string, string>> {
+  if (userIds.length === 0) return new Map();
+  const { data, error } = await supabase.rpc("get_user_emails", { _user_ids: userIds });
+  if (error) return new Map();
+  return new Map((data ?? []).map((u) => [u.id, u.email]));
+}
+
+function StoricoOrdiniSection({
+  lidoId, defaultFrom, defaultTo, role, userId,
+}: {
+  lidoId: string; defaultFrom: Date; defaultTo: Date; role: "gestore" | "staff"; userId: string;
+}) {
   const [localFrom, setLocalFrom] = useState(format(defaultFrom, "yyyy-MM-dd"));
   const [localTo, setLocalTo] = useState(format(defaultTo, "yyyy-MM-dd"));
   const [ombrelloneInput, setOmbrelloneInput] = useState("");
   const [ombrelloneFilter, setOmbrelloneFilter] = useState("");
-  const [stato, setStato] = useState<StoricoStato>("tutti");
+  const [stato, setStato] = useState<StoricoStato>("");
   const [sortCol, setSortCol] = useState<SortCol>("created_at");
   const [sortAsc, setSortAsc] = useState(false);
   const [page, setPage] = useState(0);
@@ -719,15 +748,33 @@ function StoricoOrdiniSection({ lidoId, defaultFrom, defaultTo }: { lidoId: stri
   const fromDate = useMemo(() => startOfDay(new Date(localFrom)), [localFrom]);
   const toDate = useMemo(() => endOfDay(new Date(localTo)), [localTo]);
 
+  const { data: storicoStaffGlobale = false } = useQuery({
+    queryKey: ["report-storico-globale", lidoId],
+    queryFn: () => loadStoricoStaffGlobale(lidoId),
+    enabled: role === "staff",
+  });
+
+  const presoInCaricoDa = role === "staff" && !storicoStaffGlobale ? userId : null;
+
   const { data, isLoading } = useQuery({
-    queryKey: ["report-storico", lidoId, localFrom, localTo, ombrelloneFilter, stato, sortCol, sortAsc, page],
-    queryFn: () => loadStorico({ lidoId, from: fromDate, to: toDate, ombrellone: ombrelloneFilter, stato, sortCol, sortAsc, page }),
+    queryKey: ["report-storico", lidoId, localFrom, localTo, ombrelloneFilter, stato, sortCol, sortAsc, page, presoInCaricoDa],
+    queryFn: () => loadStorico({ lidoId, from: fromDate, to: toDate, ombrellone: ombrelloneFilter, stato, sortCol, sortAsc, page, presoInCaricoDa }),
     enabled: !!lidoId,
   });
 
   const rows = data?.rows ?? [];
   const count = data?.count ?? 0;
   const totalPages = Math.max(1, Math.ceil(count / 25));
+
+  const staffIds = useMemo(
+    () => [...new Set(rows.map((r) => r.preso_in_carico_da).filter((id): id is string => !!id))],
+    [rows],
+  );
+  const { data: staffEmails = new Map<string, string>() } = useQuery({
+    queryKey: ["report-storico-emails", staffIds],
+    queryFn: () => loadUserEmails(staffIds),
+    enabled: role === "gestore" && staffIds.length > 0,
+  });
 
   const toggleSort = (col: SortCol) => {
     if (sortCol === col) setSortAsc((a) => !a);
@@ -738,7 +785,7 @@ function StoricoOrdiniSection({ lidoId, defaultFrom, defaultTo }: { lidoId: stri
   const clearFilters = () => {
     setOmbrelloneInput("");
     setOmbrelloneFilter("");
-    setStato("tutti");
+    setStato("");
     setLocalFrom(format(defaultFrom, "yyyy-MM-dd"));
     setLocalTo(format(defaultTo, "yyyy-MM-dd"));
     setPage(0);
@@ -746,12 +793,19 @@ function StoricoOrdiniSection({ lidoId, defaultFrom, defaultTo }: { lidoId: stri
 
   const sortIndicator = (col: SortCol) => (sortCol === col ? (sortAsc ? "▲" : "▼") : "");
 
+  const sectionLabel = role === "gestore"
+    ? "Tutti gli ordini del lido"
+    : storicoStaffGlobale ? "Tutti gli ordini del lido" : "I tuoi ordini";
+
+  const colCount = role === "gestore" ? 8 : 7;
+
   return (
     <div className="mt-6 card-soft p-4">
-      <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
+      <div className="flex items-center justify-between flex-wrap gap-2 mb-1">
         <h2 className="text-lg font-bold text-primary">Storico ordini</h2>
         <span className="text-sm text-muted-foreground">Totale: {count} ordini</span>
       </div>
+      <p className="text-xs text-muted-foreground mb-3">{sectionLabel}</p>
 
       <div className="flex flex-wrap items-center gap-3 mb-3 pb-3 border-b border-border">
         <div className="flex items-center gap-2">
@@ -780,8 +834,8 @@ function StoricoOrdiniSection({ lidoId, defaultFrom, defaultTo }: { lidoId: stri
           onChange={(e) => { setStato(e.target.value as StoricoStato); setPage(0); }}
           className="px-2.5 py-1.5 rounded-lg border border-border bg-card text-sm"
         >
-          <option value="tutti">Tutti</option>
-          <option value="arrivati">Arrivati</option>
+          <option value="">Tutti</option>
+          <option value="arrivati">Nuovi</option>
           <option value="da_evadere">In preparazione</option>
           <option value="consegnati">Consegnati</option>
           <option value="annullato">Annullati</option>
@@ -801,19 +855,19 @@ function StoricoOrdiniSection({ lidoId, defaultFrom, defaultTo }: { lidoId: stri
               <th className="py-1.5 pr-2 cursor-pointer whitespace-nowrap" onClick={() => toggleSort("numero_ordine")}>#Ordine {sortIndicator("numero_ordine")}</th>
               <th className="py-1.5 pr-2 cursor-pointer whitespace-nowrap" onClick={() => toggleSort("created_at")}>Data/ora {sortIndicator("created_at")}</th>
               <th className="py-1.5 pr-2 cursor-pointer whitespace-nowrap" onClick={() => toggleSort("numero_ombrellone")}>Ombrellone {sortIndicator("numero_ombrellone")}</th>
-              <th className="py-1.5 pr-2">Fila</th>
               <th className="py-1.5 pr-2 cursor-pointer whitespace-nowrap" onClick={() => toggleSort("cognome")}>Cognome {sortIndicator("cognome")}</th>
-              <th className="py-1.5 pr-2">Telefono</th>
               <th className="py-1.5 pr-2">Prodotti</th>
               <th className="py-1.5 pr-2 text-right cursor-pointer whitespace-nowrap" onClick={() => toggleSort("totale")}>Totale {sortIndicator("totale")}</th>
-              <th className="py-1.5 cursor-pointer whitespace-nowrap" onClick={() => toggleSort("stato")}>Stato {sortIndicator("stato")}</th>
+              <th className="py-1.5 pr-2 cursor-pointer whitespace-nowrap" onClick={() => toggleSort("stato")}>Stato {sortIndicator("stato")}</th>
+              <th className="py-1.5 pr-2 whitespace-nowrap">Preso in carico alle</th>
+              {role === "gestore" && <th className="py-1.5 whitespace-nowrap">Gestito da</th>}
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
-              <tr><td colSpan={9} className="py-6 text-center text-muted-foreground">Caricamento…</td></tr>
+              <tr><td colSpan={colCount + 1} className="py-6 text-center text-muted-foreground">Caricamento…</td></tr>
             ) : rows.length === 0 ? (
-              <tr><td colSpan={9} className="py-6 text-center text-muted-foreground">Nessun ordine trovato</td></tr>
+              <tr><td colSpan={colCount + 1} className="py-6 text-center text-muted-foreground">Nessun ordine trovato</td></tr>
             ) : (
               rows.map((o) => {
                 const itemsLabel = (o.ordine_items ?? []).map((it) => `${it.quantita}× ${it.nome_snapshot}`).join(", ");
@@ -822,16 +876,22 @@ function StoricoOrdiniSection({ lidoId, defaultFrom, defaultTo }: { lidoId: stri
                     <td className="py-1.5 pr-2 font-medium whitespace-nowrap">#{String(o.numero_ordine).padStart(3, "0")}</td>
                     <td className="py-1.5 pr-2 whitespace-nowrap">{format(new Date(o.created_at), "dd/MM/yyyy HH:mm")}</td>
                     <td className="py-1.5 pr-2">{o.numero_ombrellone}</td>
-                    <td className="py-1.5 pr-2">{o.fila ?? "—"}</td>
                     <td className="py-1.5 pr-2 truncate max-w-[120px]">{o.cognome}</td>
-                    <td className="py-1.5 pr-2 whitespace-nowrap">{o.telefono ?? "—"}</td>
                     <td className="py-1.5 pr-2 truncate max-w-[200px]" title={itemsLabel}>{itemsLabel || "—"}</td>
                     <td className="py-1.5 pr-2 text-right tabular-nums whitespace-nowrap">€ {Number(o.totale).toFixed(2)}</td>
-                    <td className="py-1.5">
+                    <td className="py-1.5 pr-2">
                       <span className={`text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap ${STORICO_STATO_PILL[o.stato]}`}>
-                        {STORICO_STATO_LABEL[o.stato]}
+                        {STATO_LABEL[o.stato]}
                       </span>
                     </td>
+                    <td className="py-1.5 pr-2 whitespace-nowrap">
+                      {o.preso_in_carico_at ? format(new Date(o.preso_in_carico_at), "dd/MM HH:mm") : "—"}
+                    </td>
+                    {role === "gestore" && (
+                      <td className="py-1.5 whitespace-nowrap text-xs">
+                        {o.preso_in_carico_da ? (staffEmails.get(o.preso_in_carico_da) ?? "—") : "—"}
+                      </td>
+                    )}
                   </tr>
                 );
               })

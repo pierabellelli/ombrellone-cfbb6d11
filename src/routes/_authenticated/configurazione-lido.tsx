@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +10,13 @@ type Numerazione = "auto_lr" | "auto_rl" | "manuale";
 type Fila = { index: number; label: string; ombrelloni: { numero: number }[] };
 
 export const Route = createFileRoute("/_authenticated/configurazione-lido")({
+  beforeLoad: async () => {
+    const { data: u } = await supabase.auth.getUser();
+    if (!u.user) throw redirect({ to: "/login" });
+    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", u.user.id);
+    const allowed = (roles ?? []).some((r) => r.role === "gestore" || r.role === "super_admin");
+    if (!allowed) throw redirect({ to: "/ordini" });
+  },
   head: () => ({ meta: [{ title: "Configurazione Lido · OmbrellOne" }] }),
   component: BeachConfigPage,
 });

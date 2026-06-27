@@ -171,7 +171,11 @@ function OrdiniPage() {
   }, [lidoId, queryClient]);
 
   const move = async (id: string, nuovoStato: Stato) => {
-    const { error } = await supabase.from("ordini").update({ stato: nuovoStato }).eq("id", id);
+    // "Prendi in carico" (arrivati -> da_evadere) also records who/when took
+    // the order, atomically and without overwriting if already set.
+    const { error } = nuovoStato === "da_evadere"
+      ? await supabase.rpc("prendi_in_carico_ordine", { _id: id })
+      : await supabase.from("ordini").update({ stato: nuovoStato }).eq("id", id);
     if (error) { toast.error(t("kanban.updateError"), { description: error.message }); return; }
     queryClient.invalidateQueries({ queryKey: ["ordini-col"] });
   };
