@@ -1,5 +1,5 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -18,6 +18,7 @@ type Ordine = {
   id: string;
   numero_ordine: number;
   numero_ombrellone: string;
+  fila: string | null;
   cognome: string;
   totale: number;
   stato: Stato;
@@ -56,7 +57,7 @@ async function fetchUserLidoId(): Promise<string | null> {
 async function loadOrdini(lidoId: string, from: Date, to: Date): Promise<Ordine[]> {
   const { data, error } = await supabase
     .from("ordini")
-    .select("id, numero_ordine, numero_ombrellone, cognome, totale, stato, archiviato, created_at, updated_at, ordine_items(id, nome_snapshot, prezzo_snapshot, quantita)")
+    .select("id, numero_ordine, numero_ombrellone, fila, cognome, totale, stato, archiviato, created_at, updated_at, ordine_items(id, nome_snapshot, prezzo_snapshot, quantita)")
     .eq("lido_id", lidoId)
     .gte("created_at", from.toISOString())
     .lte("created_at", to.toISOString())
@@ -101,6 +102,7 @@ function ReportPage() {
   const [topN, setTopN] = useState<5 | 10>(10);
   const [drillProduct, setDrillProduct] = useState<string | null>(null);
   const [drillVisible, setDrillVisible] = useState(50);
+  const [timeDrill, setTimeDrill] = useState<{ key: string; label: string; mode: "bucket" | "hourOfDay" } | null>(null);
 
   const { from, to, bucket } = useMemo(() => getRange(period, customFrom, customTo), [period, customFrom, customTo]);
 
@@ -136,7 +138,7 @@ function ReportPage() {
     }
 
     const revenueSeries = bucketLabels.map((b) => ({ label: b.label, value: Math.round((revenueByBucket.get(b.key) ?? 0) * 100) / 100 }));
-    const ordersSeries = bucketLabels.map((b) => ({ label: b.label, value: ordersByBucket.get(b.key) ?? 0 }));
+    const ordersSeries = bucketLabels.map((b) => ({ key: b.key, label: b.label, value: ordersByBucket.get(b.key) ?? 0 }));
 
     const hourSeries = ordersByHour.map((count, h) => ({ hour: `${String(h).padStart(2, "0")}:00`, count }));
     const top3Hours = [...hourSeries]
@@ -208,6 +210,32 @@ function ReportPage() {
     setDrillVisible(50);
   };
 
+  const timeDrillOrders = useMemo(() => {
+    if (!timeDrill) return [];
+    return orders
+      .filter((o) => {
+        const created = new Date(o.created_at);
+        return timeDrill.mode === "bucket"
+          ? bucketKey(created, bucket) === timeDrill.key
+          : format(created, "HH:00") === timeDrill.key;
+      })
+      .map((o) => ({
+        id: o.id,
+        numero_ordine: o.numero_ordine,
+        created_at: o.created_at,
+        numero_ombrellone: o.numero_ombrellone,
+        fila: o.fila,
+        cognome: o.cognome,
+        items: o.ordine_items ?? [],
+        totale: o.totale,
+      }))
+      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+  }, [orders, timeDrill, bucket]);
+
+  const openTimeDrill = (key: string, label: string, mode: "bucket" | "hourOfDay") => {
+    setTimeDrill({ key, label, mode });
+  };
+
   return (
     <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-6">
       <div className="mb-5">
@@ -252,7 +280,13 @@ function ReportPage() {
                   <XAxis dataKey="label" tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 11 }} width={30} allowDecimals={false} />
                   <Tooltip formatter={(v: number) => [v, "Ordini"]} />
-                  <Bar dataKey="value" fill="var(--primary)" radius={[4, 4, 0, 0]} />
+                  <Bar
+                    dataKey="value"
+                    fill="var(--primary)"
+                    radius={[4, 4, 0, 0]}
+                    cursor="pointer"
+                    onClick={(data: { key: string; label: string }) => openTimeDrill(data.key, data.label, "bucket")}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -266,7 +300,12 @@ function ReportPage() {
                   <XAxis dataKey="hour" tick={{ fontSize: 10 }} interval={1} />
                   <YAxis tick={{ fontSize: 11 }} width={30} allowDecimals={false} />
                   <Tooltip formatter={(v: number) => [v, "Ordini"]} />
-                  <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+                  <Bar
+                    dataKey="count"
+                    radius={[4, 4, 0, 0]}
+                    cursor="pointer"
+                    onClick={(data: { hour: string }) => openTimeDrill(data.hour, data.hour, "hourOfDay")}
+                  >
                     {metrics.hourSeries.map((h, i) => (
                       <Cell
                         key={i}
@@ -371,6 +410,8 @@ function ReportPage() {
         </div>
       )}
 
+      {lidoId && <StoricoOrdiniSection lidoId={lidoId} defaultFrom={from} defaultTo={to} />}
+
       {drillProduct && (
         <ProductDrillModal
           product={drillProduct}
@@ -378,6 +419,14 @@ function ReportPage() {
           visible={drillVisible}
           onShowMore={() => setDrillVisible((v) => v + 50)}
           onClose={() => setDrillProduct(null)}
+        />
+      )}
+
+      {timeDrill && (
+        <OrdersTimeDrillModal
+          label={timeDrill.label}
+          orders={timeDrillOrders}
+          onClose={() => setTimeDrill(null)}
         />
       )}
     </div>
@@ -465,6 +514,69 @@ function ProductDrillModal({
   );
 }
 
+type TimeDrillOrder = {
+  id: string;
+  numero_ordine: number;
+  created_at: string;
+  numero_ombrellone: string;
+  fila: string | null;
+  cognome: string;
+  items: Item[];
+  totale: number;
+};
+
+function OrdersTimeDrillModal({ label, orders, onClose }: { label: string; orders: TimeDrillOrder[]; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col">
+        <div className="flex items-start justify-between gap-3 p-4 border-b border-border shrink-0">
+          <div className="font-bold text-primary text-lg">Ordini — {label}</div>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-secondary shrink-0">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="overflow-y-auto p-4">
+          {orders.length === 0 ? (
+            <div className="text-sm text-muted-foreground text-center py-8">Nessun ordine in questo intervallo</div>
+          ) : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs text-muted-foreground border-b border-border">
+                  <th className="py-1.5 pr-2">#Ordine</th>
+                  <th className="py-1.5 pr-2">Ora</th>
+                  <th className="py-1.5 pr-2">Ombrellone</th>
+                  <th className="py-1.5 pr-2">Fila</th>
+                  <th className="py-1.5 pr-2">Cognome</th>
+                  <th className="py-1.5 pr-2">Prodotti</th>
+                  <th className="py-1.5 text-right">Totale</th>
+                </tr>
+              </thead>
+              <tbody>
+                {orders.map((o) => {
+                  const itemsLabel = o.items.map((it) => `${it.quantita}× ${it.nome_snapshot}`).join(", ");
+                  return (
+                    <tr key={o.id} className="border-b border-border last:border-b-0">
+                      <td className="py-1.5 pr-2 font-medium">#{String(o.numero_ordine).padStart(3, "0")}</td>
+                      <td className="py-1.5 pr-2 whitespace-nowrap">{format(new Date(o.created_at), "dd/MM HH:mm")}</td>
+                      <td className="py-1.5 pr-2">{o.numero_ombrellone}</td>
+                      <td className="py-1.5 pr-2">{o.fila ?? "—"}</td>
+                      <td className="py-1.5 pr-2 truncate">{o.cognome}</td>
+                      <td className="py-1.5 pr-2 truncate max-w-[180px]" title={itemsLabel}>{itemsLabel || "—"}</td>
+                      <td className="py-1.5 text-right tabular-nums">€ {Number(o.totale).toFixed(2)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function FilterBar({
   period, onPeriod, customFrom, customTo, onCustomFrom, onCustomTo,
 }: {
@@ -525,6 +637,228 @@ function Card({ title, icon, action, children }: { title: string; icon: React.Re
         {action}
       </div>
       {children}
+    </div>
+  );
+}
+
+type StoricoStato = "tutti" | "arrivati" | "da_evadere" | "consegnati" | "annullato";
+type SortCol = "created_at" | "numero_ordine" | "numero_ombrellone" | "cognome" | "totale" | "stato";
+
+type StoricoRow = {
+  id: string;
+  numero_ordine: number;
+  created_at: string;
+  numero_ombrellone: string;
+  fila: string | null;
+  cognome: string;
+  telefono: string | null;
+  totale: number;
+  stato: Stato;
+  ordine_items: Item[];
+};
+
+const STORICO_STATO_PILL: Record<Stato, string> = {
+  arrivati: "bg-green-100 text-green-800",
+  da_evadere: "bg-amber-100 text-amber-800",
+  consegnati: "bg-emerald-100 text-emerald-800",
+  annullato: "bg-red-100 text-red-800",
+};
+
+const STORICO_STATO_LABEL: Record<Stato, string> = {
+  arrivati: "Arrivati",
+  da_evadere: "In preparazione",
+  consegnati: "Consegnati",
+  annullato: "Annullati",
+};
+
+async function loadStorico(opts: {
+  lidoId: string; from: Date; to: Date; ombrellone: string; stato: StoricoStato;
+  sortCol: SortCol; sortAsc: boolean; page: number;
+}): Promise<{ rows: StoricoRow[]; count: number }> {
+  let q = supabase
+    .from("ordini")
+    .select(
+      "id, numero_ordine, numero_ombrellone, fila, cognome, telefono, totale, stato, created_at, ordine_items(id, nome_snapshot, prezzo_snapshot, quantita)",
+      { count: "exact" },
+    )
+    .eq("lido_id", opts.lidoId)
+    .gte("created_at", opts.from.toISOString())
+    .lte("created_at", opts.to.toISOString());
+  if (opts.ombrellone.trim()) q = q.ilike("numero_ombrellone", `%${opts.ombrellone.trim()}%`);
+  if (opts.stato !== "tutti") q = q.eq("stato", opts.stato);
+  q = q.order(opts.sortCol, { ascending: opts.sortAsc }).range(opts.page * 25, (opts.page + 1) * 25 - 1);
+  const { data, error, count } = await q;
+  if (error) throw error;
+  return { rows: (data ?? []) as unknown as StoricoRow[], count: count ?? 0 };
+}
+
+function StoricoOrdiniSection({ lidoId, defaultFrom, defaultTo }: { lidoId: string; defaultFrom: Date; defaultTo: Date }) {
+  const [localFrom, setLocalFrom] = useState(format(defaultFrom, "yyyy-MM-dd"));
+  const [localTo, setLocalTo] = useState(format(defaultTo, "yyyy-MM-dd"));
+  const [ombrelloneInput, setOmbrelloneInput] = useState("");
+  const [ombrelloneFilter, setOmbrelloneFilter] = useState("");
+  const [stato, setStato] = useState<StoricoStato>("tutti");
+  const [sortCol, setSortCol] = useState<SortCol>("created_at");
+  const [sortAsc, setSortAsc] = useState(false);
+  const [page, setPage] = useState(0);
+
+  useEffect(() => {
+    setLocalFrom(format(defaultFrom, "yyyy-MM-dd"));
+    setLocalTo(format(defaultTo, "yyyy-MM-dd"));
+    setPage(0);
+  }, [defaultFrom, defaultTo]);
+
+  useEffect(() => {
+    const id = setTimeout(() => {
+      setOmbrelloneFilter(ombrelloneInput);
+      setPage(0);
+    }, 300);
+    return () => clearTimeout(id);
+  }, [ombrelloneInput]);
+
+  const fromDate = useMemo(() => startOfDay(new Date(localFrom)), [localFrom]);
+  const toDate = useMemo(() => endOfDay(new Date(localTo)), [localTo]);
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["report-storico", lidoId, localFrom, localTo, ombrelloneFilter, stato, sortCol, sortAsc, page],
+    queryFn: () => loadStorico({ lidoId, from: fromDate, to: toDate, ombrellone: ombrelloneFilter, stato, sortCol, sortAsc, page }),
+    enabled: !!lidoId,
+  });
+
+  const rows = data?.rows ?? [];
+  const count = data?.count ?? 0;
+  const totalPages = Math.max(1, Math.ceil(count / 25));
+
+  const toggleSort = (col: SortCol) => {
+    if (sortCol === col) setSortAsc((a) => !a);
+    else { setSortCol(col); setSortAsc(false); }
+    setPage(0);
+  };
+
+  const clearFilters = () => {
+    setOmbrelloneInput("");
+    setOmbrelloneFilter("");
+    setStato("tutti");
+    setLocalFrom(format(defaultFrom, "yyyy-MM-dd"));
+    setLocalTo(format(defaultTo, "yyyy-MM-dd"));
+    setPage(0);
+  };
+
+  const sortIndicator = (col: SortCol) => (sortCol === col ? (sortAsc ? "▲" : "▼") : "");
+
+  return (
+    <div className="mt-6 card-soft p-4">
+      <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
+        <h2 className="text-lg font-bold text-primary">Storico ordini</h2>
+        <span className="text-sm text-muted-foreground">Totale: {count} ordini</span>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3 mb-3 pb-3 border-b border-border">
+        <div className="flex items-center gap-2">
+          <input
+            type="date"
+            value={localFrom}
+            onChange={(e) => { setLocalFrom(e.target.value); setPage(0); }}
+            className="px-2.5 py-1.5 rounded-lg border border-border bg-card text-sm"
+          />
+          <span className="text-muted-foreground text-sm">→</span>
+          <input
+            type="date"
+            value={localTo}
+            onChange={(e) => { setLocalTo(e.target.value); setPage(0); }}
+            className="px-2.5 py-1.5 rounded-lg border border-border bg-card text-sm"
+          />
+        </div>
+        <input
+          value={ombrelloneInput}
+          onChange={(e) => setOmbrelloneInput(e.target.value)}
+          placeholder="Numero ombrellone"
+          className="px-2.5 py-1.5 rounded-lg border border-border bg-card text-sm w-36"
+        />
+        <select
+          value={stato}
+          onChange={(e) => { setStato(e.target.value as StoricoStato); setPage(0); }}
+          className="px-2.5 py-1.5 rounded-lg border border-border bg-card text-sm"
+        >
+          <option value="tutti">Tutti</option>
+          <option value="arrivati">Arrivati</option>
+          <option value="da_evadere">In preparazione</option>
+          <option value="consegnati">Consegnati</option>
+          <option value="annullato">Annullati</option>
+        </select>
+        <button
+          onClick={clearFilters}
+          className="inline-flex items-center gap-1 text-sm px-3 py-1.5 rounded-lg border border-border hover:bg-secondary transition"
+        >
+          <X className="w-3.5 h-3.5" /> Pulisci filtri
+        </button>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm min-w-[760px]">
+          <thead>
+            <tr className="text-left text-xs text-muted-foreground border-b border-border">
+              <th className="py-1.5 pr-2 cursor-pointer whitespace-nowrap" onClick={() => toggleSort("numero_ordine")}>#Ordine {sortIndicator("numero_ordine")}</th>
+              <th className="py-1.5 pr-2 cursor-pointer whitespace-nowrap" onClick={() => toggleSort("created_at")}>Data/ora {sortIndicator("created_at")}</th>
+              <th className="py-1.5 pr-2 cursor-pointer whitespace-nowrap" onClick={() => toggleSort("numero_ombrellone")}>Ombrellone {sortIndicator("numero_ombrellone")}</th>
+              <th className="py-1.5 pr-2">Fila</th>
+              <th className="py-1.5 pr-2 cursor-pointer whitespace-nowrap" onClick={() => toggleSort("cognome")}>Cognome {sortIndicator("cognome")}</th>
+              <th className="py-1.5 pr-2">Telefono</th>
+              <th className="py-1.5 pr-2">Prodotti</th>
+              <th className="py-1.5 pr-2 text-right cursor-pointer whitespace-nowrap" onClick={() => toggleSort("totale")}>Totale {sortIndicator("totale")}</th>
+              <th className="py-1.5 cursor-pointer whitespace-nowrap" onClick={() => toggleSort("stato")}>Stato {sortIndicator("stato")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {isLoading ? (
+              <tr><td colSpan={9} className="py-6 text-center text-muted-foreground">Caricamento…</td></tr>
+            ) : rows.length === 0 ? (
+              <tr><td colSpan={9} className="py-6 text-center text-muted-foreground">Nessun ordine trovato</td></tr>
+            ) : (
+              rows.map((o) => {
+                const itemsLabel = (o.ordine_items ?? []).map((it) => `${it.quantita}× ${it.nome_snapshot}`).join(", ");
+                return (
+                  <tr key={o.id} className="border-b border-border last:border-b-0">
+                    <td className="py-1.5 pr-2 font-medium whitespace-nowrap">#{String(o.numero_ordine).padStart(3, "0")}</td>
+                    <td className="py-1.5 pr-2 whitespace-nowrap">{format(new Date(o.created_at), "dd/MM/yyyy HH:mm")}</td>
+                    <td className="py-1.5 pr-2">{o.numero_ombrellone}</td>
+                    <td className="py-1.5 pr-2">{o.fila ?? "—"}</td>
+                    <td className="py-1.5 pr-2 truncate max-w-[120px]">{o.cognome}</td>
+                    <td className="py-1.5 pr-2 whitespace-nowrap">{o.telefono ?? "—"}</td>
+                    <td className="py-1.5 pr-2 truncate max-w-[200px]" title={itemsLabel}>{itemsLabel || "—"}</td>
+                    <td className="py-1.5 pr-2 text-right tabular-nums whitespace-nowrap">€ {Number(o.totale).toFixed(2)}</td>
+                    <td className="py-1.5">
+                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap ${STORICO_STATO_PILL[o.stato]}`}>
+                        {STORICO_STATO_LABEL[o.stato]}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="mt-3 flex items-center justify-between">
+        <span className="text-xs text-muted-foreground">Pagina {page + 1} di {totalPages}</span>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setPage((p) => Math.max(0, p - 1))}
+            disabled={page === 0}
+            className="px-3 py-1.5 rounded-lg text-sm border border-border disabled:opacity-40 hover:bg-secondary transition"
+          >
+            Precedente
+          </button>
+          <button
+            onClick={() => setPage((p) => p + 1)}
+            disabled={(page + 1) * 25 >= count}
+            className="px-3 py-1.5 rounded-lg text-sm border border-border disabled:opacity-40 hover:bg-secondary transition"
+          >
+            Successiva
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
