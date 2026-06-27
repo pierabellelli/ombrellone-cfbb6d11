@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as TracciaSlugRouteImport } from './routes/traccia.$slug'
 import { Route as LidoSlugRouteImport } from './routes/lido.$slug'
 import { Route as AuthenticatedReportRouteImport } from './routes/_authenticated/report'
+import { Route as AuthenticatedQrcodeRouteImport } from './routes/_authenticated/qrcode'
 import { Route as AuthenticatedProdottiRouteImport } from './routes/_authenticated/prodotti'
 import { Route as AuthenticatedOrdiniRouteImport } from './routes/_authenticated/ordini'
 import { Route as AuthenticatedMappaRouteImport } from './routes/_authenticated/mappa'
@@ -48,6 +49,11 @@ const LidoSlugRoute = LidoSlugRouteImport.update({
 const AuthenticatedReportRoute = AuthenticatedReportRouteImport.update({
   id: '/report',
   path: '/report',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedQrcodeRoute = AuthenticatedQrcodeRouteImport.update({
+  id: '/qrcode',
+  path: '/qrcode',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedProdottiRoute = AuthenticatedProdottiRouteImport.update({
@@ -86,6 +92,7 @@ export interface FileRoutesByFullPath {
   '/mappa': typeof AuthenticatedMappaRoute
   '/ordini': typeof AuthenticatedOrdiniRoute
   '/prodotti': typeof AuthenticatedProdottiRoute
+  '/qrcode': typeof AuthenticatedQrcodeRoute
   '/report': typeof AuthenticatedReportRoute
   '/lido/$slug': typeof LidoSlugRoute
   '/traccia/$slug': typeof TracciaSlugRoute
@@ -98,6 +105,7 @@ export interface FileRoutesByTo {
   '/mappa': typeof AuthenticatedMappaRoute
   '/ordini': typeof AuthenticatedOrdiniRoute
   '/prodotti': typeof AuthenticatedProdottiRoute
+  '/qrcode': typeof AuthenticatedQrcodeRoute
   '/report': typeof AuthenticatedReportRoute
   '/lido/$slug': typeof LidoSlugRoute
   '/traccia/$slug': typeof TracciaSlugRoute
@@ -112,6 +120,7 @@ export interface FileRoutesById {
   '/_authenticated/mappa': typeof AuthenticatedMappaRoute
   '/_authenticated/ordini': typeof AuthenticatedOrdiniRoute
   '/_authenticated/prodotti': typeof AuthenticatedProdottiRoute
+  '/_authenticated/qrcode': typeof AuthenticatedQrcodeRoute
   '/_authenticated/report': typeof AuthenticatedReportRoute
   '/lido/$slug': typeof LidoSlugRoute
   '/traccia/$slug': typeof TracciaSlugRoute
@@ -126,6 +135,7 @@ export interface FileRouteTypes {
     | '/mappa'
     | '/ordini'
     | '/prodotti'
+    | '/qrcode'
     | '/report'
     | '/lido/$slug'
     | '/traccia/$slug'
@@ -138,6 +148,7 @@ export interface FileRouteTypes {
     | '/mappa'
     | '/ordini'
     | '/prodotti'
+    | '/qrcode'
     | '/report'
     | '/lido/$slug'
     | '/traccia/$slug'
@@ -151,6 +162,7 @@ export interface FileRouteTypes {
     | '/_authenticated/mappa'
     | '/_authenticated/ordini'
     | '/_authenticated/prodotti'
+    | '/_authenticated/qrcode'
     | '/_authenticated/report'
     | '/lido/$slug'
     | '/traccia/$slug'
@@ -208,6 +220,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReportRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/qrcode': {
+      id: '/_authenticated/qrcode'
+      path: '/qrcode'
+      fullPath: '/qrcode'
+      preLoaderRoute: typeof AuthenticatedQrcodeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/prodotti': {
       id: '/_authenticated/prodotti'
       path: '/prodotti'
@@ -252,6 +271,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedMappaRoute: typeof AuthenticatedMappaRoute
   AuthenticatedOrdiniRoute: typeof AuthenticatedOrdiniRoute
   AuthenticatedProdottiRoute: typeof AuthenticatedProdottiRoute
+  AuthenticatedQrcodeRoute: typeof AuthenticatedQrcodeRoute
   AuthenticatedReportRoute: typeof AuthenticatedReportRoute
 }
 
@@ -261,6 +281,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMappaRoute: AuthenticatedMappaRoute,
   AuthenticatedOrdiniRoute: AuthenticatedOrdiniRoute,
   AuthenticatedProdottiRoute: AuthenticatedProdottiRoute,
+  AuthenticatedQrcodeRoute: AuthenticatedQrcodeRoute,
   AuthenticatedReportRoute: AuthenticatedReportRoute,
 }
 

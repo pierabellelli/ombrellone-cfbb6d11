@@ -2,7 +2,7 @@ import { createFileRoute, Outlet, redirect, Link, useNavigate, useRouterState } 
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Logo } from "@/components/Logo";
-import { LogOut, ClipboardList, Package, Settings, Map as MapIcon, LayoutPanelTop, BarChart3 } from "lucide-react";
+import { LogOut, ClipboardList, Package, Settings, Map as MapIcon, LayoutPanelTop, BarChart3, QrCode } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useI18n } from "@/lib/i18n";
 
@@ -96,7 +96,10 @@ function AuthLayout() {
                   </>
                 )}
                 {isGestore && (
-                  <NavLink to="/report" icon={<BarChart3 className="w-4 h-4" />} label={t("nav.report")} />
+                  <>
+                    <NavLink to="/report" icon={<BarChart3 className="w-4 h-4" />} label={t("nav.report")} />
+                    <NavLink to="/qrcode" icon={<QrCode className="w-4 h-4" />} label={t("nav.qrcode")} />
+                  </>
                 )}
                 {isStaffOnly && (
                   <NavLink to="/report" icon={<BarChart3 className="w-4 h-4" />} label={t("nav.storico")} />

@@ -26,6 +26,9 @@ dist-ssr
 # Supabase CLI local link state
 supabase/.temp/
 
+# This project uses bun.lock as its canonical lockfile
+package-lock.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
