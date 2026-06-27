@@ -1,10 +1,11 @@
 import { createFileRoute, Outlet, redirect, Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Logo } from "@/components/Logo";
-import { LogOut, ClipboardList, Package, Settings, Map as MapIcon, LayoutPanelTop, BarChart3, QrCode } from "lucide-react";
+import { LogOut, ClipboardList, Package, Settings, Map as MapIcon, LayoutPanelTop, BarChart3, QrCode, MoreHorizontal } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useI18n } from "@/lib/i18n";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose } from "@/components/ui/sheet";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -66,6 +67,19 @@ function AuthLayout() {
 
   const isAdminArea = pathname.startsWith("/admin");
 
+  const navItems: { to: string; icon: ReactNode; label: string; visible: boolean }[] = [
+    { to: "/mappa", icon: <MapIcon className="w-4 h-4" />, label: t("nav.map"), visible: canSeeMap },
+    { to: "/ordini", icon: <ClipboardList className="w-4 h-4" />, label: t("nav.orders"), visible: true },
+    { to: "/prodotti", icon: <Package className="w-4 h-4" />, label: t("nav.products"), visible: isGestore || isSuper },
+    { to: "/configurazione-lido", icon: <LayoutPanelTop className="w-4 h-4" />, label: t("nav.beachConfig"), visible: isGestore || isSuper },
+    { to: "/impostazioni", icon: <Settings className="w-4 h-4" />, label: t("nav.settings"), visible: isGestore || isSuper },
+    { to: "/qrcode", icon: <QrCode className="w-4 h-4" />, label: t("nav.qrcode"), visible: isGestore },
+    { to: "/report", icon: <BarChart3 className="w-4 h-4" />, label: isStaffOnly ? t("nav.storico") : t("nav.report"), visible: isGestore || isStaffOnly },
+  ];
+  const visibleNavItems = navItems.filter((item) => item.visible);
+  const mobileTabs = visibleNavItems.length > 5 ? visibleNavItems.slice(0, 4) : visibleNavItems;
+  const mobileMoreItems = visibleNavItems.length > 5 ? visibleNavItems.slice(4) : [];
+
   return (
     <div className="min-h-screen flex flex-col">
       <header className="border-b border-border bg-card/80 backdrop-blur sticky top-0 z-30">
@@ -84,26 +98,9 @@ function AuthLayout() {
             </Link>
             {!isAdminArea && (
               <nav className="hidden md:flex items-center gap-1">
-                {canSeeMap && (
-                  <NavLink to="/mappa" icon={<MapIcon className="w-4 h-4" />} label={t("nav.map")} />
-                )}
-                <NavLink to="/ordini" icon={<ClipboardList className="w-4 h-4" />} label={t("nav.orders")} />
-                {(isGestore || isSuper) && (
-                  <>
-                    <NavLink to="/prodotti" icon={<Package className="w-4 h-4" />} label={t("nav.products")} />
-                    <NavLink to="/configurazione-lido" icon={<LayoutPanelTop className="w-4 h-4" />} label={t("nav.beachConfig")} />
-                    <NavLink to="/impostazioni" icon={<Settings className="w-4 h-4" />} label={t("nav.settings")} />
-                  </>
-                )}
-                {isGestore && (
-                  <>
-                    <NavLink to="/report" icon={<BarChart3 className="w-4 h-4" />} label={t("nav.report")} />
-                    <NavLink to="/qrcode" icon={<QrCode className="w-4 h-4" />} label={t("nav.qrcode")} />
-                  </>
-                )}
-                {isStaffOnly && (
-                  <NavLink to="/report" icon={<BarChart3 className="w-4 h-4" />} label={t("nav.storico")} />
-                )}
+                {visibleNavItems.map((item) => (
+                  <NavLink key={item.to} to={item.to} icon={item.icon} label={item.label} />
+                ))}
               </nav>
             )}
           </div>
@@ -118,10 +115,84 @@ function AuthLayout() {
         </div>
       </header>
 
-      <main className="flex-1">
+      <main className={`flex-1 ${!isAdminArea ? "pb-16 md:pb-0" : ""}`}>
         <Outlet />
       </main>
+
+      {!isAdminArea && (
+        <MobileBottomNav tabs={mobileTabs} moreItems={mobileMoreItems} moreLabel={t("nav.more")} />
+      )}
     </div>
+  );
+}
+
+function MobileBottomNav({
+  tabs, moreItems, moreLabel,
+}: {
+  tabs: { to: string; icon: ReactNode; label: string }[];
+  moreItems: { to: string; icon: ReactNode; label: string }[];
+  moreLabel: string;
+}) {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreActive = moreItems.some((item) => pathname === item.to || pathname.startsWith(item.to + "/"));
+
+  return (
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-card border-t border-border flex items-stretch">
+      {tabs.map((item) => (
+        <MobileNavLink key={item.to} to={item.to} icon={item.icon} label={item.label} />
+      ))}
+      {moreItems.length > 0 && (
+        <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
+          <button
+            type="button"
+            onClick={() => setMoreOpen(true)}
+            className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-medium transition ${
+              moreActive ? "text-primary" : "text-muted-foreground"
+            }`}
+          >
+            <MoreHorizontal className="w-5 h-5" />
+            {moreLabel}
+          </button>
+          <SheetContent side="bottom" className="rounded-t-2xl">
+            <SheetHeader><SheetTitle>{moreLabel}</SheetTitle></SheetHeader>
+            <div className="mt-2 flex flex-col">
+              {moreItems.map((item) => (
+                <SheetClose asChild key={item.to}>
+                  <Link
+                    to={item.to}
+                    className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition ${
+                      pathname === item.to || pathname.startsWith(item.to + "/")
+                        ? "bg-primary text-primary-foreground"
+                        : "hover:bg-secondary text-foreground"
+                    }`}
+                  >
+                    {item.icon}
+                    {item.label}
+                  </Link>
+                </SheetClose>
+              ))}
+            </div>
+          </SheetContent>
+        </Sheet>
+      )}
+    </nav>
+  );
+}
+
+function MobileNavLink({ to, icon, label }: { to: string; icon: ReactNode; label: string }) {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const active = pathname === to || pathname.startsWith(to + "/");
+  return (
+    <Link
+      to={to}
+      className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-medium transition ${
+        active ? "text-primary" : "text-muted-foreground"
+      }`}
+    >
+      {icon}
+      {label}
+    </Link>
   );
 }
 
