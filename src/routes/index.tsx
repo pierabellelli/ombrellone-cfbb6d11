@@ -570,6 +570,13 @@ function FormContatto() {
   return (
     <section id="contatto" className="px-6 lg:px-16 py-20 max-w-2xl mx-auto w-full">
       <h2 className="text-3xl md:text-4xl font-bold text-primary text-center">Richiedi una demo gratuita</h2>
+      <p className="text-sm text-muted-foreground mt-1">
+        Oppure scrivici direttamente a{" "}
+        <a href="mailto:ciao@ombrellone.app"
+           className="text-teal-600 hover:underline font-medium">
+          ciao@ombrellone.app
+        </a>
+      </p>
       <p className="mt-4 text-lg text-muted-foreground text-center">
         Compila il form e ti contatteremo entro 24 ore.
       </p>
