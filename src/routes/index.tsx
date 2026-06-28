@@ -95,9 +95,9 @@ function Home() {
 
         <div className="relative">
           <img
-            src="/umbrella-sea.jpg"
-            alt="Lido italiano"
-            className="rounded-2xl shadow-[var(--shadow-elevated)] aspect-[4/3] object-cover w-full"
+            src="/main_ombrellone_gestionale_bar.png"
+            alt="OmbrellOne in uso al lido"
+            className="rounded-2xl shadow-xl w-full object-cover"
           />
         </div>
       </main>
@@ -114,7 +114,7 @@ function Home() {
 function NavBar() {
   return (
     <header className="px-6 py-5 flex items-center justify-between">
-      <img src="/logo_ombrellOne.png" alt="OmbrellOne" className="h-14 w-auto" />
+      <img src="/logo_ombrellOne.png" alt="OmbrellOne" className="h-20 w-auto" />
       <Link
         to="/login"
         className="text-sm font-medium px-4 py-2 rounded-full border border-border bg-card hover:bg-secondary transition"

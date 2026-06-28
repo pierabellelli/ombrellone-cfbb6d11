@@ -47,7 +47,7 @@ function LoginPage() {
           alt=""
           className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-black/40" />
+        <div className="absolute inset-0 bg-gradient-to-br from-teal-900/60 to-blue-900/60 z-0" />
       </div>
 
       {/* Home button top-left */}
@@ -60,10 +60,8 @@ function LoginPage() {
       </Link>
 
       {/* Card */}
-      <div className="w-full max-w-md bg-white rounded-2xl p-8 md:p-10 shadow-2xl relative">
-        <div className="flex justify-center mb-7">
-          <img src="/logo_ombrellOne.png" alt="OmbrellOne" className="h-16 w-auto mx-auto" />
-        </div>
+      <div className="w-full max-w-md bg-white rounded-2xl p-8 md:p-10 shadow-2xl relative z-10">
+        <img src="/logo_ombrellOne.png" alt="OmbrellOne" className="h-20 w-auto mx-auto mb-6" />
 
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
