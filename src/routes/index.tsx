@@ -144,8 +144,8 @@ function NavBar() {
 
   return (
     <header className={`sticky top-0 z-50 bg-white transition-shadow ${scrolled ? "shadow-sm" : ""}`}>
-      <div className="px-6 py-3 flex items-center justify-between max-w-7xl mx-auto w-full">
-        <img src="/logo_ombrellOne.png" alt="OmbrellOne" className="h-[calc(6rem+6px)] w-auto" />
+      <div className="px-6 py-2 flex items-center justify-between max-w-7xl mx-auto w-full">
+        <img src="/logo_ombrellOne.png" alt="OmbrellOne" className="h-16 w-auto" />
 
         <nav className="hidden md:flex items-center gap-6">
           {NAV_LINKS.map((link) => (
