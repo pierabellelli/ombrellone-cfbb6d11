@@ -240,7 +240,7 @@ function FormContatto() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="mt-1.5"
-            placeholder="mario@example.com"
+            placeholder="email@miolido.it"
           />
         </div>
         <div>
@@ -251,7 +251,7 @@ function FormContatto() {
             value={nomeLido}
             onChange={(e) => setNomeLido(e.target.value)}
             className="mt-1.5"
-            placeholder="Bagno Marina"
+            placeholder="Lido Azzurro"
           />
         </div>
         <div>
@@ -262,7 +262,7 @@ function FormContatto() {
             value={citta}
             onChange={(e) => setCitta(e.target.value)}
             className="mt-1.5"
-            placeholder="Rimini"
+            placeholder="Capaccio Paestum"
           />
         </div>
         <div>
