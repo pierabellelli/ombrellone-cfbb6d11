@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   TrendingUp,
   Timer,
-  Smile,
+  Zap,
   Smartphone,
   Check,
   X,
@@ -21,6 +21,7 @@ import {
   ChevronRight,
   Users,
   PiggyBank,
+  Menu,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -36,10 +37,10 @@ export const Route = createFileRoute("/")({
 });
 
 const BENEFICI = [
-  { emoji: "📈", titolo: "Più ordini per ombrellone", descrizione: "Il cliente ordina quando vuole, senza aspettare il cameriere", Icon: TrendingUp },
-  { emoji: "⏱️", titolo: "Personale più efficiente", descrizione: "Meno corse, meno errori, più tempo per servire", Icon: Timer },
-  { emoji: "😌", titolo: "Zero code al bar", descrizione: "Esperienza cliente superiore, clienti che tornano", Icon: Smile },
-  { emoji: "📲", titolo: "Attivo in 24 ore", descrizione: "Nessuna installazione hardware, setup immediato", Icon: Smartphone },
+  { titolo: "Più ordini per ombrellone", descrizione: "Il cliente ordina quando vuole, senza aspettare il cameriere", Icon: TrendingUp },
+  { titolo: "Personale più efficiente", descrizione: "Meno corse, meno errori, più tempo per servire", Icon: Zap },
+  { titolo: "Zero code al bar", descrizione: "Esperienza cliente superiore, clienti che tornano", Icon: Smartphone },
+  { titolo: "Attivo in 24 ore", descrizione: "Nessuna installazione hardware, setup immediato", Icon: Timer },
 ];
 
 const CONFRONTO = [
@@ -110,6 +111,7 @@ function Home() {
       <Hero />
       <Benefici />
       <ComeFunziona />
+      <InAzione />
       <EmotionSection />
       <PrimaDopo />
       <RoiSection />
@@ -122,16 +124,89 @@ function Home() {
   );
 }
 
+const NAV_LINKS = [
+  { href: "#come-funziona", label: "Come funziona", pill: false },
+  { href: "#funzionalita", label: "Funzionalità", pill: false },
+  { href: "#contatto", label: "Richiedi demo", pill: true },
+  { href: "#contatto", label: "Contatti", pill: false },
+];
+
 function NavBar() {
+  const [scrolled, setScrolled] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   return (
-    <header className="px-6 py-5 flex items-center justify-between">
-      <img src="/logo_ombrellOne.png" alt="OmbrellOne" className="h-24 w-auto" />
-      <Link
-        to="/login"
-        className="text-sm font-medium px-4 py-2 rounded-full border border-border bg-card hover:bg-secondary transition"
-      >
-        Accedi
-      </Link>
+    <header className={`sticky top-0 z-50 bg-white transition-shadow ${scrolled ? "shadow-sm" : ""}`}>
+      <div className="px-6 py-3 flex items-center justify-between max-w-7xl mx-auto w-full">
+        <img src="/logo_ombrellOne.png" alt="OmbrellOne" className="h-[calc(6rem+6px)] w-auto" />
+
+        <nav className="hidden md:flex items-center gap-6">
+          {NAV_LINKS.map((link) => (
+            <a
+              key={link.label}
+              href={link.href}
+              className={
+                link.pill
+                  ? "text-sm font-semibold px-4 py-2 rounded-full bg-[color:var(--teal-deep)] text-white hover:opacity-90 transition"
+                  : "text-sm font-medium text-foreground hover:text-primary transition"
+              }
+            >
+              {link.label}
+            </a>
+          ))}
+        </nav>
+
+        <div className="hidden md:block">
+          <Link
+            to="/login"
+            className="text-sm font-medium px-4 py-2 rounded-full border border-border bg-card hover:bg-secondary transition"
+          >
+            Accedi
+          </Link>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setMobileOpen((v) => !v)}
+          className="md:hidden p-2 rounded-lg hover:bg-secondary transition"
+          aria-label="Apri il menu"
+        >
+          <Menu className="w-6 h-6" />
+        </button>
+      </div>
+
+      {mobileOpen && (
+        <div className="md:hidden border-t border-border bg-white px-6 py-4 flex flex-col gap-3">
+          {NAV_LINKS.map((link) => (
+            <a
+              key={link.label}
+              href={link.href}
+              onClick={() => setMobileOpen(false)}
+              className={
+                link.pill
+                  ? "text-sm font-semibold text-center px-4 py-2 rounded-full bg-[color:var(--teal-deep)] text-white"
+                  : "text-sm font-medium text-foreground py-1.5"
+              }
+            >
+              {link.label}
+            </a>
+          ))}
+          <Link
+            to="/login"
+            onClick={() => setMobileOpen(false)}
+            className="text-sm font-medium text-center px-4 py-2 rounded-full border border-border bg-card"
+          >
+            Accedi
+          </Link>
+        </div>
+      )}
     </header>
   );
 }
@@ -170,7 +245,7 @@ function Hero() {
 
 function Benefici() {
   return (
-    <section className="px-6 lg:px-16 py-16 max-w-7xl mx-auto w-full">
+    <section id="funzionalita" className="px-6 lg:px-16 py-16 max-w-7xl mx-auto w-full">
       <h2 className="text-3xl md:text-4xl font-bold text-primary text-center mb-12">
         I vantaggi per il tuo stabilimento
       </h2>
@@ -180,7 +255,7 @@ function Benefici() {
             key={b.titolo}
             className="bg-white rounded-2xl border border-border shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-elevated)] transition p-6 text-center"
           >
-            <div className="text-5xl mb-4">{b.emoji}</div>
+            <b.Icon className="w-8 h-8 text-teal-600 mx-auto mb-4" />
             <h3 className="text-lg font-bold text-primary">{b.titolo}</h3>
             <p className="mt-2 text-sm text-muted-foreground">{b.descrizione}</p>
           </div>
@@ -206,7 +281,7 @@ function EmotionSection() {
 
 function ComeFunziona() {
   return (
-    <section className="px-6 lg:px-16 py-20 max-w-6xl mx-auto w-full">
+    <section id="come-funziona" className="px-6 lg:px-16 py-20 max-w-6xl mx-auto w-full">
       <h2 className="text-3xl md:text-4xl font-bold text-primary text-center mb-12">
         Come funziona
       </h2>
@@ -231,6 +306,92 @@ function ComeFunziona() {
       </div>
       <div className="mt-12 text-center">
         <DemoButton className="bg-primary text-primary-foreground hover:bg-primary/90" />
+      </div>
+    </section>
+  );
+}
+
+const IN_AZIONE_ITEMS = [
+  {
+    badge: "👤 Esperienza cliente",
+    titolo: "Il cliente ordina in 30 secondi",
+    testo: "Scansiona il QR, sceglie dal menu, invia. Nessuna app da installare, nessuna registrazione. I preferiti vengono ricordati per il prossimo ordine.",
+    image: "/screenshots/screen-menu.jpg",
+    imageClassName: "rounded-2xl shadow-xl w-full max-w-[280px] mx-auto",
+    reverse: false,
+  },
+  {
+    badge: "👨‍💼 Gestionale staff",
+    titolo: "Lo staff gestisce tutto in tempo reale",
+    testo: "Ogni ordine appare istantaneamente nel Kanban con notifica sonora. Nuovi → In preparazione → Consegnato. Nessun ordine perso, nessuna confusione.",
+    image: "/screenshots/screen-kanban-desktop.jpg",
+    imageClassName: "rounded-2xl shadow-xl w-full",
+    reverse: true,
+  },
+  {
+    badge: "🗺️ Mappa ombrelloni",
+    titolo: "Controllo visivo di ogni ombrellone",
+    testo: "Vedi in un colpo d'occhio quali ombrelloni hanno ordini attivi, in ritardo o consegnati. Clicca su un ombrellone per vedere i dettagli.",
+    image: "/screenshots/screen-mappa.jpg",
+    imageClassName: "rounded-2xl shadow-xl w-full max-w-[280px] mx-auto",
+    reverse: false,
+  },
+];
+
+const IN_AZIONE_GRID = [
+  {
+    badge: "📱 Mobile first",
+    titolo: "Lavora da qualsiasi dispositivo",
+    testo: "Il gestionale è ottimizzato per tablet e smartphone. Lo staff può lavorare senza PC.",
+    image: "/screenshots/screen-kanban-mobile.jpg",
+    imageClassName: "rounded-2xl shadow-xl w-full max-w-[220px] mx-auto",
+  },
+  {
+    badge: "📊 Analytics",
+    titolo: "Analizza le performance del tuo lido",
+    testo: "Prodotti più venduti, ore di punta, revenue e tempo medio di consegna. Dati per decidere meglio.",
+    image: "/screenshots/screen-report.jpg",
+    imageClassName: "rounded-2xl shadow-xl w-full",
+  },
+];
+
+function InAzione() {
+  return (
+    <section className="px-6 lg:px-16 py-20 max-w-6xl mx-auto w-full">
+      <h2 className="text-3xl md:text-4xl font-bold text-primary text-center">
+        Vedi OmbrellOne in azione
+      </h2>
+      <p className="mt-4 text-lg text-muted-foreground text-center max-w-2xl mx-auto">
+        Dal menu sul telefono del cliente al report serale del gestore.
+      </p>
+
+      <div className="mt-16 space-y-16">
+        {IN_AZIONE_ITEMS.map((item) => (
+          <div
+            key={item.titolo}
+            className={`grid md:grid-cols-2 gap-8 md:gap-12 items-center ${item.reverse ? "md:[&>*:first-child]:order-2" : ""}`}
+          >
+            <div>
+              <span className="chip chip-active">{item.badge}</span>
+              <h3 className="mt-4 text-2xl md:text-3xl font-bold text-primary">{item.titolo}</h3>
+              <p className="mt-3 text-muted-foreground">{item.testo}</p>
+            </div>
+            <div>
+              <img src={item.image} alt={item.titolo} className={item.imageClassName} />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-16 grid md:grid-cols-2 gap-8">
+        {IN_AZIONE_GRID.map((item) => (
+          <div key={item.titolo} className="bg-white rounded-2xl border border-border shadow-[var(--shadow-card)] p-6 md:p-8">
+            <span className="chip chip-active">{item.badge}</span>
+            <h3 className="mt-4 text-xl font-bold text-primary">{item.titolo}</h3>
+            <p className="mt-3 text-muted-foreground">{item.testo}</p>
+            <img src={item.image} alt={item.titolo} className={`mt-6 ${item.imageClassName}`} />
+          </div>
+        ))}
       </div>
     </section>
   );
