@@ -61,12 +61,15 @@ function LoginPage() {
 
       {/* Headline + card */}
       <div className="w-full max-w-md relative z-10">
-        <p className="text-white text-2xl font-bold mb-6 text-center drop-shadow-lg">
+        <p
+          className="text-white text-2xl font-bold mb-6 text-center drop-shadow-lg"
+          style={{ textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}
+        >
           Accedi al tuo lido
         </p>
 
         <div className="bg-white rounded-2xl p-8 md:p-10 shadow-2xl">
-          <img src="/logo_ombrellOne.png" alt="OmbrellOne" className="h-24 w-auto mx-auto mb-6" />
+          <img src="/logo_ombrellOne.png" alt="OmbrellOne" className="h-24 w-auto mx-auto mb-8" />
 
           <form onSubmit={onSubmit} className="space-y-4">
             <div>
@@ -104,9 +107,9 @@ function LoginPage() {
             </button>
           </form>
 
-          <p className="mt-6 text-center text-xs text-muted-foreground">
-            Non hai ancora un account? Contatta il tuo gestore.
-          </p>
+          <a href="/#contatto" className="mt-6 block text-center text-sm text-teal-600 hover:underline">
+            Vuoi provare OmbrellOne? Richiedi una demo gratuita
+          </a>
         </div>
       </div>
     </div>
