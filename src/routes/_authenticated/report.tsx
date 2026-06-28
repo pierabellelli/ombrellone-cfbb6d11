@@ -705,16 +705,16 @@ async function loadStorico(opts: {
 }
 
 async function loadStoricoStaffGlobale(lidoId: string): Promise<boolean> {
-  const { data, error } = await supabase.from("lidi").select("storico_staff_globale").eq("id", lidoId).maybeSingle();
+  const { data, error } = await (supabase.from("lidi") as any).select("storico_staff_globale").eq("id", lidoId).maybeSingle();
   if (error) throw error;
-  return !!data?.storico_staff_globale;
+  return !!(data as any)?.storico_staff_globale;
 }
 
 async function loadUserEmails(userIds: string[]): Promise<Map<string, string>> {
   if (userIds.length === 0) return new Map();
-  const { data, error } = await supabase.rpc("get_user_emails", { _user_ids: userIds });
+  const { data, error } = await (supabase.rpc as any)("get_user_emails", { _user_ids: userIds });
   if (error) return new Map();
-  return new Map((data ?? []).map((u) => [u.id, u.email]));
+  return new Map(((data ?? []) as any[]).map((u: any) => [u.id, u.email]));
 }
 
 function StoricoOrdiniSection({

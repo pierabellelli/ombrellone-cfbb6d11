@@ -53,8 +53,8 @@ async function fetchUserLidoId(): Promise<string | null> {
 }
 
 async function loadColonna(stato: Stato, lidoId: string): Promise<Ordine[]> {
-  let q = supabase
-    .from("ordini")
+  let q = (supabase
+    .from("ordini") as any)
     .select(SELECT_COLS)
     .eq("lido_id", lidoId)
     .eq("stato", stato)
@@ -174,7 +174,7 @@ function OrdiniPage() {
     // "Prendi in carico" (arrivati -> da_evadere) also records who/when took
     // the order, atomically and without overwriting if already set.
     const { error } = nuovoStato === "da_evadere"
-      ? await supabase.rpc("prendi_in_carico_ordine", { _id: id })
+      ? await (supabase.rpc as any)("prendi_in_carico_ordine", { _id: id })
       : await supabase.from("ordini").update({ stato: nuovoStato }).eq("id", id);
     if (error) { toast.error(t("kanban.updateError"), { description: error.message }); return; }
     queryClient.invalidateQueries({ queryKey: ["ordini-col"] });
@@ -199,7 +199,7 @@ function OrdiniPage() {
   const archiveSelected = async () => {
     const ids = Array.from(selectedIds);
     if (ids.length === 0) return;
-    const { error } = await supabase.from("ordini").update({ archiviato: true }).in("id", ids);
+    const { error } = await (supabase.from("ordini") as any).update({ archiviato: true } as any).in("id", ids);
     if (error) { toast.error(t("kanban.archiveError"), { description: error.message }); return; }
     toast.success(t("kanban.archiveOk"));
     setSelectedIds(new Set());
