@@ -126,7 +126,6 @@ function Home() {
 
 const NAV_LINKS = [
   { href: "#come-funziona", label: "Come funziona", pill: false },
-  { href: "#funzionalita", label: "Funzionalità", pill: false },
   { href: "#contatto", label: "Richiedi demo", pill: true },
   { href: "#contatto", label: "Contatti", pill: false },
 ];
