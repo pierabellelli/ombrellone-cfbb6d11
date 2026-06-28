@@ -6,22 +6,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  TrendingUp,
-  Timer,
-  Zap,
-  Smartphone,
   Check,
   X,
-  AlertCircle,
-  CheckCircle2,
   QrCode,
-  UtensilsCrossed,
-  Bell,
-  Package,
+  ShoppingCart,
+  BellRing,
   ChevronRight,
-  Users,
-  PiggyBank,
   Menu,
+  Kanban,
+  Map,
+  BarChart3,
+  ShieldCheck,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -37,57 +32,35 @@ export const Route = createFileRoute("/")({
 });
 
 const BENEFICI = [
-  { titolo: "Più ordini per ombrellone", descrizione: "Il cliente ordina quando vuole, senza aspettare il cameriere", Icon: TrendingUp },
-  { titolo: "Personale più efficiente", descrizione: "Meno corse, meno errori, più tempo per servire", Icon: Zap },
-  { titolo: "Zero code al bar", descrizione: "Esperienza cliente superiore, clienti che tornano", Icon: Smartphone },
-  { titolo: "Attivo in 24 ore", descrizione: "Nessuna installazione hardware, setup immediato", Icon: Timer },
+  { titolo: "Kanban in tempo reale", descrizione: "Ogni ordine arriva subito allo staff con notifica sonora. Nessun ordine perso, nessuna confusione.", Icon: Kanban },
+  { titolo: "Mappa ombrelloni", descrizione: "Sai sempre cosa sta succedendo in spiaggia. Vedi in un colpo d'occhio dove c'è un ordine in attesa o in ritardo.", Icon: Map },
+  { titolo: "Report e analytics", descrizione: "Scopri quali prodotti vendono di più, le ore di punta e il tempo medio di consegna. Dati reali per decisioni migliori.", Icon: BarChart3 },
+  { titolo: "Accesso per ruoli", descrizione: "Il gestore controlla tutto. Lo staff vede solo quello che gli serve. Zero confusione, zero errori.", Icon: ShieldCheck },
 ];
 
-const CONFRONTO = [
-  { tradizionale: "Il cliente va al bar", ombrellone: "Ordina dal lettino" },
-  { tradizionale: "Code e attese", ombrellone: "Ordine immediato" },
-  { tradizionale: "Il cameriere prende nota", ombrellone: "Ordine digitale, zero errori" },
-  { tradizionale: "Nessun dato sugli ordini", ombrellone: "Dashboard in tempo reale" },
+const PRIMA_DOPO = [
+  { prima: "🚶 Code al bar", dopo: "📱 Ordini dal lettino" },
+  { prima: "📝 Cameriere prende nota", dopo: "✅ Ordine digitale preciso" },
+  { prima: "❌ Errori di trascrizione", dopo: "🔔 Notifica immediata allo staff" },
+  { prima: "⏳ Clienti aspettano", dopo: "⚡ Flusso organizzato" },
+  { prima: "😰 Personale sotto pressione", dopo: "😊 Staff efficiente e sereno" },
 ];
 
 const COME_FUNZIONA = [
   {
     Icon: QrCode,
-    titolo: "Scansiona il QR",
-    descrizione: "Il cliente inquadra il codice al suo ombrellone",
+    titolo: "Scansiona",
+    descrizione: "Il cliente inquadra il QR sull'ombrellone",
   },
   {
-    Icon: UtensilsCrossed,
-    titolo: "Sceglie dal menu",
-    descrizione: "Vede il menu digitale, ordina in 30 secondi",
+    Icon: ShoppingCart,
+    titolo: "Ordina",
+    descrizione: "Sceglie dal menu e invia in un tap",
   },
   {
-    Icon: Bell,
-    titolo: "Il bar riceve",
-    descrizione: "L'ordine arriva direttamente alla cassa",
-  },
-  {
-    Icon: Package,
-    titolo: "Consegna al lettino",
-    descrizione: "Nessuna coda, nessun errore",
-  },
-];
-
-const ROI = [
-  {
-    Icon: TrendingUp,
-    titolo: "Più ordini",
-    descrizione: "Il cliente ordina quando vuole. Nessun momento di attesa = più consumi.",
-  },
-  {
-    Icon: Users,
-    titolo: "Personale più efficiente",
-    descrizione: "Meno corse, meno errori. Il tuo staff serve meglio con meno fatica.",
-  },
-  {
-    Icon: PiggyBank,
-    titolo: "Meno sprechi",
-    descrizione: "Ordini digitali, zero malintesi. Meno resi, meno problemi.",
+    Icon: BellRing,
+    titolo: "Ricevi",
+    descrizione: "L'ordine arriva subito allo staff, senza errori",
   },
 ];
 
@@ -109,13 +82,11 @@ function Home() {
     <div className="min-h-screen flex flex-col">
       <NavBar />
       <Hero />
-      <Benefici />
       <ComeFunziona />
+      <PrimaDopo />
+      <Benefici />
       <InAzione />
       <EmotionSection />
-      <PrimaDopo />
-      <RoiSection />
-      <Confronto />
       <Urgenza />
       <FormContatto />
       <CtaFinale />
@@ -216,10 +187,11 @@ function Hero() {
       <div>
         <span className="chip chip-active mb-6">🏖️ Pensato per i lidi italiani</span>
         <h1 className="text-5xl md:text-6xl font-extrabold leading-[1.05] text-primary">
-          Niente più code al bar.
+          Il sistema operativo<br />
+          del tuo <span className="text-[color:var(--teal-deep)]">stabilimento.</span>
         </h1>
         <p className="mt-6 text-lg text-muted-foreground max-w-md">
-          I tuoi clienti ordinano dal lettino in 30 secondi. Tu incassi di più, il tuo personale lavora meglio.
+          Ordini digitali, mappa in tempo reale, analytics e menu dal QR. OmbrellOne gestisce l'operatività del tuo bar mentre tu ti concentri sui clienti.
         </p>
         <div className="mt-8">
           <a
@@ -245,10 +217,13 @@ function Hero() {
 function Benefici() {
   return (
     <section id="funzionalita" className="px-6 lg:px-16 py-16 max-w-7xl mx-auto w-full">
-      <h2 className="text-3xl md:text-4xl font-bold text-primary text-center mb-12">
-        I vantaggi per il tuo stabilimento
+      <h2 className="text-3xl md:text-4xl font-bold text-primary text-center">
+        Tutto quello che ti serve
       </h2>
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <p className="mt-4 text-lg text-muted-foreground text-center max-w-2xl mx-auto">
+        Non un'altra app per i lidi. Un sistema completo che gestisce ordini, consegne, mappa, menu digitale e analytics — tutto in un posto solo.
+      </p>
+      <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {BENEFICI.map((b) => (
           <div
             key={b.titolo}
@@ -287,11 +262,9 @@ function ComeFunziona() {
       <div className="flex flex-col lg:flex-row items-stretch gap-4 lg:gap-6">
         {COME_FUNZIONA.map((step, index) => (
           <div key={step.titolo} className="flex-1 flex items-center gap-4 lg:gap-6">
-            <div className="flex-1 bg-white rounded-2xl border border-border shadow-[var(--shadow-card)] p-6 text-center">
-              <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                <step.Icon className="w-6 h-6 text-primary" />
-              </div>
-              <h3 className="text-lg font-bold text-primary">{step.titolo}</h3>
+            <div className="flex-1 text-center">
+              <step.Icon className="w-16 h-16 text-teal-600 mx-auto mb-4" />
+              <h3 className="text-xl font-bold text-primary">{step.titolo}</h3>
               <p className="mt-2 text-sm text-muted-foreground">{step.descrizione}</p>
             </div>
             {index < COME_FUNZIONA.length - 1 && (
@@ -397,94 +370,35 @@ function InAzione() {
 }
 
 function PrimaDopo() {
-  const prima = ["Code al bar", "Cameriere di corsa", "Ordini sbagliati", "Nessun dato"];
-  const dopo = ["Ordini dal lettino", "Personale libero", "Zero errori", "Dashboard in tempo reale"];
   return (
-    <section className="px-6 lg:px-16 py-20 max-w-6xl mx-auto w-full">
-      <div className="grid md:grid-cols-2 gap-6">
-        <div className="rounded-2xl border-2 border-destructive/20 bg-destructive/5 p-8">
-          <div className="w-14 h-14 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
-            <AlertCircle className="w-7 h-7 text-destructive" />
-          </div>
-          <h3 className="text-2xl font-bold text-destructive mb-6">Prima di OmbrellOne</h3>
-          <ul className="space-y-3">
-            {prima.map((item) => (
-              <li key={item} className="flex items-center gap-3 text-base text-foreground/80">
-                <X className="w-5 h-5 text-destructive shrink-0" />
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className="rounded-2xl border-2 border-[color:var(--teal-deep)]/30 bg-[color:var(--teal-deep)]/10 p-8">
-          <div className="w-14 h-14 rounded-full bg-[color:var(--teal-deep)]/10 flex items-center justify-center mb-4">
-            <CheckCircle2 className="w-7 h-7 text-[color:var(--teal-deep)]" />
-          </div>
-          <h3 className="text-2xl font-bold text-[color:var(--teal-deep)] mb-6">Con OmbrellOne</h3>
-          <ul className="space-y-3">
-            {dopo.map((item) => (
-              <li key={item} className="flex items-center gap-3 text-base font-medium text-foreground">
-                <Check className="w-5 h-5 text-[color:var(--teal-deep)] shrink-0" />
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function RoiSection() {
-  return (
-    <section className="px-6 lg:px-16 py-20 max-w-6xl mx-auto w-full">
-      <h2 className="text-3xl md:text-4xl font-bold text-primary text-center mb-12">
-        Il tuo ritorno economico
-      </h2>
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {ROI.map((card) => (
-          <div
-            key={card.titolo}
-            className="bg-white rounded-2xl border border-border shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-elevated)] transition p-6"
-          >
-            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-              <card.Icon className="w-6 h-6 text-primary" />
-            </div>
-            <h3 className="text-xl font-bold text-primary">{card.titolo}</h3>
-            <p className="mt-2 text-sm text-muted-foreground">{card.descrizione}</p>
-          </div>
-        ))}
-      </div>
-      <div className="mt-12 text-center">
-        <DemoButton className="bg-primary text-primary-foreground hover:bg-primary/90" />
-      </div>
-    </section>
-  );
-}
-
-function Confronto() {
-  return (
-    <section className="px-6 lg:px-16 py-20 max-w-4xl mx-auto w-full">
+    <section className="px-6 lg:px-16 py-20 max-w-3xl mx-auto w-full">
       <h2 className="text-3xl md:text-4xl font-bold text-primary text-center">
-        Perché i gestori scelgono OmbrellOne
+        Il tuo lido, prima e dopo
       </h2>
-      <div className="mt-12 card-soft overflow-hidden">
+      <p className="mt-4 text-lg text-muted-foreground text-center">
+        La differenza la vedi dal primo giorno.
+      </p>
+      <div className="mt-12 bg-white rounded-2xl shadow-sm border border-border overflow-hidden">
         <div className="grid grid-cols-2">
-          <div className="bg-muted/50 p-4 md:p-6 text-center font-semibold text-sm md:text-base text-muted-foreground border-b border-border">
-            Metodo tradizionale
-          </div>
-          <div className="bg-primary p-4 md:p-6 text-center font-semibold text-sm md:text-base text-primary-foreground border-b border-border">
-            OmbrellOne
-          </div>
-          {CONFRONTO.map((row, i) => (
+          <div className="p-4 md:p-5 text-center font-semibold text-destructive border-b border-border">Prima</div>
+          <div className="p-4 md:p-5 text-center font-semibold text-[color:var(--teal-deep)] border-b border-border">Dopo</div>
+          {PRIMA_DOPO.map((row, i) => (
             <div key={i} className="contents">
-              <div className="p-4 md:p-6 border-b border-border last:border-b-0 flex items-start gap-2 md:gap-3 text-sm md:text-base">
-                <X className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
-                <span className="text-muted-foreground">{row.tradizionale}</span>
+              <div
+                className={`p-4 md:p-5 flex items-center gap-2 text-sm md:text-base text-destructive/80 border-b border-border last:border-b-0 ${
+                  i % 2 === 1 ? "bg-destructive/5" : ""
+                }`}
+              >
+                <X className="w-4 h-4 text-destructive shrink-0" />
+                <span>{row.prima}</span>
               </div>
-              <div className="p-4 md:p-6 border-b border-border last:border-b-0 flex items-start gap-2 md:gap-3 text-sm md:text-base bg-[color:var(--teal-deep)]/5">
-                <Check className="w-5 h-5 text-[color:var(--teal-deep)] shrink-0 mt-0.5" />
-                <span className="font-medium text-foreground">{row.ombrellone}</span>
+              <div
+                className={`p-4 md:p-5 flex items-center gap-2 text-sm md:text-base font-medium text-[color:var(--teal-deep)] border-b border-border last:border-b-0 ${
+                  i % 2 === 1 ? "bg-[color:var(--teal-deep)]/5" : ""
+                }`}
+              >
+                <Check className="w-4 h-4 text-[color:var(--teal-deep)] shrink-0" />
+                <span>{row.dopo}</span>
               </div>
             </div>
           ))}
