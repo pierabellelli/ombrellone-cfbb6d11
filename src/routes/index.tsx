@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { QrCode, ShoppingCart, BellRing, Kanban, Map, BarChart3, ShieldCheck } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -21,19 +22,19 @@ export const Route = createFileRoute("/")({
 
 const COME_FUNZIONA_STEPS = [
   {
-    emoji: "📱",
+    Icon: QrCode,
     numero: "01",
     titolo: "QR code sull'ombrellone",
     descrizione: "Il cliente scansiona il QR e vede il menu del tuo bar direttamente sul telefono. Nessuna app da installare.",
   },
   {
-    emoji: "🛒",
+    Icon: ShoppingCart,
     numero: "02",
     titolo: "Ordine in un tap",
     descrizione: "Il cliente sceglie i prodotti e invia l'ordine. Può tracciare lo stato in tempo reale.",
   },
   {
-    emoji: "⚡",
+    Icon: BellRing,
     numero: "03",
     titolo: "Staff avvisato istantaneamente",
     descrizione: "L'ordine appare subito nel Kanban dello staff con notifica sonora. Niente confusione, niente errori.",
@@ -42,28 +43,28 @@ const COME_FUNZIONA_STEPS = [
 
 const FUNZIONALITA = [
   {
-    emoji: "📋",
+    Icon: Kanban,
     titolo: "Kanban in tempo reale",
     descrizione: "Ogni ordine scorre tra le colonne: Nuovo → In preparazione → Consegnato. Lo staff non perde nulla.",
   },
   {
-    emoji: "🗺️",
+    Icon: Map,
     titolo: "Mappa ombrelloni",
     descrizione: "Visualizza lo stato di ogni ombrellone in tempo reale. Vedi subito dove c'è un ordine in ritardo.",
   },
   {
-    emoji: "📊",
+    Icon: BarChart3,
     titolo: "Report e analytics",
     descrizione: "Prodotti più venduti, ore di punta, revenue giornaliera e tempo medio di consegna. Dati per decidere meglio.",
   },
   {
-    emoji: "🔒",
+    Icon: ShieldCheck,
     titolo: "Accesso per ruoli",
     descrizione: "Il gestore ha accesso completo. Lo staff vede solo mappa e ordini. Nessuna sovrapposizione.",
   },
 ];
 
-const PER_CHI = ["🏖️ Stabilimenti balneari", "🌊 Lidi attrezzati", "🎵 Beach club"];
+const PER_CHI = ["🏖️ Stabilimenti balneari", "🌊 Lidi attrezzati", "☀️ Beach club"];
 
 type FormStatus = "idle" | "submitting" | "success" | "error";
 
@@ -74,14 +75,14 @@ function Home() {
 
       <main className="flex-1 grid lg:grid-cols-2 gap-12 px-6 lg:px-16 py-12 max-w-7xl mx-auto w-full items-center">
         <div>
-          <span className="chip chip-active mb-6">Nuovo · Servizio bar via QR</span>
+          <span className="chip chip-active mb-6">🏖️ Pensato per i lidi italiani</span>
           <h1 className="text-5xl md:text-6xl font-extrabold leading-[1.05] text-primary">
             Ordini dal tuo<br />
             <span className="text-[color:var(--teal-deep)]">ombrellone.</span>
           </h1>
           <p className="mt-6 text-lg text-muted-foreground max-w-md">
-            OmbrellOne porta il menu del bar direttamente sul telefono dei clienti.
-            Niente file, niente attese: lo staff vede ogni ordine in tempo reale.
+            Il tuo bar prende ordini mentre tu gestisci il lido.
+            I clienti ordinano dal telefono, lo staff consegna. Zero code, zero errori.
           </p>
           <div className="mt-8">
             <a
@@ -135,7 +136,7 @@ function ComeFunziona() {
         {COME_FUNZIONA_STEPS.map((s) => (
           <div key={s.numero} className="card-soft p-6">
             <div className="flex items-center justify-between">
-              <span className="text-3xl">{s.emoji}</span>
+              <s.Icon className="w-8 h-8 text-teal-600" />
               <span className="text-sm font-bold text-[color:var(--teal-deep)]">{s.numero}</span>
             </div>
             <h3 className="mt-4 text-lg font-semibold">{s.titolo}</h3>
@@ -154,7 +155,7 @@ function Funzionalita() {
       <div className="mt-12 grid sm:grid-cols-2 gap-6">
         {FUNZIONALITA.map((f) => (
           <div key={f.titolo} className="card-soft p-6">
-            <span className="text-3xl">{f.emoji}</span>
+            <f.Icon className="w-8 h-8 text-teal-600" />
             <h3 className="mt-4 text-lg font-semibold">{f.titolo}</h3>
             <p className="mt-2 text-sm text-muted-foreground">{f.descrizione}</p>
           </div>
