@@ -5,15 +5,32 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { TrendingUp, Timer, Smile, Smartphone, Check, X } from "lucide-react";
+import {
+  TrendingUp,
+  Timer,
+  Smile,
+  Smartphone,
+  Check,
+  X,
+  AlertCircle,
+  CheckCircle2,
+  ScanLine,
+  UtensilsCrossed,
+  Bell,
+  Umbrella,
+  ArrowRight,
+  Wallet,
+  Users,
+  TrendingDown,
+} from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "OmbrellOne — Più ordini. Meno code. Da oggi." },
-      { name: "description", content: "Il sistema QR per stabilimenti balneari che aumenta gli ordini e libera il tuo personale. Setup in 24 ore, nessun hardware." },
-      { property: "og:title", content: "OmbrellOne — Più ordini. Meno code." },
-      { property: "og:description", content: "Il sistema QR per stabilimenti balneari che aumenta gli ordini e libera il tuo personale." },
+      { title: "OmbrellOne — Niente più code al bar." },
+      { name: "description", content: "I tuoi clienti ordinano dal lettino in 30 secondi. Tu incassi di più, il tuo personale lavora meglio." },
+      { property: "og:title", content: "OmbrellOne — Niente più code al bar." },
+      { property: "og:description", content: "I tuoi clienti ordinano dal lettino in 30 secondi. Tu incassi di più, il tuo personale lavora meglio." },
     ],
   }),
   component: Home,
@@ -33,6 +50,58 @@ const CONFRONTO = [
   { tradizionale: "Nessun dato sugli ordini", ombrellone: "Dashboard in tempo reale" },
 ];
 
+const COME_FUNZIONA = [
+  {
+    Icon: ScanLine,
+    titolo: "Scansiona il QR",
+    descrizione: "Il cliente inquadra il codice al suo ombrellone",
+  },
+  {
+    Icon: UtensilsCrossed,
+    titolo: "Sceglie dal menu",
+    descrizione: "Vede il menu digitale, ordina in 30 secondi",
+  },
+  {
+    Icon: Bell,
+    titolo: "Il bar riceve",
+    descrizione: "L'ordine arriva direttamente alla cassa",
+  },
+  {
+    Icon: Umbrella,
+    titolo: "Consegna al lettino",
+    descrizione: "Nessuna coda, nessun errore",
+  },
+];
+
+const ROI = [
+  {
+    Icon: Wallet,
+    titolo: "Più ordini",
+    descrizione: "Il cliente ordina quando vuole. Nessun momento di attesa = più consumi.",
+  },
+  {
+    Icon: Users,
+    titolo: "Personale più efficiente",
+    descrizione: "Meno corse, meno errori. Il tuo staff serve meglio con meno fatica.",
+  },
+  {
+    Icon: TrendingDown,
+    titolo: "Meno sprechi",
+    descrizione: "Ordini digitali, zero malintesi. Meno resi, meno problemi.",
+  },
+];
+
+function DemoButton({ className }: { className?: string }) {
+  return (
+    <a
+      href="#contatto"
+      className={`inline-flex items-center justify-center rounded-full px-8 py-4 font-semibold transition shadow-[var(--shadow-elevated)] ${className}`}
+    >
+      Richiedi una demo gratuita
+    </a>
+  );
+}
+
 type FormStatus = "idle" | "submitting" | "success" | "error";
 
 function Home() {
@@ -42,7 +111,9 @@ function Home() {
       <Hero />
       <Benefici />
       <EmotionSection />
+      <ComeFunziona />
       <PrimaDopo />
+      <RoiSection />
       <Confronto />
       <Urgenza />
       <FormContatto />
@@ -72,12 +143,10 @@ function Hero() {
       <div>
         <span className="chip chip-active mb-6">🏖️ Pensato per i lidi italiani</span>
         <h1 className="text-5xl md:text-6xl font-extrabold leading-[1.05] text-primary">
-          Più ordini.<br />
-          Meno code.<br />
-          <span className="text-[color:var(--teal-deep)]">Da oggi.</span>
+          Niente più code al bar.
         </h1>
         <p className="mt-6 text-lg text-muted-foreground max-w-md">
-          Il sistema QR per stabilimenti balneari che aumenta gli ordini e libera il tuo personale.
+          I tuoi clienti ordinano dal lettino in 30 secondi. Tu incassi di più, il tuo personale lavora meglio.
         </p>
         <div className="mt-8">
           <a
@@ -122,6 +191,52 @@ function Benefici() {
   );
 }
 
+function EmotionSection() {
+  return (
+    <section className="px-6 lg:px-16 py-20 max-w-4xl mx-auto w-full text-center">
+      <p className="text-3xl md:text-4xl font-bold text-primary leading-tight">
+        Sole. Spritz. Panino.<br />
+        <span className="text-[color:var(--teal-deep)]">Ordinato dal lettino, arrivato senza alzarsi.</span>
+      </p>
+      <p className="mt-6 text-lg text-muted-foreground">
+        Questo è ciò che i tuoi clienti ricordano — e per cui tornano.
+      </p>
+    </section>
+  );
+}
+
+function ComeFunziona() {
+  return (
+    <section className="px-6 lg:px-16 py-20 max-w-6xl mx-auto w-full">
+      <h2 className="text-3xl md:text-4xl font-bold text-primary text-center mb-12">
+        Come funziona
+      </h2>
+      <div className="flex flex-col lg:flex-row items-stretch gap-4 lg:gap-6">
+        {COME_FUNZIONA.map((step, index) => (
+          <div key={step.titolo} className="flex-1 flex items-center gap-4 lg:gap-6">
+            <div className="flex-1 bg-white rounded-2xl border border-border shadow-[var(--shadow-card)] p-6 text-center">
+              <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                <step.Icon className="w-6 h-6 text-primary" />
+              </div>
+              <h3 className="text-lg font-bold text-primary">{step.titolo}</h3>
+              <p className="mt-2 text-sm text-muted-foreground">{step.descrizione}</p>
+            </div>
+            {index < COME_FUNZIONA.length - 1 && (
+              <div className="flex items-center justify-center text-[color:var(--teal-deep)]">
+                <ArrowRight className="w-6 h-6 hidden lg:block" />
+                <ArrowRight className="w-6 h-6 lg:hidden rotate-90" />
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+      <div className="mt-12 text-center">
+        <DemoButton className="bg-primary text-primary-foreground hover:bg-primary/90" />
+      </div>
+    </section>
+  );
+}
+
 function PrimaDopo() {
   const prima = ["Code al bar", "Cameriere di corsa", "Ordini sbagliati", "Nessun dato"];
   const dopo = ["Ordini dal lettino", "Personale libero", "Zero errori", "Dashboard in tempo reale"];
@@ -129,7 +244,9 @@ function PrimaDopo() {
     <section className="px-6 lg:px-16 py-20 max-w-6xl mx-auto w-full">
       <div className="grid md:grid-cols-2 gap-6">
         <div className="rounded-2xl border-2 border-destructive/20 bg-destructive/5 p-8">
-          <div className="text-6xl mb-4">😤</div>
+          <div className="w-14 h-14 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
+            <AlertCircle className="w-7 h-7 text-destructive" />
+          </div>
           <h3 className="text-2xl font-bold text-destructive mb-6">Prima di OmbrellOne</h3>
           <ul className="space-y-3">
             {prima.map((item) => (
@@ -141,7 +258,9 @@ function PrimaDopo() {
           </ul>
         </div>
         <div className="rounded-2xl border-2 border-[color:var(--teal-deep)]/30 bg-[color:var(--teal-deep)]/10 p-8">
-          <div className="text-6xl mb-4">😎</div>
+          <div className="w-14 h-14 rounded-full bg-[color:var(--teal-deep)]/10 flex items-center justify-center mb-4">
+            <CheckCircle2 className="w-7 h-7 text-[color:var(--teal-deep)]" />
+          </div>
           <h3 className="text-2xl font-bold text-[color:var(--teal-deep)] mb-6">Con OmbrellOne</h3>
           <ul className="space-y-3">
             {dopo.map((item) => (
@@ -157,16 +276,29 @@ function PrimaDopo() {
   );
 }
 
-function EmotionSection() {
+function RoiSection() {
   return (
-    <section className="px-6 lg:px-16 py-20 max-w-4xl mx-auto w-full text-center">
-      <p className="text-3xl md:text-4xl font-bold text-primary leading-tight">
-        Sole. Spritz. Panino.<br />
-        <span className="text-[color:var(--teal-deep)]">Ordinato dal lettino, arrivato senza alzarsi.</span>
-      </p>
-      <p className="mt-6 text-lg text-muted-foreground">
-        Questo è ciò che i tuoi clienti ricordano — e per cui tornano.
-      </p>
+    <section className="px-6 lg:px-16 py-20 max-w-6xl mx-auto w-full">
+      <h2 className="text-3xl md:text-4xl font-bold text-primary text-center mb-12">
+        Il tuo ritorno economico
+      </h2>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {ROI.map((card) => (
+          <div
+            key={card.titolo}
+            className="bg-white rounded-2xl border border-border shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-elevated)] transition p-6"
+          >
+            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+              <card.Icon className="w-6 h-6 text-primary" />
+            </div>
+            <h3 className="text-xl font-bold text-primary">{card.titolo}</h3>
+            <p className="mt-2 text-sm text-muted-foreground">{card.descrizione}</p>
+          </div>
+        ))}
+      </div>
+      <div className="mt-12 text-center">
+        <DemoButton className="bg-primary text-primary-foreground hover:bg-primary/90" />
+      </div>
     </section>
   );
 }
