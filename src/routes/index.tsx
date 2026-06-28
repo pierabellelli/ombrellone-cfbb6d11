@@ -183,8 +183,16 @@ function NavBar() {
 
 function Hero() {
   return (
-    <section className="grid lg:grid-cols-2 gap-12 px-6 lg:px-16 py-12 max-w-7xl mx-auto w-full items-center">
-      <div>
+    <section className="flex flex-col lg:flex-row min-h-screen">
+      <div className="w-full h-64 lg:h-auto lg:w-1/2 lg:order-2">
+        <img
+          src="/main_ombrellone_gestionale_bar2.png"
+          alt="OmbrellOne in uso al lido"
+          className="w-full h-full object-cover"
+        />
+      </div>
+
+      <div className="w-full lg:w-1/2 lg:order-1 flex flex-col justify-center bg-white px-6 lg:px-16 py-12">
         <span className="chip chip-active mb-6">🏖️ Pensato per i lidi italiani</span>
         <h1 className="text-5xl md:text-6xl font-extrabold leading-[1.05] text-primary">
           Il sistema operativo<br />
@@ -201,14 +209,6 @@ function Hero() {
             Richiedi una demo gratuita
           </a>
         </div>
-      </div>
-
-      <div className="relative">
-        <img
-          src="/main_ombrellone_gestionale_bar.png"
-          alt="OmbrellOne in uso al lido"
-          className="rounded-2xl shadow-xl w-full object-cover"
-        />
       </div>
     </section>
   );
