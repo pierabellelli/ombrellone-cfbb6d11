@@ -1,3 +1,4 @@
+# Auto-deploy enabled
 name: Deploy
 
 on:
