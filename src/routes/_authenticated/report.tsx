@@ -686,8 +686,8 @@ async function loadStorico(opts: {
   lidoId: string; from: Date; to: Date; ombrellone: string; stato: StoricoStato;
   sortCol: SortCol; sortAsc: boolean; page: number; presoInCaricoDa: string | null;
 }): Promise<{ rows: StoricoRow[]; count: number }> {
-  let q = supabase
-    .from("ordini")
+  let q = (supabase
+    .from("ordini") as any)
     .select(
       "id, numero_ordine, numero_ombrellone, cognome, totale, stato, created_at, preso_in_carico_da, preso_in_carico_at, ordine_items(id, nome_snapshot, prezzo_snapshot, quantita)",
       { count: "exact" },
