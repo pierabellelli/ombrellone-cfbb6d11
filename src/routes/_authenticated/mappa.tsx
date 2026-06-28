@@ -137,63 +137,65 @@ function MappaPage() {
   };
 
   return (
-    <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-6">
-      <div className="flex items-start justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-primary">{t("map.title")}</h1>
-          <p className="text-sm text-muted-foreground mt-1">{t("map.subtitle")}</p>
-        </div>
-        <Legend t={t} />
-      </div>
-
-      {file.length === 0 ? (
-        <div className="mt-8 card-soft p-8 text-center text-muted-foreground">{t("map.noConfig")}</div>
-      ) : (
-        <div className="mt-6 card-soft p-4 md:p-5 space-y-5 overflow-x-hidden max-w-full" style={{ overflowX: "hidden", maxWidth: "100%" }}>
-          {/* Sea marker */}
-          <div className="text-center text-xs font-semibold tracking-wider text-[color:var(--teal-deep)] uppercase">
-            ≈ {lang === "it" ? "Mare" : "Sea"} ≈
+    <div style={{ overflow: "hidden", width: "100%", maxWidth: "100vw" }}>
+      <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-6">
+        <div className="flex items-start justify-between flex-wrap gap-4">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-primary">{t("map.title")}</h1>
+            <p className="text-sm text-muted-foreground mt-1">{t("map.subtitle")}</p>
           </div>
+          <Legend t={t} />
+        </div>
 
-          {file.map((row) => (
-            <div key={row.index}>
-              <div className="text-xs font-semibold text-muted-foreground mb-2 px-1">{row.label}</div>
-              <div className="flex flex-wrap gap-2.5 max-w-full" style={{ flexWrap: "wrap", maxWidth: "100%" }}>
-                {row.ombrelloni.map((u) => {
-                  const orders = ordersByNumero.get(String(u.numero)) ?? [];
-                  const s = worstState(orders, now);
-                  return (
-                    <UmbrellaTile
-                      key={`${row.index}-${u.numero}`}
-                      numero={u.numero}
-                      rowLabel={row.label}
-                      orders={orders}
-                      state={s}
-                      now={now}
-                      onClick={() => setSelected({ numero: u.numero, fila: row.label })}
-                    />
-                  );
-                })}
-              </div>
+        {file.length === 0 ? (
+          <div className="mt-8 card-soft p-8 text-center text-muted-foreground">{t("map.noConfig")}</div>
+        ) : (
+          <div className="mt-6 card-soft p-4 md:p-5 space-y-5" style={{ overflowX: "hidden", width: "100%" }}>
+            {/* Sea marker */}
+            <div className="text-center text-xs font-semibold tracking-wider text-[color:var(--teal-deep)] uppercase">
+              ≈ {lang === "it" ? "Mare" : "Sea"} ≈
             </div>
-          ))}
 
-          <div className="text-center text-xs font-semibold tracking-wider text-amber-700/70 uppercase pt-2 border-t border-dashed border-border">
-            ☼ {lang === "it" ? "Entrata" : "Entrance"} ☼
+            {file.map((row) => (
+              <div key={row.index}>
+                <div className="text-xs font-semibold text-muted-foreground mb-2 px-1">{row.label}</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", width: "100%", overflow: "hidden" }}>
+                  {row.ombrelloni.map((u) => {
+                    const orders = ordersByNumero.get(String(u.numero)) ?? [];
+                    const s = worstState(orders, now);
+                    return (
+                      <UmbrellaTile
+                        key={`${row.index}-${u.numero}`}
+                        numero={u.numero}
+                        rowLabel={row.label}
+                        orders={orders}
+                        state={s}
+                        now={now}
+                        onClick={() => setSelected({ numero: u.numero, fila: row.label })}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+
+            <div className="text-center text-xs font-semibold tracking-wider text-amber-700/70 uppercase pt-2 border-t border-dashed border-border">
+              ☼ {lang === "it" ? "Entrata" : "Entrance"} ☼
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {selected && (
-        <DetailSheet
-          numero={selected.numero}
-          fila={selected.fila}
-          orders={selectedOrders}
-          now={now}
-          onClose={() => setSelected(null)}
-          onDelivered={markDelivered}
-        />
-      )}
+        {selected && (
+          <DetailSheet
+            numero={selected.numero}
+            fila={selected.fila}
+            orders={selectedOrders}
+            now={now}
+            onClose={() => setSelected(null)}
+            onDelivered={markDelivered}
+          />
+        )}
+      </div>
     </div>
   );
 }
@@ -248,8 +250,15 @@ function UmbrellaTile({ numero, rowLabel, orders, state, now, onClick }: {
   return (
     <button
       onClick={onClick}
-      className={`relative min-h-[88px] rounded-2xl border-2 ${TILE_CLASS[state]} flex flex-col items-center transition active:scale-95 shadow-sm overflow-hidden`}
-      style={{ width: "80px", minWidth: "80px", maxWidth: "80px", flexShrink: 0 }}
+      className={`relative min-h-[88px] rounded-2xl border-2 ${TILE_CLASS[state]} flex flex-col items-center transition active:scale-95 shadow-sm`}
+      style={{
+        width: "80px",
+        minWidth: "80px",
+        maxWidth: "80px",
+        flexShrink: 0,
+        flexGrow: 0,
+        overflow: "hidden",
+      }}
     >
       {bar && (
         <div className={`w-full h-6 flex items-center justify-center gap-1 ${bar.barClass} text-white`}>
