@@ -42,6 +42,7 @@ function Home() {
       <Hero />
       <Benefici />
       <EmotionSection />
+      <PrimaDopo />
       <Confronto />
       <Urgenza />
       <FormContatto />
@@ -102,14 +103,55 @@ function Hero() {
 function Benefici() {
   return (
     <section className="px-6 lg:px-16 py-16 max-w-7xl mx-auto w-full">
+      <h2 className="text-3xl md:text-4xl font-bold text-primary text-center mb-12">
+        I vantaggi per il tuo stabilimento
+      </h2>
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {BENEFICI.map((b) => (
-          <div key={b.titolo} className="card-soft p-6 text-center">
-            <div className="text-4xl mb-3">{b.emoji}</div>
+          <div
+            key={b.titolo}
+            className="bg-white rounded-2xl border border-border shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-elevated)] transition p-6 text-center"
+          >
+            <div className="text-5xl mb-4">{b.emoji}</div>
             <h3 className="text-lg font-bold text-primary">{b.titolo}</h3>
             <p className="mt-2 text-sm text-muted-foreground">{b.descrizione}</p>
           </div>
         ))}
+      </div>
+    </section>
+  );
+}
+
+function PrimaDopo() {
+  const prima = ["Code al bar", "Cameriere di corsa", "Ordini sbagliati", "Nessun dato"];
+  const dopo = ["Ordini dal lettino", "Personale libero", "Zero errori", "Dashboard in tempo reale"];
+  return (
+    <section className="px-6 lg:px-16 py-20 max-w-6xl mx-auto w-full">
+      <div className="grid md:grid-cols-2 gap-6">
+        <div className="rounded-2xl border-2 border-destructive/20 bg-destructive/5 p-8">
+          <div className="text-6xl mb-4">😤</div>
+          <h3 className="text-2xl font-bold text-destructive mb-6">Prima di OmbrellOne</h3>
+          <ul className="space-y-3">
+            {prima.map((item) => (
+              <li key={item} className="flex items-center gap-3 text-base text-foreground/80">
+                <X className="w-5 h-5 text-destructive shrink-0" />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="rounded-2xl border-2 border-[color:var(--teal-deep)]/30 bg-[color:var(--teal-deep)]/10 p-8">
+          <div className="text-6xl mb-4">😎</div>
+          <h3 className="text-2xl font-bold text-[color:var(--teal-deep)] mb-6">Con OmbrellOne</h3>
+          <ul className="space-y-3">
+            {dopo.map((item) => (
+              <li key={item} className="flex items-center gap-3 text-base font-medium text-foreground">
+                <Check className="w-5 h-5 text-[color:var(--teal-deep)] shrink-0" />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
     </section>
   );
