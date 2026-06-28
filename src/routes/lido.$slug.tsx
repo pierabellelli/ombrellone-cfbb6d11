@@ -57,7 +57,7 @@ function writeStoredCustomer(telefono: string, cognome: string, orderedItems: { 
 }
 
 const searchSchema = z.object({
-  o: z.string().optional(),
+  o: z.union([z.string(), z.number()]).transform(String).optional(),
 });
 
 export const Route = createFileRoute("/lido/$slug")({
