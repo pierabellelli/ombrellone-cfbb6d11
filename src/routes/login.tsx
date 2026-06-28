@@ -59,49 +59,55 @@ function LoginPage() {
         Home
       </Link>
 
-      {/* Card */}
-      <div className="w-full max-w-md bg-white rounded-2xl p-8 md:p-10 shadow-2xl relative z-10">
-        <img src="/logo_ombrellOne.png" alt="OmbrellOne" className="h-20 w-auto mx-auto mb-6" />
-
-        <form onSubmit={onSubmit} className="space-y-4">
-          <div>
-            <label className="text-sm font-medium block mb-1.5">Email</label>
-            <input
-              type="email"
-              required
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="staff@lido.it"
-              className="w-full px-4 py-2.5 rounded-lg border border-input bg-card focus:outline-none focus:ring-2 focus:ring-ring/40 focus:border-ring transition"
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium block mb-1.5">Password</label>
-            <input
-              type="password"
-              required
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              className="w-full px-4 py-2.5 rounded-lg border border-input bg-card focus:outline-none focus:ring-2 focus:ring-ring/40 focus:border-ring transition"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full brand-gradient rounded-lg py-3 font-semibold shadow-[var(--shadow-card)] hover:opacity-95 transition flex items-center justify-center gap-2 disabled:opacity-60"
-          >
-            {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-            Accedi
-          </button>
-        </form>
-
-        <p className="mt-6 text-center text-xs text-muted-foreground">
-          Non hai ancora un account? Contatta il tuo gestore.
+      {/* Headline + card */}
+      <div className="w-full max-w-md relative z-10">
+        <p className="text-white text-2xl font-bold mb-6 text-center drop-shadow-lg">
+          Accedi al tuo lido
         </p>
+
+        <div className="bg-white rounded-2xl p-8 md:p-10 shadow-2xl">
+          <img src="/logo_ombrellOne.png" alt="OmbrellOne" className="h-24 w-auto mx-auto mb-6" />
+
+          <form onSubmit={onSubmit} className="space-y-4">
+            <div>
+              <label className="text-sm font-medium block mb-1.5">Email</label>
+              <input
+                type="email"
+                required
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="staff@lido.it"
+                className="w-full px-4 py-2.5 rounded-lg border border-input bg-card focus:outline-none focus:ring-2 focus:ring-ring/40 focus:border-ring transition"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium block mb-1.5">Password</label>
+              <input
+                type="password"
+                required
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full px-4 py-2.5 rounded-lg border border-input bg-card focus:outline-none focus:ring-2 focus:ring-ring/40 focus:border-ring transition"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full brand-gradient rounded-lg py-3 font-semibold shadow-[var(--shadow-card)] hover:opacity-95 transition flex items-center justify-center gap-2 disabled:opacity-60"
+            >
+              {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+              Accedi
+            </button>
+          </form>
+
+          <p className="mt-6 text-center text-xs text-muted-foreground">
+            Non hai ancora un account? Contatta il tuo gestore.
+          </p>
+        </div>
       </div>
     </div>
   );

@@ -114,7 +114,7 @@ function Home() {
 function NavBar() {
   return (
     <header className="px-6 py-5 flex items-center justify-between">
-      <img src="/logo_ombrellOne.png" alt="OmbrellOne" className="h-20 w-auto" />
+      <img src="/logo_ombrellOne.png" alt="OmbrellOne" className="h-24 w-auto" />
       <Link
         to="/login"
         className="text-sm font-medium px-4 py-2 rounded-full border border-border bg-card hover:bg-secondary transition"
@@ -165,10 +165,10 @@ function Funzionalita() {
 function PerChiE() {
   return (
     <section className="px-6 lg:px-16 py-20 max-w-7xl mx-auto w-full text-center">
-      <h2 className="text-3xl md:text-4xl font-bold text-primary">Fatto per i lidi italiani</h2>
+      <h2 className="text-3xl md:text-4xl font-bold text-primary">Progettato per i lidi italiani</h2>
       <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-        OmbrellOne è pensato per stabilimenti balneari, lidi attrezzati e beach club che vogliono
-        digitalizzare il servizio bar senza complicazioni.
+        Niente software complicati, niente formazione infinita. OmbrellOne funziona dal primo
+        giorno — i clienti ordinano dal telefono, lo staff consegna, tu incassi di più.
       </p>
       <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
         {PER_CHI.map((p) => (
