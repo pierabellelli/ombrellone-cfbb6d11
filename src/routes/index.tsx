@@ -14,14 +14,13 @@ import {
   X,
   AlertCircle,
   CheckCircle2,
-  ScanLine,
+  QrCode,
   UtensilsCrossed,
   Bell,
-  Umbrella,
-  ArrowRight,
-  Wallet,
+  Package,
+  ChevronRight,
   Users,
-  TrendingDown,
+  PiggyBank,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -52,7 +51,7 @@ const CONFRONTO = [
 
 const COME_FUNZIONA = [
   {
-    Icon: ScanLine,
+    Icon: QrCode,
     titolo: "Scansiona il QR",
     descrizione: "Il cliente inquadra il codice al suo ombrellone",
   },
@@ -67,7 +66,7 @@ const COME_FUNZIONA = [
     descrizione: "L'ordine arriva direttamente alla cassa",
   },
   {
-    Icon: Umbrella,
+    Icon: Package,
     titolo: "Consegna al lettino",
     descrizione: "Nessuna coda, nessun errore",
   },
@@ -75,7 +74,7 @@ const COME_FUNZIONA = [
 
 const ROI = [
   {
-    Icon: Wallet,
+    Icon: TrendingUp,
     titolo: "Più ordini",
     descrizione: "Il cliente ordina quando vuole. Nessun momento di attesa = più consumi.",
   },
@@ -85,7 +84,7 @@ const ROI = [
     descrizione: "Meno corse, meno errori. Il tuo staff serve meglio con meno fatica.",
   },
   {
-    Icon: TrendingDown,
+    Icon: PiggyBank,
     titolo: "Meno sprechi",
     descrizione: "Ordini digitali, zero malintesi. Meno resi, meno problemi.",
   },
@@ -110,8 +109,8 @@ function Home() {
       <NavBar />
       <Hero />
       <Benefici />
-      <EmotionSection />
       <ComeFunziona />
+      <EmotionSection />
       <PrimaDopo />
       <RoiSection />
       <Confronto />
@@ -223,8 +222,8 @@ function ComeFunziona() {
             </div>
             {index < COME_FUNZIONA.length - 1 && (
               <div className="flex items-center justify-center text-[color:var(--teal-deep)]">
-                <ArrowRight className="w-6 h-6 hidden lg:block" />
-                <ArrowRight className="w-6 h-6 lg:hidden rotate-90" />
+                <ChevronRight className="w-6 h-6 hidden lg:block" />
+                <ChevronRight className="w-6 h-6 lg:hidden rotate-90" />
               </div>
             )}
           </div>
