@@ -482,7 +482,7 @@ function OrderCard({ ordine, stato, onMove, selectable, selected, onToggleSelect
 
       {/* Items */}
       {ordine.ordine_items?.length > 0 && (
-        <div className="mt-2.5 pt-2 border-t border-border space-y-0.5 text-base text-foreground/85">
+        <div className="mt-2.5 pt-2 border-t border-border space-y-0.5 text-lg text-foreground/85">
           {ordine.ordine_items.map((it) => (
             <div key={it.id} className="flex justify-between gap-2">
               <span className="truncate">{it.quantita}× {it.nome_snapshot}</span>
