@@ -5,65 +5,33 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { QrCode, ShoppingCart, BellRing, Kanban, Map, BarChart3, ShieldCheck } from "lucide-react";
+import { TrendingUp, Timer, Smile, Smartphone, Check, X } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "OmbrellOne — Ordini QR per stabilimenti balneari" },
-      { name: "description", content: "OmbrellOne porta il menu del bar direttamente sul telefono dei clienti. Sistema di ordinazione QR per lidi e stabilimenti balneari italiani." },
-      { property: "og:title", content: "OmbrellOne" },
-      { property: "og:description", content: "Ordini dal bar via QR per stabilimenti balneari italiani." },
+      { title: "OmbrellOne — Più ordini. Meno code. Da oggi." },
+      { name: "description", content: "Il sistema QR per stabilimenti balneari che aumenta gli ordini e libera il tuo personale. Setup in 24 ore, nessun hardware." },
+      { property: "og:title", content: "OmbrellOne — Più ordini. Meno code." },
+      { property: "og:description", content: "Il sistema QR per stabilimenti balneari che aumenta gli ordini e libera il tuo personale." },
     ],
   }),
   component: Home,
 });
 
-const COME_FUNZIONA_STEPS = [
-  {
-    Icon: QrCode,
-    numero: "01",
-    titolo: "QR code sull'ombrellone",
-    descrizione: "Il cliente scansiona il QR e vede il menu del tuo bar direttamente sul telefono. Nessuna app da installare.",
-  },
-  {
-    Icon: ShoppingCart,
-    numero: "02",
-    titolo: "Ordine in un tap",
-    descrizione: "Il cliente sceglie i prodotti e invia l'ordine. Può tracciare lo stato in tempo reale.",
-  },
-  {
-    Icon: BellRing,
-    numero: "03",
-    titolo: "Staff avvisato istantaneamente",
-    descrizione: "L'ordine appare subito nel Kanban dello staff con notifica sonora. Niente confusione, niente errori.",
-  },
+const BENEFICI = [
+  { emoji: "📈", titolo: "Più ordini per ombrellone", descrizione: "Il cliente ordina quando vuole, senza aspettare il cameriere", Icon: TrendingUp },
+  { emoji: "⏱️", titolo: "Personale più efficiente", descrizione: "Meno corse, meno errori, più tempo per servire", Icon: Timer },
+  { emoji: "😌", titolo: "Zero code al bar", descrizione: "Esperienza cliente superiore, clienti che tornano", Icon: Smile },
+  { emoji: "📲", titolo: "Attivo in 24 ore", descrizione: "Nessuna installazione hardware, setup immediato", Icon: Smartphone },
 ];
 
-const FUNZIONALITA = [
-  {
-    Icon: Kanban,
-    titolo: "Kanban in tempo reale",
-    descrizione: "Ogni ordine scorre tra le colonne: Nuovo → In preparazione → Consegnato. Lo staff non perde nulla.",
-  },
-  {
-    Icon: Map,
-    titolo: "Mappa ombrelloni",
-    descrizione: "Visualizza lo stato di ogni ombrellone in tempo reale. Vedi subito dove c'è un ordine in ritardo.",
-  },
-  {
-    Icon: BarChart3,
-    titolo: "Report e analytics",
-    descrizione: "Prodotti più venduti, ore di punta, revenue giornaliera e tempo medio di consegna. Dati per decidere meglio.",
-  },
-  {
-    Icon: ShieldCheck,
-    titolo: "Accesso per ruoli",
-    descrizione: "Il gestore ha accesso completo. Lo staff vede solo mappa e ordini. Nessuna sovrapposizione.",
-  },
+const CONFRONTO = [
+  { tradizionale: "Il cliente va al bar", ombrellone: "Ordina dal lettino" },
+  { tradizionale: "Code e attese", ombrellone: "Ordine immediato" },
+  { tradizionale: "Il cameriere prende nota", ombrellone: "Ordine digitale, zero errori" },
+  { tradizionale: "Nessun dato sugli ordini", ombrellone: "Dashboard in tempo reale" },
 ];
-
-const PER_CHI = ["🏖️ Stabilimenti balneari", "🌊 Lidi attrezzati", "☀️ Beach club"];
 
 type FormStatus = "idle" | "submitting" | "success" | "error";
 
@@ -71,41 +39,13 @@ function Home() {
   return (
     <div className="min-h-screen flex flex-col">
       <NavBar />
-
-      <main className="flex-1 grid lg:grid-cols-2 gap-12 px-6 lg:px-16 py-12 max-w-7xl mx-auto w-full items-center">
-        <div>
-          <span className="chip chip-active mb-6">🏖️ Pensato per i lidi italiani</span>
-          <h1 className="text-5xl md:text-6xl font-extrabold leading-[1.05] text-primary">
-            Ordini dal tuo<br />
-            <span className="text-[color:var(--teal-deep)]">ombrellone.</span>
-          </h1>
-          <p className="mt-6 text-lg text-muted-foreground max-w-md">
-            Il tuo bar prende ordini mentre tu gestisci il lido.
-            I clienti ordinano dal telefono, lo staff consegna. Zero code, zero errori.
-          </p>
-          <div className="mt-8">
-            <a
-              href="#contatto"
-              className="bg-primary text-primary-foreground inline-flex items-center justify-center rounded-full px-6 py-3 font-semibold shadow-[var(--shadow-elevated)] hover:bg-primary/90 transition"
-            >
-              Richiedi una demo
-            </a>
-          </div>
-        </div>
-
-        <div className="relative">
-          <img
-            src="/main_ombrellone_gestionale_bar.png"
-            alt="OmbrellOne in uso al lido"
-            className="rounded-2xl shadow-xl w-full object-cover"
-          />
-        </div>
-      </main>
-
-      <ComeFunziona />
-      <Funzionalita />
-      <PerChiE />
+      <Hero />
+      <Benefici />
+      <EmotionSection />
+      <Confronto />
+      <Urgenza />
       <FormContatto />
+      <CtaFinale />
       <Footer />
     </div>
   );
@@ -125,19 +65,49 @@ function NavBar() {
   );
 }
 
-function ComeFunziona() {
+function Hero() {
   return (
-    <section className="px-6 lg:px-16 py-20 max-w-7xl mx-auto w-full">
-      <h2 className="text-3xl md:text-4xl font-bold text-primary text-center">Come funziona</h2>
-      <div className="mt-12 grid md:grid-cols-3 gap-6">
-        {COME_FUNZIONA_STEPS.map((s) => (
-          <div key={s.numero} className="card-soft p-6">
-            <div className="flex items-center justify-between">
-              <s.Icon className="w-8 h-8 text-teal-600" />
-              <span className="text-sm font-bold text-[color:var(--teal-deep)]">{s.numero}</span>
-            </div>
-            <h3 className="mt-4 text-lg font-semibold">{s.titolo}</h3>
-            <p className="mt-2 text-sm text-muted-foreground">{s.descrizione}</p>
+    <section className="grid lg:grid-cols-2 gap-12 px-6 lg:px-16 py-12 max-w-7xl mx-auto w-full items-center">
+      <div>
+        <span className="chip chip-active mb-6">🏖️ Pensato per i lidi italiani</span>
+        <h1 className="text-5xl md:text-6xl font-extrabold leading-[1.05] text-primary">
+          Più ordini.<br />
+          Meno code.<br />
+          <span className="text-[color:var(--teal-deep)]">Da oggi.</span>
+        </h1>
+        <p className="mt-6 text-lg text-muted-foreground max-w-md">
+          Il sistema QR per stabilimenti balneari che aumenta gli ordini e libera il tuo personale.
+        </p>
+        <div className="mt-8">
+          <a
+            href="#contatto"
+            className="bg-primary text-primary-foreground inline-flex items-center justify-center rounded-full px-6 py-3 font-semibold shadow-[var(--shadow-elevated)] hover:bg-primary/90 transition"
+          >
+            Richiedi una demo gratuita
+          </a>
+        </div>
+      </div>
+
+      <div className="relative">
+        <img
+          src="/main_ombrellone_gestionale_bar.png"
+          alt="OmbrellOne in uso al lido"
+          className="rounded-2xl shadow-xl w-full object-cover"
+        />
+      </div>
+    </section>
+  );
+}
+
+function Benefici() {
+  return (
+    <section className="px-6 lg:px-16 py-16 max-w-7xl mx-auto w-full">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {BENEFICI.map((b) => (
+          <div key={b.titolo} className="card-soft p-6 text-center">
+            <div className="text-4xl mb-3">{b.emoji}</div>
+            <h3 className="text-lg font-bold text-primary">{b.titolo}</h3>
+            <p className="mt-2 text-sm text-muted-foreground">{b.descrizione}</p>
           </div>
         ))}
       </div>
@@ -145,36 +115,88 @@ function ComeFunziona() {
   );
 }
 
-function Funzionalita() {
+function EmotionSection() {
   return (
-    <section className="px-6 lg:px-16 py-20 max-w-7xl mx-auto w-full">
-      <h2 className="text-3xl md:text-4xl font-bold text-primary text-center">Tutto quello che ti serve</h2>
-      <div className="mt-12 grid sm:grid-cols-2 gap-6">
-        {FUNZIONALITA.map((f) => (
-          <div key={f.titolo} className="card-soft p-6">
-            <f.Icon className="w-8 h-8 text-teal-600" />
-            <h3 className="mt-4 text-lg font-semibold">{f.titolo}</h3>
-            <p className="mt-2 text-sm text-muted-foreground">{f.descrizione}</p>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function PerChiE() {
-  return (
-    <section className="px-6 lg:px-16 py-20 max-w-7xl mx-auto w-full text-center">
-      <h2 className="text-3xl md:text-4xl font-bold text-primary">Progettato per i lidi italiani</h2>
-      <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-        Niente software complicati, niente formazione infinita. OmbrellOne funziona dal primo
-        giorno — i clienti ordinano dal telefono, lo staff consegna, tu incassi di più.
+    <section className="px-6 lg:px-16 py-20 max-w-4xl mx-auto w-full text-center">
+      <p className="text-3xl md:text-4xl font-bold text-primary leading-tight">
+        Sole. Spritz. Panino.<br />
+        <span className="text-[color:var(--teal-deep)]">Ordinato dal lettino, arrivato senza alzarsi.</span>
       </p>
-      <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-        {PER_CHI.map((p) => (
-          <span key={p} className="chip text-sm">{p}</span>
-        ))}
+      <p className="mt-6 text-lg text-muted-foreground">
+        Questo è ciò che i tuoi clienti ricordano — e per cui tornano.
+      </p>
+    </section>
+  );
+}
+
+function Confronto() {
+  return (
+    <section className="px-6 lg:px-16 py-20 max-w-4xl mx-auto w-full">
+      <h2 className="text-3xl md:text-4xl font-bold text-primary text-center">
+        Perché i gestori scelgono OmbrellOne
+      </h2>
+      <div className="mt-12 card-soft overflow-hidden">
+        <div className="grid grid-cols-2">
+          <div className="bg-muted/50 p-4 md:p-6 text-center font-semibold text-sm md:text-base text-muted-foreground border-b border-border">
+            Metodo tradizionale
+          </div>
+          <div className="bg-primary p-4 md:p-6 text-center font-semibold text-sm md:text-base text-primary-foreground border-b border-border">
+            OmbrellOne
+          </div>
+          {CONFRONTO.map((row, i) => (
+            <div key={i} className="contents">
+              <div className="p-4 md:p-6 border-b border-border last:border-b-0 flex items-start gap-2 md:gap-3 text-sm md:text-base">
+                <X className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+                <span className="text-muted-foreground">{row.tradizionale}</span>
+              </div>
+              <div className="p-4 md:p-6 border-b border-border last:border-b-0 flex items-start gap-2 md:gap-3 text-sm md:text-base bg-[color:var(--teal-deep)]/5">
+                <Check className="w-5 h-5 text-[color:var(--teal-deep)] shrink-0 mt-0.5" />
+                <span className="font-medium text-foreground">{row.ombrellone}</span>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
+    </section>
+  );
+}
+
+function Urgenza() {
+  return (
+    <section className="px-6 lg:px-16 py-20 max-w-4xl mx-auto w-full text-center">
+      <div className="card-soft p-8 md:p-12 bg-primary text-primary-foreground">
+        <p className="text-2xl md:text-3xl font-bold leading-tight">
+          La stagione è già iniziata.
+        </p>
+        <p className="mt-3 text-lg md:text-xl text-primary-foreground/90">
+          Ogni settimana senza OmbrellOne è una settimana di ordini persi.
+        </p>
+        <a
+          href="#contatto"
+          className="mt-8 inline-flex items-center justify-center rounded-full px-8 py-4 font-semibold bg-[color:var(--teal-deep)] text-white hover:opacity-90 transition shadow-lg"
+        >
+          Prenota la tua demo — è gratuita
+        </a>
+      </div>
+    </section>
+  );
+}
+
+function CtaFinale() {
+  return (
+    <section className="px-6 lg:px-16 py-20 max-w-3xl mx-auto w-full text-center">
+      <h2 className="text-3xl md:text-4xl font-bold text-primary">
+        Pronto a digitalizzare il tuo stabilimento?
+      </h2>
+      <p className="mt-4 text-lg text-muted-foreground">
+        Setup in 24 ore. Nessun hardware. Annullabile quando vuoi.
+      </p>
+      <a
+        href="#contatto"
+        className="mt-8 inline-flex items-center justify-center rounded-full px-8 py-4 font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition shadow-[var(--shadow-elevated)]"
+      >
+        Richiedi una demo gratuita
+      </a>
     </section>
   );
 }
@@ -222,59 +244,23 @@ function FormContatto() {
       <form onSubmit={handleSubmit} className="mt-10 card-soft p-6 md:p-8 space-y-4">
         <div>
           <Label htmlFor="contatto-nome">Nome e cognome</Label>
-          <Input
-            id="contatto-nome"
-            required
-            value={nome}
-            onChange={(e) => setNome(e.target.value)}
-            className="mt-1.5"
-            placeholder="Mario Rossi"
-          />
+          <Input id="contatto-nome" required value={nome} onChange={(e) => setNome(e.target.value)} className="mt-1.5" placeholder="Mario Rossi" />
         </div>
         <div>
           <Label htmlFor="contatto-email">Email</Label>
-          <Input
-            id="contatto-email"
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="mt-1.5"
-            placeholder="email@miolido.it"
-          />
+          <Input id="contatto-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="mt-1.5" placeholder="email@miolido.it" />
         </div>
         <div>
           <Label htmlFor="contatto-lido">Nome del lido</Label>
-          <Input
-            id="contatto-lido"
-            required
-            value={nomeLido}
-            onChange={(e) => setNomeLido(e.target.value)}
-            className="mt-1.5"
-            placeholder="Lido Azzurro"
-          />
+          <Input id="contatto-lido" required value={nomeLido} onChange={(e) => setNomeLido(e.target.value)} className="mt-1.5" placeholder="Lido Azzurro" />
         </div>
         <div>
           <Label htmlFor="contatto-citta">Città</Label>
-          <Input
-            id="contatto-citta"
-            required
-            value={citta}
-            onChange={(e) => setCitta(e.target.value)}
-            className="mt-1.5"
-            placeholder="Capaccio Paestum"
-          />
+          <Input id="contatto-citta" required value={citta} onChange={(e) => setCitta(e.target.value)} className="mt-1.5" placeholder="Capaccio Paestum" />
         </div>
         <div>
           <Label htmlFor="contatto-messaggio">Messaggio</Label>
-          <Textarea
-            id="contatto-messaggio"
-            value={messaggio}
-            onChange={(e) => setMessaggio(e.target.value)}
-            className="mt-1.5"
-            rows={4}
-            placeholder="Raccontaci qualcosa in più sul tuo lido (opzionale)"
-          />
+          <Textarea id="contatto-messaggio" value={messaggio} onChange={(e) => setMessaggio(e.target.value)} className="mt-1.5" rows={4} placeholder="Raccontaci qualcosa in più sul tuo lido (opzionale)" />
         </div>
 
         <Button type="submit" disabled={status === "submitting"} className="w-full h-11 rounded-full">
