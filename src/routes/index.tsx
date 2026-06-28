@@ -343,7 +343,7 @@ const IN_AZIONE_GRID = [
     badge: "📱 Mobile first",
     titolo: "Lavora da qualsiasi dispositivo",
     testo: "Il gestionale è ottimizzato per tablet e smartphone. Lo staff può lavorare senza PC.",
-    image: "/scrreshot-kanban-mobile.jpeg",
+    image: "/screenshot-kanban-mobile.jpeg",
     imageClassName: "rounded-2xl shadow-xl w-full max-w-[220px] mx-auto",
   },
   {
