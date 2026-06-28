@@ -149,7 +149,7 @@ function MappaPage() {
       {file.length === 0 ? (
         <div className="mt-8 card-soft p-8 text-center text-muted-foreground">{t("map.noConfig")}</div>
       ) : (
-        <div className="mt-6 card-soft p-4 md:p-5 space-y-5 overflow-x-auto">
+        <div className="mt-6 card-soft p-4 md:p-5 space-y-5 overflow-x-hidden max-w-full">
           {/* Sea marker */}
           <div className="text-center text-xs font-semibold tracking-wider text-[color:var(--teal-deep)] uppercase">
             ≈ {lang === "it" ? "Mare" : "Sea"} ≈
@@ -158,7 +158,7 @@ function MappaPage() {
           {file.map((row) => (
             <div key={row.index}>
               <div className="text-xs font-semibold text-muted-foreground mb-2 px-1">{row.label}</div>
-              <div className="flex flex-wrap gap-2.5">
+              <div className="flex flex-wrap gap-2.5 max-w-full">
                 {row.ombrelloni.map((u) => {
                   const orders = ordersByNumero.get(String(u.numero)) ?? [];
                   const s = worstState(orders, now);
@@ -248,7 +248,7 @@ function UmbrellaTile({ numero, rowLabel, orders, state, now, onClick }: {
   return (
     <button
       onClick={onClick}
-      className={`relative w-[88px] min-h-[88px] rounded-2xl border-2 ${TILE_CLASS[state]} flex flex-col items-center transition active:scale-95 shadow-sm overflow-hidden`}
+      className={`relative w-20 min-h-[88px] shrink-0 grow-0 rounded-2xl border-2 ${TILE_CLASS[state]} flex flex-col items-center transition active:scale-95 shadow-sm overflow-hidden`}
     >
       {bar && (
         <div className={`w-full h-6 flex items-center justify-center gap-1 ${bar.barClass} text-white`}>
