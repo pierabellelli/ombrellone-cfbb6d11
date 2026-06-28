@@ -1,5 +1,5 @@
-const CACHE_NAME = 'ombrellone-v1';
-const urlsToCache = ['/', '/index.html'];
+const CACHE_NAME = 'ombrellone-v2';
+const urlsToCache = ['/', '/index.html', '/login'];
 
 self.addEventListener('install', event => {
   event.waitUntil(
