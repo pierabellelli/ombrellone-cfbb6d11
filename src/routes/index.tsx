@@ -387,13 +387,13 @@ function FormContatto() {
     e.preventDefault();
     setStatus("submitting");
 
-    const { error } = await supabase.from("contatti").insert({
+    const { error } = await (supabase.from("contatti" as any) as any).insert({
       nome: nome.trim(),
       email: email.trim(),
       nome_lido: nomeLido.trim(),
       citta: citta.trim(),
       messaggio: messaggio.trim() ? messaggio.trim() : null,
-    });
+    } as any);
 
     if (error) {
       setStatus("error");
