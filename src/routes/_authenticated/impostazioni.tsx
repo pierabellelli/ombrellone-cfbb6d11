@@ -264,9 +264,9 @@ function ImageUploader({
         .createSignedUrl(path, SIGNED_TTL);
       if (sErr) throw sErr;
       const patch = { [field]: signed.signedUrl } as Partial<Lido>;
-      const { error: updErr } = await supabase
-        .from("lidi")
-        .update(patch)
+      const { error: updErr } = await (supabase
+        .from("lidi") as any)
+        .update(patch as any)
         .eq("id", lidoId);
       if (updErr) throw updErr;
       toast.success(`${label} aggiornato`);
@@ -282,7 +282,7 @@ function ImageUploader({
   const handleRemove = async () => {
     setBusy(true);
     const patch = { [field]: null } as Partial<Lido>;
-    const { error } = await supabase.from("lidi").update(patch).eq("id", lidoId);
+    const { error } = await (supabase.from("lidi") as any).update(patch as any).eq("id", lidoId);
     setBusy(false);
     if (error) { toast.error("Impossibile rimuovere", { description: error.message }); return; }
     toast.success(`${label} rimosso`);
@@ -466,7 +466,7 @@ function PagamentiCard({ lido, onSaved }: { lido: Lido; onSaved: () => void }) {
   const onSave = async () => {
     setSaving(true);
     const patch = { accetta_carta: accettaCarta } as Partial<Lido>;
-    const { error } = await supabase.from("lidi").update(patch).eq("id", lido.id);
+    const { error } = await (supabase.from("lidi") as any).update(patch as any).eq("id", lido.id);
     setSaving(false);
     if (error) { toast.error("Impossibile salvare", { description: error.message }); return; }
     toast.success("Metodi di pagamento aggiornati");
@@ -507,7 +507,7 @@ function StoricoStaffCard({ lido, onSaved }: { lido: Lido; onSaved: () => void }
   const onToggle = async (checked: boolean) => {
     setGlobale(checked);
     setSaving(true);
-    const { error } = await supabase.from("lidi").update({ storico_staff_globale: checked }).eq("id", lido.id);
+    const { error } = await (supabase.from("lidi") as any).update({ storico_staff_globale: checked } as any).eq("id", lido.id);
     setSaving(false);
     if (error) {
       setGlobale(lido.storico_staff_globale);

@@ -552,7 +552,7 @@ function TrackOrderView({ lidoId, onBack }: { lidoId: string; onBack: () => void
     }
     setPhoneError(false);
     setSearching(true);
-    const { data, error } = await supabase.rpc("traccia_ordini_oggi", {
+    const { data, error } = await (supabase.rpc as any)("traccia_ordini_oggi", {
       _lido_id: lidoId,
       _numero_ombrellone: numeroOmbrellone.trim(),
       _telefono: digits,
@@ -761,7 +761,7 @@ function CartView({
     if (items.length === 0) { toast.error(t("cliente.errEmptyCart")); return; }
 
     setSending(true);
-    const { data, error } = await supabase.rpc("create_ordine", {
+    const { data, error } = await (supabase.rpc as any)("create_ordine", {
       _lido_id: lido.id,
       _numero_ombrellone: ombrTrim.slice(0, 20),
       _cognome: cogTrim.slice(0, 60),
@@ -925,7 +925,7 @@ function OrderHistorySection({ lidoId }: { lidoId: string }) {
     queryKey: ["cliente-storico", lidoId, stored?.telefono],
     enabled: !!stored?.telefono && !!lidoId,
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_order_history", {
+      const { data, error } = await (supabase.rpc as any)("get_order_history", {
         _lido_id: lidoId,
         _telefono: stored!.telefono,
       });
