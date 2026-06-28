@@ -2,7 +2,7 @@ import { createFileRoute, Outlet, redirect, Link, useNavigate, useRouterState } 
 import { useEffect, useState, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Logo } from "@/components/Logo";
-import { LogOut, ClipboardList, Package, Settings, Map as MapIcon, LayoutPanelTop, BarChart3, QrCode, MoreHorizontal } from "lucide-react";
+import { LogOut, ClipboardList, Package, Settings, Map as MapIcon, LayoutPanelTop, BarChart3, QrCode, MoreHorizontal, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useI18n } from "@/lib/i18n";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose } from "@/components/ui/sheet";
@@ -34,6 +34,37 @@ function AuthLayout() {
   useEffect(() => {
     setLang("it");
   }, [setLang]);
+
+  const [installPrompt, setInstallPrompt] = useState<any>(null);
+  const [installDismissed, setInstallDismissed] = useState(
+    () => localStorage.getItem("pwa-install-dismissed") === "true",
+  );
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+    };
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
+
+  const showInstallBanner =
+    !!installPrompt &&
+    !installDismissed &&
+    window.matchMedia("(display-mode: browser)").matches;
+
+  const handleInstall = async () => {
+    if (!installPrompt) return;
+    installPrompt.prompt();
+    await installPrompt.userChoice;
+    setInstallPrompt(null);
+  };
+
+  const handleDismissInstall = () => {
+    localStorage.setItem("pwa-install-dismissed", "true");
+    setInstallDismissed(true);
+  };
 
   const { data: roles = [] } = useQuery({
     queryKey: ["user_roles", user.id],
@@ -82,6 +113,22 @@ function AuthLayout() {
 
   return (
     <div className="min-h-screen flex flex-col">
+      {showInstallBanner && (
+        <div className="md:hidden flex items-center justify-between gap-3 px-4 py-2 bg-[#1D9E75] text-white text-sm">
+          <span className="flex-1">
+            📱 Installa OmbrellOne sul tuo telefono per un'esperienza migliore
+          </span>
+          <button
+            onClick={handleInstall}
+            className="shrink-0 px-3 py-1 rounded-md bg-white/20 hover:bg-white/30 font-medium transition"
+          >
+            Installa
+          </button>
+          <button onClick={handleDismissInstall} className="shrink-0" aria-label="Chiudi">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
       <header className="border-b border-border bg-card/80 backdrop-blur sticky top-0 z-30">
         <div className="max-w-[1400px] mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-6">
