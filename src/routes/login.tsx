@@ -2,8 +2,6 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Logo } from "@/components/Logo";
-import beachHero from "@/assets/beach-hero.jpg";
 import { ArrowLeft, Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/login")({
@@ -37,7 +35,6 @@ function LoginPage() {
       toast.error("Accesso fallito", { description: error.message });
       return;
     }
-    toast.success("Bentornato!");
     navigate({ to: "/mappa" });
   };
 
@@ -46,11 +43,11 @@ function LoginPage() {
       {/* Sfondo spiaggia */}
       <div className="absolute inset-0 -z-10">
         <img
-          src={beachHero}
+          src="/umbrella-sea.jpg"
           alt=""
           className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-br from-[color:var(--navy-deep)]/85 via-[color:var(--navy)]/70 to-[color:var(--teal-deep)]/60" />
+        <div className="absolute inset-0 bg-black/40" />
       </div>
 
       {/* Home button top-left */}
@@ -63,19 +60,9 @@ function LoginPage() {
       </Link>
 
       {/* Card */}
-      <div className="w-full max-w-md card-soft p-8 md:p-10 shadow-[var(--shadow-elevated)] relative">
-        <div className="flex justify-center mb-6">
-          <Logo size={48} />
-        </div>
-
-        <div className="text-center mb-7">
-          <div className="text-xs font-bold tracking-[0.18em] text-[color:var(--teal-deep)] uppercase">
-            Area staff
-          </div>
-          <h1 className="mt-2 text-2xl font-bold text-primary">Accedi alla dashboard</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Gestisci ordini, menu e ombrelloni del tuo lido.
-          </p>
+      <div className="w-full max-w-md bg-white rounded-2xl p-8 md:p-10 shadow-2xl relative">
+        <div className="flex justify-center mb-7">
+          <img src="/logo_ombrellOne.png" alt="OmbrellOne" className="h-16 w-auto mx-auto" />
         </div>
 
         <form onSubmit={onSubmit} className="space-y-4">
@@ -115,7 +102,7 @@ function LoginPage() {
         </form>
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
-          Hai bisogno di un account staff? Contatta il gestore del lido.
+          Non hai ancora un account? Contatta il tuo gestore.
         </p>
       </div>
     </div>

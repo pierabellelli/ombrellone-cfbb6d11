@@ -1,6 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
-import beachHero from "@/assets/beach-hero.jpg";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -96,11 +95,9 @@ function Home() {
 
         <div className="relative">
           <img
-            src={beachHero}
-            alt="Vista aerea di un lido italiano con ombrelloni"
-            width={1536}
-            height={1024}
-            className="rounded-3xl shadow-[var(--shadow-elevated)] aspect-[4/3] object-cover"
+            src="/umbrella-sea.jpg"
+            alt="Lido italiano"
+            className="rounded-2xl shadow-[var(--shadow-elevated)] aspect-[4/3] object-cover w-full"
           />
         </div>
       </main>
@@ -303,10 +300,7 @@ function Footer() {
   return (
     <footer className="hero-gradient px-6 py-8">
       <div className="max-w-7xl mx-auto w-full flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <img src="/logo_ombrellOne.png" alt="OmbrellOne" className="h-16 w-auto" />
-          <span className="text-sm text-white/80">© {new Date().getFullYear()} OmbrellOne</span>
-        </div>
+        <span className="text-sm text-white/80">© {new Date().getFullYear()} OmbrellOne</span>
         <Link to="/login" className="text-sm font-medium text-white hover:underline">
           Accedi al gestionale
         </Link>
