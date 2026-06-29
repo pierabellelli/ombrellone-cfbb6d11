@@ -136,7 +136,7 @@ function NavBar() {
         <div className="hidden md:block">
           <Link
             to="/login"
-            className="text-base font-medium px-4 py-2 rounded-full border border-border bg-card hover:bg-secondary transition"
+            className="text-base font-medium px-4 py-2 rounded-full bg-primary text-white hover:opacity-90 transition"
           >
             Accedi
           </Link>
@@ -171,7 +171,7 @@ function NavBar() {
           <Link
             to="/login"
             onClick={() => setMobileOpen(false)}
-            className="text-base font-medium text-center px-4 py-2 rounded-full border border-border bg-card"
+            className="text-base font-medium text-center px-4 py-2 rounded-full bg-primary text-white hover:opacity-90 transition"
           >
             Accedi
           </Link>
