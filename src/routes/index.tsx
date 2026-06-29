@@ -256,9 +256,13 @@ function EmotionSection() {
       <p className="mt-6 text-lg text-muted-foreground">
         I tuoi clienti ordinano dal lettino e mangiano comodamente sotto l'ombrellone — senza occupare un tavolo al bar. Tu servi più persone, ruoti i tavoli più velocemente e incassi di più.
       </p>
-      <p className="mt-4 text-sm font-medium text-muted-foreground">
-        Più ordini per turno • Tavoli sempre disponibili • Zero code al bar
-      </p>
+      <div className="mt-6 flex flex-row gap-3 justify-center flex-wrap">
+        {["Più ordini per turno", "Tavoli sempre disponibili", "Zero code al bar"].map((testo) => (
+          <span key={testo} className="bg-primary text-white font-medium text-sm px-5 py-2 rounded-full">
+            {testo}
+          </span>
+        ))}
+      </div>
     </section>
   );
 }
