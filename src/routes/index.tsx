@@ -124,8 +124,8 @@ function NavBar() {
               href={link.href}
               className={
                 link.pill
-                  ? "text-sm font-semibold px-4 py-2 rounded-full bg-[color:var(--teal-deep)] text-white hover:opacity-90 transition"
-                  : "text-sm font-medium text-foreground hover:text-primary transition"
+                  ? "text-base font-semibold px-4 py-2 rounded-full bg-[color:var(--teal-deep)] text-white hover:opacity-90 transition"
+                  : "text-base font-medium text-foreground hover:text-primary transition"
               }
             >
               {link.label}
@@ -136,7 +136,7 @@ function NavBar() {
         <div className="hidden md:block">
           <Link
             to="/login"
-            className="text-sm font-medium px-4 py-2 rounded-full border border-border bg-card hover:bg-secondary transition"
+            className="text-base font-medium px-4 py-2 rounded-full border border-border bg-card hover:bg-secondary transition"
           >
             Accedi
           </Link>
@@ -161,8 +161,8 @@ function NavBar() {
               onClick={() => setMobileOpen(false)}
               className={
                 link.pill
-                  ? "text-sm font-semibold text-center px-4 py-2 rounded-full bg-[color:var(--teal-deep)] text-white"
-                  : "text-sm font-medium text-foreground py-1.5"
+                  ? "text-base font-semibold text-center px-4 py-2 rounded-full bg-[color:var(--teal-deep)] text-white"
+                  : "text-base font-medium text-foreground py-1.5"
               }
             >
               {link.label}
@@ -171,7 +171,7 @@ function NavBar() {
           <Link
             to="/login"
             onClick={() => setMobileOpen(false)}
-            className="text-sm font-medium text-center px-4 py-2 rounded-full border border-border bg-card"
+            className="text-base font-medium text-center px-4 py-2 rounded-full border border-border bg-card"
           >
             Accedi
           </Link>
@@ -251,11 +251,13 @@ function EmotionSection() {
   return (
     <section className="px-6 lg:px-16 py-20 max-w-4xl mx-auto w-full text-center">
       <p className="text-3xl md:text-4xl font-bold text-primary leading-tight">
-        Sole. Spritz. Panino.<br />
-        <span className="text-[color:var(--teal-deep)]">Ordinato dal lettino, arrivato senza alzarsi.</span>
+        Sole. Spritz. Pizza. Qualsiasi cosa.
       </p>
       <p className="mt-6 text-lg text-muted-foreground">
-        Questo è ciò che i tuoi clienti ricordano — e per cui tornano.
+        I tuoi clienti ordinano dal lettino e mangiano comodamente sotto l'ombrellone — senza occupare un tavolo al bar. Tu servi più persone, ruoti i tavoli più velocemente e incassi di più.
+      </p>
+      <p className="mt-4 text-sm font-medium text-muted-foreground">
+        Più ordini per turno • Tavoli sempre disponibili • Zero code al bar
       </p>
     </section>
   );
