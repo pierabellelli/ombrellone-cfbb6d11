@@ -183,40 +183,39 @@ function NavBar() {
 
 function Hero() {
   return (
-    <section className="relative min-h-screen overflow-hidden">
-      <img
-        src="/main_ombrellone_gestionale_bar2.png"
-        alt="OmbrellOne in uso al lido"
-        className="md:hidden w-full h-64 object-cover"
-      />
-
-      <div className="flex flex-row h-full">
-        <div className="w-full md:w-[45%] flex flex-col justify-center bg-white pl-6 md:pl-20 pr-6 py-12 relative z-10">
-          <span className="chip chip-active w-fit mb-6">🏖️ Pensato per i lidi italiani</span>
-          <h1 className="text-5xl md:text-6xl font-extrabold leading-[1.05] text-primary">
-            Il sistema operativo<br />
-            del tuo <span className="text-[color:var(--teal-deep)]">stabilimento.</span>
-          </h1>
-          <p className="mt-6 text-lg text-muted-foreground max-w-md">
-            Ordini digitali, mappa in tempo reale, analytics e menu dal QR. OmbrellOne gestisce l'operatività del tuo bar mentre tu ti concentri sui clienti.
-          </p>
-          <div className="mt-8">
-            <a
-              href="#contatto"
-              className="bg-primary text-primary-foreground inline-flex items-center justify-center rounded-full px-6 py-3 font-semibold shadow-[var(--shadow-elevated)] hover:bg-primary/90 transition"
-            >
-              Richiedi una demo gratuita
-            </a>
-          </div>
-        </div>
-      </div>
-
-      <div className="hidden md:block absolute right-0 top-0 bottom-0 w-[55%] overflow-hidden">
+    <section className="min-h-screen flex flex-col md:flex-row items-center bg-slate-50 px-8 md:px-16 lg:px-20 gap-8 md:gap-12">
+      <div className="md:hidden w-full rounded-xl overflow-hidden aspect-[4/3]">
         <img
           src="/main_ombrellone_gestionale_bar2.png"
           alt="OmbrellOne in uso al lido"
-          className="w-full h-full object-cover"
-          style={{ objectPosition: "center center", display: "block" }}
+          className="w-full h-full object-cover object-center"
+        />
+      </div>
+
+      <div className="w-full md:w-[45%] flex flex-col justify-center">
+        <span className="chip chip-active w-fit mb-6">🏖️ Pensato per i lidi italiani</span>
+        <h1 className="text-5xl md:text-6xl font-extrabold leading-[1.05] text-primary">
+          Il sistema operativo<br />
+          del tuo <span className="text-[color:var(--teal-deep)]">stabilimento.</span>
+        </h1>
+        <p className="mt-6 text-lg text-muted-foreground max-w-md">
+          Ordini digitali, mappa in tempo reale, analytics e menu dal QR. OmbrellOne gestisce l'operatività del tuo bar mentre tu ti concentri sui clienti.
+        </p>
+        <div className="mt-8">
+          <a
+            href="#contatto"
+            className="bg-primary text-primary-foreground inline-flex items-center justify-center rounded-full px-6 py-3 font-semibold shadow-[var(--shadow-elevated)] hover:bg-primary/90 transition"
+          >
+            Richiedi una demo gratuita
+          </a>
+        </div>
+      </div>
+
+      <div className="hidden md:block w-full md:w-[55%] rounded-2xl overflow-hidden shadow-xl aspect-[4/3]">
+        <img
+          src="/main_ombrellone_gestionale_bar2.png"
+          alt="OmbrellOne in uso al lido"
+          className="w-full h-full object-cover object-center"
         />
       </div>
     </section>
