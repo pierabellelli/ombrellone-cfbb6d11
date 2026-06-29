@@ -555,9 +555,17 @@ function Footer() {
     <footer className="hero-gradient px-6 py-8">
       <div className="max-w-7xl mx-auto w-full flex flex-wrap items-center justify-between gap-4">
         <span className="text-sm text-white/80">© {new Date().getFullYear()} OmbrellOne</span>
-        <Link to="/login" className="text-sm font-medium text-white hover:underline">
-          Accedi al gestionale
-        </Link>
+        <div className="flex flex-wrap items-center gap-4">
+          <Link to="/privacy" className="text-sm text-white/70 hover:underline">
+            Privacy Policy
+          </Link>
+          <Link to="/terms" className="text-sm text-white/70 hover:underline">
+            Termini di Servizio
+          </Link>
+          <Link to="/login" className="text-sm font-medium text-white hover:underline">
+            Accedi al gestionale
+          </Link>
+        </div>
       </div>
     </footer>
   );
