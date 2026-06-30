@@ -39,6 +39,7 @@ type Lido = {
   storico_staff_globale: boolean;
   tempo_attesa_attivo: boolean;
   tempo_attesa_minuti: number | null;
+  numero_ordine_partenza: number;
 };
 
 const SIGNED_TTL = 60 * 60 * 24 * 365;
@@ -347,6 +348,7 @@ function RegoleServizioCard({ lido, onSaved }: { lido: Lido; onSaved: () => void
   const [tempoAttesaMinuti, setTempoAttesaMinuti] = useState<string>(
     lido.tempo_attesa_minuti != null ? String(lido.tempo_attesa_minuti) : "",
   );
+  const [numeroPartenza, setNumeroPartenza] = useState<string>(String(lido.numero_ordine_partenza));
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -358,6 +360,7 @@ function RegoleServizioCard({ lido, onSaved }: { lido: Lido; onSaved: () => void
     setFinestra(lido.finestra_controllo_minuti != null ? String(lido.finestra_controllo_minuti) : "");
     setTempoAttesaAttivo(lido.tempo_attesa_attivo);
     setTempoAttesaMinuti(lido.tempo_attesa_minuti != null ? String(lido.tempo_attesa_minuti) : "");
+    setNumeroPartenza(String(lido.numero_ordine_partenza));
   }, [lido.id]);
 
   const parseNum = (v: string) => {
@@ -374,6 +377,7 @@ function RegoleServizioCard({ lido, onSaved }: { lido: Lido; onSaved: () => void
     const m = parseInt2(maxOrd);
     const f = parseInt2(finestra);
     const tam = parseInt2(tempoAttesaMinuti);
+    const np = parseInt2(numeroPartenza);
     if (Number.isNaN(s) || (s !== null && s < 0)) { toast.error("Soglia non valida"); return; }
     if (Number.isNaN(m) || (m !== null && m < 0)) { toast.error("Max ordini non valido"); return; }
     if (Number.isNaN(f) || (f !== null && f < 0)) { toast.error("Finestra controllo non valida"); return; }
@@ -381,6 +385,7 @@ function RegoleServizioCard({ lido, onSaved }: { lido: Lido; onSaved: () => void
       toast.error("Minuti stimati non validi");
       return;
     }
+    if (Number.isNaN(np) || np === null || np < 1) { toast.error("Numero ordine di partenza non valido"); return; }
 
     setSaving(true);
     const { error } = await supabase.from("lidi").update({
@@ -392,6 +397,7 @@ function RegoleServizioCard({ lido, onSaved }: { lido: Lido; onSaved: () => void
       finestra_controllo_minuti: f,
       tempo_attesa_attivo: tempoAttesaAttivo,
       tempo_attesa_minuti: tempoAttesaAttivo ? tam : null,
+      numero_ordine_partenza: np,
     }).eq("id", lido.id);
     setSaving(false);
     if (error) { toast.error("Impossibile salvare", { description: error.message }); return; }
@@ -487,6 +493,20 @@ function RegoleServizioCard({ lido, onSaved }: { lido: Lido; onSaved: () => void
             </p>
           </div>
         )}
+
+        <div>
+          <Label htmlFor="numeropartenza">Numero ordine di partenza</Label>
+          <Input
+            id="numeropartenza"
+            inputMode="numeric"
+            value={numeroPartenza}
+            onChange={(e) => setNumeroPartenza(e.target.value)}
+            className="mt-1.5 max-w-xs"
+          />
+          <p className="text-xs text-muted-foreground mt-1.5">
+            Imposta da quale numero ripartiranno gli ordini. Cambialo solo prima dell'inizio della stagione o quando non ci sono ancora ordini registrati: modificarlo a stagione iniziata farà saltare la numerazione in avanti o non avrà effetto se il numero scelto è inferiore a quello già raggiunto.
+          </p>
+        </div>
 
         <div className="flex justify-end pt-2">
           <Button onClick={handleSave} disabled={saving}>

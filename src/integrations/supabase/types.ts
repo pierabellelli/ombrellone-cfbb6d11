@@ -157,6 +157,7 @@ export type Database = {
           messaggio_benvenuto: string | null
           nome: string
           note_interne: string | null
+          numero_ordine_partenza: number
           orario_apertura: string | null
           orario_chiusura: string | null
           servizio_bar_attivo: boolean | null
@@ -189,6 +190,7 @@ export type Database = {
           messaggio_benvenuto?: string | null
           nome: string
           note_interne?: string | null
+          numero_ordine_partenza?: number
           orario_apertura?: string | null
           orario_chiusura?: string | null
           servizio_bar_attivo?: boolean | null
@@ -221,6 +223,7 @@ export type Database = {
           messaggio_benvenuto?: string | null
           nome?: string
           note_interne?: string | null
+          numero_ordine_partenza?: number
           orario_apertura?: string | null
           orario_chiusura?: string | null
           servizio_bar_attivo?: boolean | null
