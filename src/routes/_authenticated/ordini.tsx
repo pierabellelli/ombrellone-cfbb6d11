@@ -3,8 +3,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Clock, Phone, MapPin, Banknote, CreditCard, StickyNote, ArrowRight, Check, CheckCheck, Archive, Search, X } from "lucide-react";
+import { Clock, Phone, MapPin, Banknote, CreditCard, StickyNote, ArrowRight, Check, CheckCheck, Archive, Search, X, AlertTriangle } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
+
+const SOGLIA_URGENTE_ARRIVATI = 10;
+const SOGLIA_URGENTE_DA_EVADERE = 15;
 
 type Stato = "arrivati" | "da_evadere" | "consegnati";
 
@@ -94,8 +97,12 @@ function useTick(ms = 1000) {
   }, [ms]);
 }
 
+function getElapsedMinutes(iso: string) {
+  return Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 60000));
+}
+
 function formatElapsed(iso: string) {
-  const totalMin = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 60000));
+  const totalMin = getElapsedMinutes(iso);
   const h = Math.floor(totalMin / 60);
   const m = totalMin % 60;
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
@@ -110,7 +117,7 @@ const STATO_STYLE: Record<Stato, {
 }> = {
   arrivati: { border: "border-l-emerald-500", pillBg: "bg-green-100 text-green-800", pillIcon: Check, pillKey: "kanban.pill.arrivati", box: "bg-emerald-50 border-emerald-300 text-emerald-800" },
   da_evadere: { border: "border-l-amber-500", pillBg: "bg-amber-100 text-amber-800", pillIcon: Clock, pillKey: "kanban.pill.daEvadere", box: "bg-amber-50 border-amber-300 text-amber-800" },
-  consegnati: { border: "border-l-red-500", pillBg: "bg-emerald-100 text-emerald-800", pillIcon: CheckCheck, pillKey: "kanban.pill.consegnati", box: "bg-red-50 border-red-300 text-red-800" },
+  consegnati: { border: "border-l-emerald-500", pillBg: "bg-emerald-100 text-emerald-800", pillIcon: CheckCheck, pillKey: "kanban.pill.consegnati", box: "bg-emerald-50 border-emerald-300 text-emerald-800" },
 };
 
 function OrdiniPage() {
@@ -423,8 +430,12 @@ function OrderCard({ ordine, stato, onMove, selectable, selected, onToggleSelect
   const pagamento = (ordine.metodo_pagamento ?? "contanti").toLowerCase();
   const isCarta = pagamento === "carta";
 
+  const elapsedMin = getElapsedMinutes(ordine.created_at);
+  const sogliaUrgente = stato === "arrivati" ? SOGLIA_URGENTE_ARRIVATI : stato === "da_evadere" ? SOGLIA_URGENTE_DA_EVADERE : null;
+  const isUrgente = sogliaUrgente != null && elapsedMin >= sogliaUrgente;
+
   return (
-    <div className={`relative bg-white rounded-2xl border border-border border-l-2 ${style.border} shadow-sm p-3 transition`}>
+    <div className={`relative bg-white rounded-2xl border border-border border-l-2 ${isUrgente ? "border-l-red-600 animate-pulse" : style.border} shadow-sm p-3 transition`}>
       {selectable && (
         <input
           type="checkbox"
@@ -444,8 +455,8 @@ function OrderCard({ ordine, stato, onMove, selectable, selected, onToggleSelect
           <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${style.pillBg}`}>
             <PillIcon className="w-3 h-3" /> {t(style.pillKey)}
           </span>
-          <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full border border-border text-foreground">
-            <Clock className="w-3 h-3" /> {formatElapsed(ordine.created_at)}
+          <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${isUrgente ? "bg-red-600 text-white" : "border border-border text-foreground"}`}>
+            {isUrgente ? <AlertTriangle className="w-3 h-3" /> : <Clock className="w-3 h-3" />} {formatElapsed(ordine.created_at)}
           </span>
         </div>
       </div>
