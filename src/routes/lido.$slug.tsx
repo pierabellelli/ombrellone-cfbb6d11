@@ -66,6 +66,31 @@ function removeStoredFavorite(prodottoId: string) {
   try { localStorage.setItem(LS_KEY, JSON.stringify(next)); } catch { /* ignore */ }
 }
 
+type StoredCartItem = { prodotto_id: string; quantita: number };
+
+function cartStorageKey(slug: string) {
+  return `ombrellone.cart.${slug}`;
+}
+function readStoredCart(slug: string): StoredCartItem[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = sessionStorage.getItem(cartStorageKey(slug));
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((x: any) => x && typeof x.prodotto_id === "string" && typeof x.quantita === "number");
+  } catch { return []; }
+}
+function writeStoredCart(slug: string, cart: Record<string, CartItem>) {
+  if (typeof window === "undefined") return;
+  const items: StoredCartItem[] = Object.values(cart).map((it) => ({ prodotto_id: it.prodotto.id, quantita: it.quantita }));
+  try { sessionStorage.setItem(cartStorageKey(slug), JSON.stringify(items)); } catch { /* ignore */ }
+}
+function clearStoredCart(slug: string) {
+  if (typeof window === "undefined") return;
+  try { sessionStorage.removeItem(cartStorageKey(slug)); } catch { /* ignore */ }
+}
+
 const searchSchema = z.object({
   o: z.union([z.string(), z.number()]).transform(String).optional(),
 });
@@ -160,6 +185,29 @@ function LidoClientPage() {
   });
 
   const [cart, setCart] = useState<Record<string, CartItem>>({});
+  const restoredCartForSlugRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (restoredCartForSlugRef.current === slug) return;
+    if (prodotti.length === 0) return;
+    const stored = readStoredCart(slug);
+    if (stored.length > 0) {
+      const byId = new Map(prodotti.map((p) => [p.id, p]));
+      const restored: Record<string, CartItem> = {};
+      for (const it of stored) {
+        const p = byId.get(it.prodotto_id);
+        if (p) restored[p.id] = { prodotto: p, quantita: it.quantita };
+      }
+      if (Object.keys(restored).length > 0) setCart(restored);
+    }
+    restoredCartForSlugRef.current = slug;
+  }, [prodotti, slug]);
+
+  useEffect(() => {
+    if (restoredCartForSlugRef.current !== slug) return;
+    writeStoredCart(slug, cart);
+  }, [cart, slug]);
+
   const [search, setSearch] = useState("");
   const [catSel, setCatSel] = useState<string>("tutte");
   const [cartOpen, setCartOpen] = useState(false);
@@ -391,6 +439,8 @@ function LidoClientPage() {
                   prefix: telefono.prefix,
                   phone: telefono.phone,
                 });
+                setCart({});
+                clearStoredCart(slug);
                 setCartOpen(false);
               }}
             />
