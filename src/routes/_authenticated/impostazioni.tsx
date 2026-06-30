@@ -37,6 +37,8 @@ type Lido = {
   finestra_controllo_minuti: number | null;
   accetta_carta: boolean;
   storico_staff_globale: boolean;
+  tempo_attesa_attivo: boolean;
+  tempo_attesa_minuti: number | null;
 };
 
 const SIGNED_TTL = 60 * 60 * 24 * 365;
@@ -341,6 +343,10 @@ function RegoleServizioCard({ lido, onSaved }: { lido: Lido; onSaved: () => void
   const [finestra, setFinestra] = useState<string>(
     lido.finestra_controllo_minuti != null ? String(lido.finestra_controllo_minuti) : "",
   );
+  const [tempoAttesaAttivo, setTempoAttesaAttivo] = useState(lido.tempo_attesa_attivo);
+  const [tempoAttesaMinuti, setTempoAttesaMinuti] = useState<string>(
+    lido.tempo_attesa_minuti != null ? String(lido.tempo_attesa_minuti) : "",
+  );
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -350,6 +356,8 @@ function RegoleServizioCard({ lido, onSaved }: { lido: Lido; onSaved: () => void
     setSoglia(lido.soglia_ordine_libero != null ? String(lido.soglia_ordine_libero) : "");
     setMaxOrd(lido.max_ordini_ravvicinati != null ? String(lido.max_ordini_ravvicinati) : "");
     setFinestra(lido.finestra_controllo_minuti != null ? String(lido.finestra_controllo_minuti) : "");
+    setTempoAttesaAttivo(lido.tempo_attesa_attivo);
+    setTempoAttesaMinuti(lido.tempo_attesa_minuti != null ? String(lido.tempo_attesa_minuti) : "");
   }, [lido.id]);
 
   const parseNum = (v: string) => {
@@ -365,9 +373,14 @@ function RegoleServizioCard({ lido, onSaved }: { lido: Lido; onSaved: () => void
     const s = parseNum(soglia);
     const m = parseInt2(maxOrd);
     const f = parseInt2(finestra);
+    const tam = parseInt2(tempoAttesaMinuti);
     if (Number.isNaN(s) || (s !== null && s < 0)) { toast.error("Soglia non valida"); return; }
     if (Number.isNaN(m) || (m !== null && m < 0)) { toast.error("Max ordini non valido"); return; }
     if (Number.isNaN(f) || (f !== null && f < 0)) { toast.error("Finestra controllo non valida"); return; }
+    if (tempoAttesaAttivo && (Number.isNaN(tam) || tam === null || tam < 0)) {
+      toast.error("Minuti stimati non validi");
+      return;
+    }
 
     setSaving(true);
     const { error } = await supabase.from("lidi").update({
@@ -377,6 +390,8 @@ function RegoleServizioCard({ lido, onSaved }: { lido: Lido; onSaved: () => void
       soglia_ordine_libero: s,
       max_ordini_ravvicinati: m,
       finestra_controllo_minuti: f,
+      tempo_attesa_attivo: tempoAttesaAttivo,
+      tempo_attesa_minuti: tempoAttesaAttivo ? tam : null,
     }).eq("id", lido.id);
     setSaving(false);
     if (error) { toast.error("Impossibile salvare", { description: error.message }); return; }
@@ -443,6 +458,35 @@ function RegoleServizioCard({ lido, onSaved }: { lido: Lido; onSaved: () => void
             </p>
           </div>
         </div>
+
+        <div className="flex items-center justify-between rounded-lg border border-border p-4">
+          <div className="flex items-center gap-3">
+            <Clock className="w-5 h-5 text-[color:var(--teal-deep)]" />
+            <div>
+              <p className="text-sm font-medium">Tempo di attesa stimato</p>
+              <p className="text-xs text-muted-foreground">
+                Mostra ai clienti una stima del tempo di attesa dopo l'invio dell'ordine.
+              </p>
+            </div>
+          </div>
+          <Switch checked={tempoAttesaAttivo} onCheckedChange={setTempoAttesaAttivo} />
+        </div>
+
+        {tempoAttesaAttivo && (
+          <div>
+            <Label htmlFor="tempoattesa">Minuti stimati</Label>
+            <Input
+              id="tempoattesa"
+              inputMode="numeric"
+              value={tempoAttesaMinuti}
+              onChange={(e) => setTempoAttesaMinuti(e.target.value)}
+              className="mt-1.5 max-w-xs"
+            />
+            <p className="text-xs text-muted-foreground mt-1.5">
+              Il gestore può modificarlo in qualsiasi momento, ad esempio nei picchi di lavoro.
+            </p>
+          </div>
+        )}
 
         <div className="flex justify-end pt-2">
           <Button onClick={handleSave} disabled={saving}>

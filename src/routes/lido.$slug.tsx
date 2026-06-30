@@ -93,6 +93,8 @@ type Lido = {
   orario_chiusura: string | null;
   soglia_ordine_libero: number | null;
   accetta_carta: boolean;
+  tempo_attesa_attivo: boolean;
+  tempo_attesa_minuti: number | null;
 };
 
 type Categoria = { id: string; nome: string; ordine: number };
@@ -120,7 +122,7 @@ function LidoClientPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("lidi")
-        .select("id, nome, slug, logo_url, foto_copertina_url, servizio_bar_attivo, orario_apertura, orario_chiusura, soglia_ordine_libero, accetta_carta")
+        .select("id, nome, slug, logo_url, foto_copertina_url, servizio_bar_attivo, orario_apertura, orario_chiusura, soglia_ordine_libero, accetta_carta, tempo_attesa_attivo, tempo_attesa_minuti")
         .eq("slug", slug)
         .maybeSingle();
       if (error) throw error;
@@ -1074,6 +1076,12 @@ function OrdineConfermato({
           <p className="text-xs uppercase tracking-wider text-muted-foreground">{t("cliente.orderNumberLabel")}</p>
           <p className="text-4xl font-bold text-primary mt-1">#{numero}</p>
           <p className="text-sm text-muted-foreground mt-3">{t("map.total")}: <strong className="text-foreground">€ {totale.toFixed(2)}</strong></p>
+          {lido.tempo_attesa_attivo && lido.tempo_attesa_minuti != null && (
+            <p className="text-sm text-muted-foreground mt-2 flex items-center justify-center gap-1.5">
+              <Clock className="w-4 h-4" />
+              {t("cliente.estimatedWaitPrefix")}{lido.tempo_attesa_minuti} {t("cliente.estimatedWaitSuffix")}
+            </p>
+          )}
         </div>
 
         <p className="text-xs text-muted-foreground mt-4">
