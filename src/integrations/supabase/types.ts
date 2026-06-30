@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       beach_config: {
@@ -81,57 +106,132 @@ export type Database = {
           },
         ]
       }
+      contatti: {
+        Row: {
+          citta: string
+          created_at: string | null
+          email: string
+          id: string
+          messaggio: string | null
+          nome: string
+          nome_lido: string
+        }
+        Insert: {
+          citta: string
+          created_at?: string | null
+          email: string
+          id?: string
+          messaggio?: string | null
+          nome: string
+          nome_lido: string
+        }
+        Update: {
+          citta?: string
+          created_at?: string | null
+          email?: string
+          id?: string
+          messaggio?: string | null
+          nome?: string
+          nome_lido?: string
+        }
+        Relationships: []
+      }
       lidi: {
         Row: {
           accetta_carta: boolean
+          attivo: boolean
+          citta: string | null
+          colore_primario: string | null
+          colore_secondario: string | null
           created_at: string
+          email: string | null
           finestra_controllo_minuti: number | null
           foto_copertina_url: string | null
           id: string
+          in_pausa: boolean
+          indirizzo: string | null
+          intervallo_minuti: number | null
+          lingua_default: string | null
           logo_url: string | null
           max_ordini_ravvicinati: number | null
+          messaggio_benvenuto: string | null
           nome: string
+          note_interne: string | null
           orario_apertura: string | null
           orario_chiusura: string | null
-          servizio_bar_attivo: boolean
+          servizio_bar_attivo: boolean | null
           slug: string
           soglia_ordine_libero: number | null
-          stripe_account_id: string | null
+          storico_staff_globale: boolean
+          telefono: string | null
+          tempo_attesa_attivo: boolean
+          tempo_attesa_minuti: number | null
           updated_at: string
+          valuta: string | null
         }
         Insert: {
           accetta_carta?: boolean
+          attivo?: boolean
+          citta?: string | null
+          colore_primario?: string | null
+          colore_secondario?: string | null
           created_at?: string
+          email?: string | null
           finestra_controllo_minuti?: number | null
           foto_copertina_url?: string | null
           id?: string
+          in_pausa?: boolean
+          indirizzo?: string | null
+          intervallo_minuti?: number | null
+          lingua_default?: string | null
           logo_url?: string | null
           max_ordini_ravvicinati?: number | null
+          messaggio_benvenuto?: string | null
           nome: string
+          note_interne?: string | null
           orario_apertura?: string | null
           orario_chiusura?: string | null
-          servizio_bar_attivo?: boolean
+          servizio_bar_attivo?: boolean | null
           slug: string
           soglia_ordine_libero?: number | null
-          stripe_account_id?: string | null
+          storico_staff_globale?: boolean
+          telefono?: string | null
+          tempo_attesa_attivo?: boolean
+          tempo_attesa_minuti?: number | null
           updated_at?: string
+          valuta?: string | null
         }
         Update: {
           accetta_carta?: boolean
+          attivo?: boolean
+          citta?: string | null
+          colore_primario?: string | null
+          colore_secondario?: string | null
           created_at?: string
+          email?: string | null
           finestra_controllo_minuti?: number | null
           foto_copertina_url?: string | null
           id?: string
+          in_pausa?: boolean
+          indirizzo?: string | null
+          intervallo_minuti?: number | null
+          lingua_default?: string | null
           logo_url?: string | null
           max_ordini_ravvicinati?: number | null
+          messaggio_benvenuto?: string | null
           nome?: string
+          note_interne?: string | null
           orario_apertura?: string | null
           orario_chiusura?: string | null
-          servizio_bar_attivo?: boolean
+          servizio_bar_attivo?: boolean | null
           slug?: string
           soglia_ordine_libero?: number | null
-          stripe_account_id?: string | null
+          storico_staff_globale?: boolean
+          telefono?: string | null
+          tempo_attesa_attivo?: boolean
+          tempo_attesa_minuti?: number | null
           updated_at?: string
+          valuta?: string | null
         }
         Relationships: []
       }
@@ -182,6 +282,7 @@ export type Database = {
       }
       ordini: {
         Row: {
+          archiviato: boolean
           cognome: string
           created_at: string
           fila: string | null
@@ -191,13 +292,15 @@ export type Database = {
           note: string | null
           numero_ombrellone: string
           numero_ordine: number
-          stato: Database["public"]["Enums"]["ordine_stato"]
-          stripe_payment_id: string | null
+          preso_in_carico_at: string | null
+          preso_in_carico_da: string | null
+          stato: Database["public"]["Enums"]["stato_ordine"]
           telefono: string | null
           totale: number
           updated_at: string
         }
         Insert: {
+          archiviato?: boolean
           cognome: string
           created_at?: string
           fila?: string | null
@@ -206,14 +309,16 @@ export type Database = {
           metodo_pagamento?: string | null
           note?: string | null
           numero_ombrellone: string
-          numero_ordine: number
-          stato?: Database["public"]["Enums"]["ordine_stato"]
-          stripe_payment_id?: string | null
+          numero_ordine?: number
+          preso_in_carico_at?: string | null
+          preso_in_carico_da?: string | null
+          stato?: Database["public"]["Enums"]["stato_ordine"]
           telefono?: string | null
           totale?: number
           updated_at?: string
         }
         Update: {
+          archiviato?: boolean
           cognome?: string
           created_at?: string
           fila?: string | null
@@ -223,8 +328,9 @@ export type Database = {
           note?: string | null
           numero_ombrellone?: string
           numero_ordine?: number
-          stato?: Database["public"]["Enums"]["ordine_stato"]
-          stripe_payment_id?: string | null
+          preso_in_carico_at?: string | null
+          preso_in_carico_da?: string | null
+          stato?: Database["public"]["Enums"]["stato_ordine"]
           telefono?: string | null
           totale?: number
           updated_at?: string
@@ -250,6 +356,7 @@ export type Database = {
           immagine_url: string | null
           lido_id: string
           nome: string
+          ordine: number
           prezzo: number
           updated_at: string
         }
@@ -263,6 +370,7 @@ export type Database = {
           immagine_url?: string | null
           lido_id: string
           nome: string
+          ordine?: number
           prezzo?: number
           updated_at?: string
         }
@@ -276,6 +384,7 @@ export type Database = {
           immagine_url?: string | null
           lido_id?: string
           nome?: string
+          ordine?: number
           prezzo?: number
           updated_at?: string
         }
@@ -300,39 +409,34 @@ export type Database = {
         Row: {
           cognome: string | null
           created_at: string
-          email: string | null
           id: string
-          lido_id: string | null
+          indirizzo: string | null
           nome: string | null
+          ragione_sociale: string | null
+          telefono: string | null
           updated_at: string
         }
         Insert: {
           cognome?: string | null
           created_at?: string
-          email?: string | null
           id: string
-          lido_id?: string | null
+          indirizzo?: string | null
           nome?: string | null
+          ragione_sociale?: string | null
+          telefono?: string | null
           updated_at?: string
         }
         Update: {
           cognome?: string | null
           created_at?: string
-          email?: string | null
           id?: string
-          lido_id?: string | null
+          indirizzo?: string | null
           nome?: string | null
+          ragione_sociale?: string | null
+          telefono?: string | null
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "profiles_lido_id_fkey"
-            columns: ["lido_id"]
-            isOneToOne: false
-            referencedRelation: "lidi"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       user_roles: {
         Row: {
@@ -371,23 +475,42 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      bootstrap_super_admin: { Args: { _email: string }; Returns: string }
-      has_role: {
+      create_ordine: {
         Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: string
-        }
-        Returns: boolean
-      }
-      has_role_in_lido: {
-        Args: {
+          _cognome: string
+          _items: Json
           _lido_id: string
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: string
+          _metodo_pagamento: string
+          _note: string
+          _numero_ombrellone: string
+          _telefono: string
+          _totale: number
         }
-        Returns: boolean
+        Returns: {
+          id: string
+          numero_ordine: number
+        }[]
       }
-      is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      get_order_history: {
+        Args: { _lido_id: string; _telefono: string }
+        Returns: {
+          created_at: string
+          id: string
+          items: Json
+          numero_ombrellone: string
+          numero_ordine: number
+          stato: Database["public"]["Enums"]["stato_ordine"]
+          totale: number
+        }[]
+      }
+      get_user_emails: {
+        Args: { _user_ids: string[] }
+        Returns: {
+          email: string
+          id: string
+        }[]
+      }
+      prendi_in_carico_ordine: { Args: { _id: string }; Returns: undefined }
       traccia_ordine: {
         Args: { _cognome: string; _numero: number; _slug: string }
         Returns: {
@@ -400,11 +523,27 @@ export type Database = {
           totale: number
         }[]
       }
-      user_lido_id: { Args: { _user_id: string }; Returns: string }
+      traccia_ordini_oggi: {
+        Args: {
+          _lido_id: string
+          _numero_ombrellone: string
+          _telefono: string
+        }
+        Returns: {
+          created_at: string
+          id: string
+          items: Json
+          numero_ombrellone: string
+          numero_ordine: number
+          stato: Database["public"]["Enums"]["stato_ordine"]
+          totale: number
+        }[]
+      }
+      user_lido_id: { Args: never; Returns: string }
     }
     Enums: {
-      app_role: "cliente" | "staff" | "gestore" | "super_admin"
-      ordine_stato: "arrivati" | "da_evadere" | "consegnati" | "annullato"
+      app_role: "super_admin" | "gestore" | "staff"
+      stato_ordine: "arrivati" | "da_evadere" | "consegnati" | "annullato"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -530,10 +669,13 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
-      app_role: ["cliente", "staff", "gestore", "super_admin"],
-      ordine_stato: ["arrivati", "da_evadere", "consegnati", "annullato"],
+      app_role: ["super_admin", "gestore", "staff"],
+      stato_ordine: ["arrivati", "da_evadere", "consegnati", "annullato"],
     },
   },
 } as const
