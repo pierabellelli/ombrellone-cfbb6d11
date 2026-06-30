@@ -1,12 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
   ShoppingCart, Plus, Minus, X, Search, Loader2, CheckCircle2, Clock,
-  AlertTriangle, MapPin, ArrowLeft, ChevronDown, ChevronUp, Zap,
+  AlertTriangle, MapPin, ArrowLeft, ChevronDown, ChevronUp, Zap, Coffee,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,6 +52,16 @@ function writeStoredCustomer(telefono: string, cognome: string, orderedItems: { 
     telefono,
     cognome: existing?.cognome?.trim() ? existing.cognome : cognome,
     preferiti,
+  };
+  try { localStorage.setItem(LS_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+}
+function removeStoredFavorite(prodottoId: string) {
+  if (typeof window === "undefined") return;
+  const existing = readStoredCustomer();
+  if (!existing) return;
+  const next: StoredCustomer = {
+    ...existing,
+    preferiti: existing.preferiti.filter((p) => p.prodotto_id !== prodottoId),
   };
   try { localStorage.setItem(LS_KEY, JSON.stringify(next)); } catch { /* ignore */ }
 }
@@ -163,6 +173,18 @@ function LidoClientPage() {
     [cart],
   );
 
+  const [cartBump, setCartBump] = useState(false);
+  const prevItemCountRef = useRef(itemCount);
+  useEffect(() => {
+    if (itemCount > prevItemCountRef.current) {
+      setCartBump(true);
+      const timer = setTimeout(() => setCartBump(false), 250);
+      prevItemCountRef.current = itemCount;
+      return () => clearTimeout(timer);
+    }
+    prevItemCountRef.current = itemCount;
+  }, [itemCount]);
+
   const add = (p: Prodotto) =>
     setCart((c) => ({ ...c, [p.id]: { prodotto: p, quantita: (c[p.id]?.quantita ?? 0) + 1 } }));
   const dec = (id: string) =>
@@ -192,6 +214,7 @@ function LidoClientPage() {
     return map;
   }, [filtered]);
 
+  const [favTick, setFavTick] = useState(0);
   const stored = typeof window !== "undefined" ? readStoredCustomer() : null;
   const favoriti = useMemo(() => {
     if (!stored?.preferiti?.length || prodotti.length === 0) return [];
@@ -200,7 +223,13 @@ function LidoClientPage() {
       .map((pref) => byId.get(pref.prodotto_id))
       .filter((p): p is Prodotto => !!p)
       .slice(0, 5);
-  }, [stored, prodotti]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stored, prodotti, favTick]);
+
+  const removeFavorite = (prodottoId: string) => {
+    removeStoredFavorite(prodottoId);
+    setFavTick((n) => n + 1);
+  };
 
   if (lidoLoading) {
     return (
@@ -287,7 +316,7 @@ function LidoClientPage() {
         </div>
 
         {lido.servizio_bar_attivo && favoriti.length > 0 && (
-          <FavoritesSection favoriti={favoriti} cart={cart} onAdd={add} onDec={dec} />
+          <FavoritesSection favoriti={favoriti} cart={cart} onAdd={add} onDec={dec} onRemoveFavorite={removeFavorite} />
         )}
 
         {prodLoading ? (
@@ -330,7 +359,9 @@ function LidoClientPage() {
       {view === "order" && itemCount > 0 && lido.servizio_bar_attivo && (
         <Sheet open={cartOpen} onOpenChange={setCartOpen}>
           <SheetTrigger asChild>
-            <button className="fixed bottom-4 left-4 right-4 max-w-2xl mx-auto z-30 bg-primary text-primary-foreground rounded-full shadow-lg px-5 py-3.5 flex items-center justify-between font-semibold">
+            <button
+              className={`fixed bottom-4 left-4 right-4 max-w-2xl mx-auto z-30 bg-primary text-primary-foreground rounded-full shadow-lg px-5 py-3.5 flex items-center justify-between font-semibold transition-transform duration-200 ${cartBump ? "scale-110" : "scale-100"}`}
+            >
               <span className="inline-flex items-center gap-2">
                 <ShoppingCart className="w-5 h-5" />
                 {itemCount} {itemCount === 1 ? t("cliente.item") : t("cliente.items")}
@@ -345,7 +376,10 @@ function LidoClientPage() {
               cart={cart}
               totale={totale}
               defaultOmbrellone={ombrelloneParam ?? ""}
+              prodotti={prodotti}
+              categorie={categorie}
               onAdd={(id) => add(cart[id].prodotto)}
+              onAddProduct={add}
               onDec={dec}
               onRemove={remove}
               onSubmitted={(numero, telefono, numeroOmbrellone) => {
@@ -439,11 +473,12 @@ function Header({ lido, ombrellone }: { lido: Lido; ombrellone?: string }) {
   );
 }
 
-function FavoritesSection({ favoriti, cart, onAdd, onDec }: {
+function FavoritesSection({ favoriti, cart, onAdd, onDec, onRemoveFavorite }: {
   favoriti: Prodotto[];
   cart: Record<string, CartItem>;
   onAdd: (p: Prodotto) => void;
   onDec: (id: string) => void;
+  onRemoveFavorite: (prodottoId: string) => void;
 }) {
   const { t } = useI18n();
   return (
@@ -458,8 +493,15 @@ function FavoritesSection({ favoriti, cart, onAdd, onDec }: {
         {favoriti.map((p) => {
           const quantita = cart[p.id]?.quantita ?? 0;
           return (
-            <div key={p.id} className="card-soft p-3 w-32 shrink-0 flex flex-col">
-              <h3 className="text-xs font-semibold text-foreground leading-tight line-clamp-2 min-h-[2.2em]">{p.nome}</h3>
+            <div key={p.id} className="relative card-soft p-3 w-32 shrink-0 flex flex-col">
+              <button
+                onClick={() => onRemoveFavorite(p.id)}
+                aria-label={t("cliente.removeFavorite")}
+                className="absolute top-1 right-1 w-5 h-5 inline-flex items-center justify-center rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground"
+              >
+                <X className="w-3 h-3" />
+              </button>
+              <h3 className="text-xs font-semibold text-foreground leading-tight line-clamp-2 min-h-[2.2em] pr-3">{p.nome}</h3>
               <p className="text-xs font-bold text-primary mt-1">€ {p.prezzo.toFixed(2)}</p>
               {quantita === 0 ? (
                 <Button onClick={() => onAdd(p)} size="sm" className="mt-2 rounded-full h-8 w-8 p-0 self-center">
@@ -504,6 +546,50 @@ function LandingChoice({ onOrder, onTrack }: { onOrder: () => void; onTrack: () 
       </button>
     </div>
   );
+}
+
+const UPSELL_DRINK_KEYWORDS = ["bevand", "drink", "bibit", "acqua", "birra", "cocktail", "caff", "vino", "succh"];
+const UPSELL_FOOD_KEYWORDS = ["cibo", "salat", "panin", "food", "pizza", "gelat", "dolc", "snack", "patatine", "toast"];
+
+function matchesAnyKeyword(name: string, keywords: string[]): boolean {
+  const lower = name.toLowerCase();
+  return keywords.some((k) => lower.includes(k));
+}
+
+function getUpsellSuggestions(
+  prodotti: Prodotto[],
+  categorie: Categoria[],
+  cart: Record<string, CartItem>,
+  limit: number,
+): Prodotto[] {
+  const available = prodotti.filter((p) => p.disponibile && !cart[p.id]);
+  if (available.length === 0) return [];
+
+  const categoriaNomeById = new Map(categorie.map((c) => [c.id, c.nome]));
+  const cartCategoryNames = Object.values(cart)
+    .map((it) => (it.prodotto.categoria_id ? categoriaNomeById.get(it.prodotto.categoria_id) : null))
+    .filter((n): n is string => !!n);
+
+  const cartHasFood = cartCategoryNames.some((n) => matchesAnyKeyword(n, UPSELL_FOOD_KEYWORDS));
+  const cartHasDrink = cartCategoryNames.some((n) => matchesAnyKeyword(n, UPSELL_DRINK_KEYWORDS));
+
+  let targetKeywords: string[] | null = null;
+  if (cartHasFood && !cartHasDrink) targetKeywords = UPSELL_DRINK_KEYWORDS;
+  else if (cartHasDrink && !cartHasFood) targetKeywords = UPSELL_FOOD_KEYWORDS;
+
+  const byPriceAsc = (a: Prodotto, b: Prodotto) => a.prezzo - b.prezzo;
+
+  if (targetKeywords) {
+    const complementary = available
+      .filter((p) => {
+        const catNome = p.categoria_id ? categoriaNomeById.get(p.categoria_id) : null;
+        return catNome ? matchesAnyKeyword(catNome, targetKeywords!) : false;
+      })
+      .sort(byPriceAsc);
+    if (complementary.length > 0) return complementary.slice(0, limit);
+  }
+
+  return [...available].sort(byPriceAsc).slice(0, limit);
 }
 
 const COUNTRY_CODES = [
@@ -756,7 +842,9 @@ function ProdottoRow({
         {(prodotto.immagine_url ?? prodotto.foto_url) ? (
           <img src={(prodotto.immagine_url ?? prodotto.foto_url)!} alt={prodotto.nome} className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full" />
+          <div className="w-full h-full flex items-center justify-center bg-secondary">
+            <Coffee className="w-6 h-6 text-muted-foreground" />
+          </div>
         )}
       </div>
       <div className="flex-1 min-w-0">
@@ -786,13 +874,16 @@ function ProdottoRow({
 }
 
 function CartView({
-  lido, cart, totale, defaultOmbrellone, onAdd, onDec, onRemove, onSubmitted,
+  lido, cart, totale, defaultOmbrellone, prodotti, categorie, onAdd, onAddProduct, onDec, onRemove, onSubmitted,
 }: {
   lido: Lido;
   cart: Record<string, CartItem>;
   totale: number;
   defaultOmbrellone: string;
+  prodotti: Prodotto[];
+  categorie: Categoria[];
   onAdd: (id: string) => void;
+  onAddProduct: (p: Prodotto) => void;
   onDec: (id: string) => void;
   onRemove: (id: string) => void;
   onSubmitted: (numero: number, telefono: { prefix: string; phone: string }, numeroOmbrellone: string) => void;
@@ -812,6 +903,11 @@ function CartView({
   const items = Object.values(cart);
   const sopraSoglia = lido.soglia_ordine_libero != null && totale > Number(lido.soglia_ordine_libero);
   const effectivePrefix = phoneValue.prefix === "altro" ? phoneValue.customPrefix.trim() : phoneValue.prefix;
+
+  const upsellSuggestions = useMemo(
+    () => (items.length > 0 ? getUpsellSuggestions(prodotti, categorie, cart, 2) : []),
+    [prodotti, categorie, cart, items.length],
+  );
 
   const handleSubmit = async () => {
     const ombrTrim = ombrellone.trim();
@@ -934,6 +1030,23 @@ function CartView({
           )}
         </div>
       </div>
+
+      {upsellSuggestions.length > 0 && (
+        <div className="space-y-2">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-primary">{t("cliente.upsellTitle")}</h3>
+          <div className="flex gap-2.5 overflow-x-auto pb-1 -mx-1 px-1">
+            {upsellSuggestions.map((p) => (
+              <div key={p.id} className="card-soft p-3 w-32 shrink-0 flex flex-col">
+                <h4 className="text-xs font-semibold text-foreground leading-tight line-clamp-2 min-h-[2.2em]">{p.nome}</h4>
+                <p className="text-xs font-bold text-primary mt-1">€ {p.prezzo.toFixed(2)}</p>
+                <Button onClick={() => onAddProduct(p)} size="sm" className="mt-2 rounded-full h-8 w-8 p-0 self-center">
+                  <Plus className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <Button onClick={handleSubmit} disabled={sending} className="w-full h-12 text-base rounded-full">
         {sending ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : null}
