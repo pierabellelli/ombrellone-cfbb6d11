@@ -152,6 +152,7 @@ function LidoClientPage() {
   const [catSel, setCatSel] = useState<string>("tutte");
   const [cartOpen, setCartOpen] = useState(false);
   const [confermato, setConfermato] = useState<{ numero: number; totale: number } | null>(null);
+  const [trackPrefill, setTrackPrefill] = useState<TrackPrefill | null>(null);
 
   const totale = useMemo(
     () => Object.values(cart).reduce((s, it) => s + it.prodotto.prezzo * it.quantita, 0),
@@ -223,7 +224,15 @@ function LidoClientPage() {
   }
 
   if (confermato) {
-    return <OrdineConfermato lido={lido} numero={confermato.numero} totale={confermato.totale} onReset={() => { setConfermato(null); setCart({}); }} />;
+    return (
+      <OrdineConfermato
+        lido={lido}
+        numero={confermato.numero}
+        totale={confermato.totale}
+        onReset={() => { setConfermato(null); setCart({}); }}
+        onTrack={() => { setConfermato(null); setCart({}); setView("track"); }}
+      />
+    );
   }
 
   return (
@@ -236,7 +245,11 @@ function LidoClientPage() {
         )}
 
         {view === "track" && (
-          <TrackOrderView lidoId={lido.id} onBack={() => setView("landing")} />
+          <TrackOrderView
+            lidoId={lido.id}
+            onBack={() => setView("landing")}
+            prefill={trackPrefill ?? undefined}
+          />
         )}
 
         {view === "order" && (
@@ -335,8 +348,13 @@ function LidoClientPage() {
               onAdd={(id) => add(cart[id].prodotto)}
               onDec={dec}
               onRemove={remove}
-              onSubmitted={(numero) => {
+              onSubmitted={(numero, telefono, numeroOmbrellone) => {
                 setConfermato({ numero, totale });
+                setTrackPrefill({
+                  numeroOmbrellone,
+                  prefix: telefono.prefix,
+                  phone: telefono.phone,
+                });
                 setCartOpen(false);
               }}
             />
@@ -508,6 +526,57 @@ function isValidPhoneDigits(prefix: string, digits: string): boolean {
   return digits.length >= 6 && digits.length <= 15;
 }
 
+function normalizePhone(prefix: string, digits: string): string {
+  return `${prefix}${digits.replace(/[\s-]/g, "")}`;
+}
+
+type PhoneFieldValue = { prefix: string; customPrefix: string; phone: string };
+
+function PhoneField({
+  value, onChange, error, idPrefix = "phone",
+}: {
+  value: PhoneFieldValue;
+  onChange: (next: PhoneFieldValue) => void;
+  error?: boolean;
+  idPrefix?: string;
+}) {
+  const { t } = useI18n();
+  return (
+    <div>
+      <div className="mt-1.5 flex gap-2">
+        <select
+          value={value.prefix}
+          onChange={(e) => onChange({ ...value, prefix: e.target.value })}
+          className="px-2 py-2 rounded-lg border border-border bg-card text-sm shrink-0"
+        >
+          {COUNTRY_CODES.map((c) => (
+            <option key={c.code} value={c.code}>{c.flag} {c.code}</option>
+          ))}
+          <option value="altro">{t("cliente.trackOtherPrefix")}</option>
+        </select>
+        {value.prefix === "altro" && (
+          <input
+            value={value.customPrefix}
+            onChange={(e) => onChange({ ...value, customPrefix: e.target.value })}
+            placeholder={t("cliente.trackPrefixPlaceholder")}
+            className="w-24 px-2.5 py-2 rounded-lg border border-border bg-card text-sm"
+          />
+        )}
+        <Input
+          id={`${idPrefix}-tel`}
+          type="tel"
+          inputMode="tel"
+          value={value.phone}
+          onChange={(e) => onChange({ ...value, phone: e.target.value })}
+          placeholder={t("cliente.trackPhonePlaceholder")}
+          className="flex-1"
+        />
+      </div>
+      {error && <p className="text-xs text-destructive mt-1">{t("cliente.trackInvalidPhone")}</p>}
+    </div>
+  );
+}
+
 function elapsedFromNow(iso: string): string {
   const mins = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 60000));
   if (mins < 60) return `${mins} min`;
@@ -531,22 +600,29 @@ const TRACK_STATO_PILL: Record<string, { bg: string; icon: string; labelKey: "cl
   consegnati: { bg: "bg-emerald-100 text-emerald-800", icon: "✓", labelKey: "cliente.status.consegnati" },
 };
 
-function TrackOrderView({ lidoId, onBack }: { lidoId: string; onBack: () => void }) {
+type TrackPrefill = { numeroOmbrellone: string; prefix: string; phone: string };
+
+function TrackOrderView({ lidoId, onBack, prefill }: { lidoId: string; onBack: () => void; prefill?: TrackPrefill }) {
   const { t } = useI18n();
-  const [numeroOmbrellone, setNumeroOmbrellone] = useState("");
-  const [prefix, setPrefix] = useState("+39");
-  const [customPrefix, setCustomPrefix] = useState("");
-  const [phone, setPhone] = useState("");
+  const [numeroOmbrellone, setNumeroOmbrellone] = useState(prefill?.numeroOmbrellone ?? "");
+  const [phoneValue, setPhoneValue] = useState<PhoneFieldValue>({
+    prefix: prefill?.prefix ?? "+39",
+    customPrefix: "",
+    phone: prefill?.phone ?? "",
+  });
   const [phoneError, setPhoneError] = useState(false);
   const [searching, setSearching] = useState(false);
   const [results, setResults] = useState<TrackOrder[] | null>(null);
 
-  const effectivePrefix = prefix === "altro" ? customPrefix.trim() : prefix;
+  const effectivePrefix = phoneValue.prefix === "altro" ? phoneValue.customPrefix.trim() : phoneValue.prefix;
 
-  const handleSearch = async () => {
-    if (!numeroOmbrellone.trim()) { toast.error(t("cliente.errUmbrellaRequired")); return; }
-    const digits = phone.replace(/[\s-]/g, "");
-    if (!isValidPhoneDigits(effectivePrefix, digits)) {
+  const handleSearch = async (overrides?: Partial<{ numeroOmbrellone: string; prefix: string; phone: string }>) => {
+    const omb = overrides?.numeroOmbrellone ?? numeroOmbrellone;
+    const pfx = overrides?.prefix ?? effectivePrefix;
+    const ph = overrides?.phone ?? phoneValue.phone;
+    if (!omb.trim()) { toast.error(t("cliente.errUmbrellaRequired")); return; }
+    const digits = ph.replace(/[\s-]/g, "");
+    if (!isValidPhoneDigits(pfx, digits)) {
       setPhoneError(true);
       return;
     }
@@ -554,8 +630,8 @@ function TrackOrderView({ lidoId, onBack }: { lidoId: string; onBack: () => void
     setSearching(true);
     const { data, error } = await (supabase.rpc as any)("traccia_ordini_oggi", {
       _lido_id: lidoId,
-      _numero_ombrellone: numeroOmbrellone.trim(),
-      _telefono: digits,
+      _numero_ombrellone: omb.trim(),
+      _telefono: normalizePhone(pfx, digits),
     });
     setSearching(false);
     if (error) {
@@ -564,6 +640,17 @@ function TrackOrderView({ lidoId, onBack }: { lidoId: string; onBack: () => void
     }
     setResults((data ?? []) as unknown as TrackOrder[]);
   };
+
+  useEffect(() => {
+    if (prefill) {
+      void handleSearch({
+        numeroOmbrellone: prefill.numeroOmbrellone,
+        prefix: prefill.prefix,
+        phone: prefill.phone,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="py-4">
@@ -582,44 +669,17 @@ function TrackOrderView({ lidoId, onBack }: { lidoId: string; onBack: () => void
             value={numeroOmbrellone}
             onChange={(e) => setNumeroOmbrellone(e.target.value)}
             placeholder={t("cliente.trackUmbrellaPlaceholder")}
-            className="mt-1.5"
+            readOnly={!!prefill}
+            disabled={!!prefill}
+            className={`mt-1.5 ${prefill ? "bg-muted text-muted-foreground" : ""}`}
           />
         </div>
         <div>
           <Label htmlFor="track-tel">{t("cliente.trackPhoneLabel")}</Label>
-          <div className="mt-1.5 flex gap-2">
-            <select
-              value={prefix}
-              onChange={(e) => setPrefix(e.target.value)}
-              className="px-2 py-2 rounded-lg border border-border bg-card text-sm shrink-0"
-            >
-              {COUNTRY_CODES.map((c) => (
-                <option key={c.code} value={c.code}>{c.flag} {c.code}</option>
-              ))}
-              <option value="altro">{t("cliente.trackOtherPrefix")}</option>
-            </select>
-            {prefix === "altro" && (
-              <input
-                value={customPrefix}
-                onChange={(e) => setCustomPrefix(e.target.value)}
-                placeholder={t("cliente.trackPrefixPlaceholder")}
-                className="w-24 px-2.5 py-2 rounded-lg border border-border bg-card text-sm"
-              />
-            )}
-            <Input
-              id="track-tel"
-              type="tel"
-              inputMode="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder={t("cliente.trackPhonePlaceholder")}
-              className="flex-1"
-            />
-          </div>
-          {phoneError && <p className="text-xs text-destructive mt-1">{t("cliente.trackInvalidPhone")}</p>}
+          <PhoneField idPrefix="track" value={phoneValue} onChange={setPhoneValue} error={phoneError} />
         </div>
 
-        <Button onClick={handleSearch} disabled={searching} className="w-full h-11 rounded-full">
+        <Button onClick={() => handleSearch()} disabled={searching} className="w-full h-11 rounded-full">
           {searching ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null} {t("cliente.trackSubmit")}
         </Button>
       </div>
@@ -735,12 +795,13 @@ function CartView({
   onAdd: (id: string) => void;
   onDec: (id: string) => void;
   onRemove: (id: string) => void;
-  onSubmitted: (numero: number) => void;
+  onSubmitted: (numero: number, telefono: { prefix: string; phone: string }, numeroOmbrellone: string) => void;
 }) {
   const { t } = useI18n();
   const stored = readStoredCustomer();
   const [ombrellone, setOmbrellone] = useState(defaultOmbrellone);
-  const [telefono, setTelefono] = useState(stored?.telefono ?? "");
+  const [phoneValue, setPhoneValue] = useState<PhoneFieldValue>({ prefix: "+39", customPrefix: "", phone: stored?.telefono ?? "" });
+  const [phoneError, setPhoneError] = useState(false);
   const [cognome, setCognome] = useState(stored?.cognome ?? "");
   const [note, setNote] = useState("");
   const [metodoPagamento, setMetodoPagamento] = useState<"contanti" | "carta">("contanti");
@@ -750,22 +811,30 @@ function CartView({
 
   const items = Object.values(cart);
   const sopraSoglia = lido.soglia_ordine_libero != null && totale > Number(lido.soglia_ordine_libero);
+  const effectivePrefix = phoneValue.prefix === "altro" ? phoneValue.customPrefix.trim() : phoneValue.prefix;
 
   const handleSubmit = async () => {
     const ombrTrim = ombrellone.trim();
     const cogTrim = cognome.trim();
-    const telTrim = telefono.trim();
+    const digits = phoneValue.phone.replace(/[\s-]/g, "");
     if (!ombrTrim) { toast.error(t("cliente.errUmbrellaRequired")); return; }
-    if (!telTrim || telTrim.replace(/\D/g, "").length < 6) { toast.error(t("cliente.errPhoneInvalid")); return; }
+    if (!isValidPhoneDigits(effectivePrefix, digits)) {
+      setPhoneError(true);
+      toast.error(t("cliente.errPhoneInvalid"));
+      return;
+    }
+    setPhoneError(false);
     if (!cogTrim) { toast.error(t("cliente.errLastNameRequired")); return; }
     if (items.length === 0) { toast.error(t("cliente.errEmptyCart")); return; }
+
+    const telNormalizzato = normalizePhone(effectivePrefix, digits);
 
     setSending(true);
     const { data, error } = await (supabase.rpc as any)("create_ordine", {
       _lido_id: lido.id,
       _numero_ombrellone: ombrTrim.slice(0, 20),
       _cognome: cogTrim.slice(0, 60),
-      _telefono: telTrim.slice(0, 30),
+      _telefono: telNormalizzato.slice(0, 30),
       _totale: totale,
       _note: note.trim() ? note.trim().slice(0, 300) : null,
       _metodo_pagamento: lido.accetta_carta ? metodoPagamento : "contanti",
@@ -784,8 +853,8 @@ function CartView({
       return;
     }
 
-    writeStoredCustomer(telTrim.slice(0, 30), cogTrim.slice(0, 60), items.map((it) => ({ prodotto_id: it.prodotto.id, quantita: it.quantita })));
-    onSubmitted(ord.numero_ordine);
+    writeStoredCustomer(telNormalizzato.slice(0, 30), cogTrim.slice(0, 60), items.map((it) => ({ prodotto_id: it.prodotto.id, quantita: it.quantita })));
+    onSubmitted(ord.numero_ordine, { prefix: effectivePrefix, phone: digits }, ombrTrim);
   };
 
   return (
@@ -832,9 +901,8 @@ function CartView({
             maxLength={20} className="mt-1.5" placeholder={t("cliente.umbrellaPlaceholder")} />
         </div>
         <div>
-          <Label htmlFor="tel">{t("cliente.phoneLabel")}</Label>
-          <Input id="tel" type="tel" inputMode="tel" value={telefono} onChange={(e) => setTelefono(e.target.value)}
-            maxLength={30} className="mt-1.5" placeholder={t("cliente.phonePlaceholder")} />
+          <Label htmlFor="cart-tel">{t("cliente.phoneLabel")}</Label>
+          <PhoneField idPrefix="cart" value={phoneValue} onChange={setPhoneValue} error={phoneError} />
         </div>
         <div>
           <Label htmlFor="cog">{t("cliente.lastNameLabel")}</Label>
@@ -876,8 +944,8 @@ function CartView({
 }
 
 function OrdineConfermato({
-  lido, numero, totale, onReset,
-}: { lido: Lido; numero: number; totale: number; onReset: () => void }) {
+  lido, numero, totale, onReset, onTrack,
+}: { lido: Lido; numero: number; totale: number; onReset: () => void; onTrack: () => void }) {
   const { t } = useI18n();
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-[color:var(--background)]">
@@ -898,9 +966,14 @@ function OrdineConfermato({
           {t("cliente.deliveryPrefix")} {lido.nome} {t("cliente.deliverySuffix")}
         </p>
 
-        <Button onClick={onReset} variant="outline" className="mt-6 rounded-full">
-          <ArrowLeft className="w-4 h-4 mr-1.5" /> {t("cliente.newOrder")}
-        </Button>
+        <div className="mt-6 flex flex-col sm:flex-row gap-2 justify-center">
+          <Button onClick={onReset} variant="outline" className="rounded-full">
+            <ArrowLeft className="w-4 h-4 mr-1.5" /> {t("cliente.newOrder")}
+          </Button>
+          <Button onClick={onTrack} className="rounded-full">
+            {t("cliente.trackOrderButton")}
+          </Button>
+        </div>
       </div>
     </div>
   );
