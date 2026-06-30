@@ -277,7 +277,7 @@ function LidoClientPage() {
 
         {view === "track" && (
           <TrackOrderView
-            lidoId={lido.id}
+            lido={lido}
             onBack={() => setView("landing")}
             prefill={trackPrefill ?? undefined}
           />
@@ -690,8 +690,9 @@ const TRACK_STATO_PILL: Record<string, { bg: string; icon: typeof Clock; labelKe
 
 type TrackPrefill = { numeroOmbrellone: string; prefix: string; phone: string };
 
-function TrackOrderView({ lidoId, onBack, prefill }: { lidoId: string; onBack: () => void; prefill?: TrackPrefill }) {
+function TrackOrderView({ lido, onBack, prefill }: { lido: Lido; onBack: () => void; prefill?: TrackPrefill }) {
   const { t } = useI18n();
+  const lidoId = lido.id;
   const [numeroOmbrellone, setNumeroOmbrellone] = useState(prefill?.numeroOmbrellone ?? "");
   const [phoneValue, setPhoneValue] = useState<PhoneFieldValue>({
     prefix: prefill?.prefix ?? "+39",
@@ -807,6 +808,12 @@ function TrackOrderView({ lidoId, onBack, prefill }: { lidoId: string; onBack: (
                       </span>
                       <span className="font-bold text-primary">€ {Number(o.totale).toFixed(2)}</span>
                     </div>
+                    {o.stato !== "consegnati" && lido.tempo_attesa_attivo && lido.tempo_attesa_minuti != null && (
+                      <p className="mt-2 text-xs text-muted-foreground inline-flex items-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5" />
+                        {t("cliente.estimatedWaitPrefix")}{lido.tempo_attesa_minuti} {t("cliente.estimatedWaitSuffix")}
+                      </p>
+                    )}
                   </div>
                 );
               })}
