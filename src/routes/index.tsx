@@ -6,8 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Check,
-  X,
   QrCode,
   ShoppingCart,
   BellRing,
@@ -17,6 +15,16 @@ import {
   Map,
   BarChart3,
   ShieldCheck,
+  Clock,
+  Smartphone,
+  PenLine,
+  CheckCircle2,
+  AlertTriangle,
+  Hourglass,
+  Zap,
+  Frown,
+  Smile,
+  type LucideIcon,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -38,12 +46,12 @@ const BENEFICI = [
   { titolo: "Accesso per ruoli", descrizione: "Il gestore controlla tutto. Lo staff vede solo quello che gli serve. Zero confusione, zero errori.", Icon: ShieldCheck },
 ];
 
-const PRIMA_DOPO = [
-  { prima: "🚶 Code al bar", dopo: "📱 Ordini dal lettino" },
-  { prima: "📝 Cameriere prende nota", dopo: "✅ Ordine digitale preciso" },
-  { prima: "❌ Errori di trascrizione", dopo: "🔔 Notifica immediata allo staff" },
-  { prima: "⏳ Clienti aspettano", dopo: "⚡ Flusso organizzato" },
-  { prima: "😰 Personale sotto pressione", dopo: "😊 Staff efficiente e sereno" },
+const PRIMA_DOPO: { prima: string; primaIcon: LucideIcon; dopo: string; dopoIcon: LucideIcon }[] = [
+  { prima: "Code al bar", primaIcon: Clock, dopo: "Ordini dal lettino", dopoIcon: Smartphone },
+  { prima: "Cameriere prende nota", primaIcon: PenLine, dopo: "Ordine digitale preciso", dopoIcon: CheckCircle2 },
+  { prima: "Errori di trascrizione", primaIcon: AlertTriangle, dopo: "Notifica immediata allo staff", dopoIcon: BellRing },
+  { prima: "Clienti aspettano", primaIcon: Hourglass, dopo: "Flusso organizzato", dopoIcon: Zap },
+  { prima: "Personale sotto pressione", primaIcon: Frown, dopo: "Staff efficiente e sereno", dopoIcon: Smile },
 ];
 
 const COME_FUNZIONA = [
@@ -183,7 +191,7 @@ function NavBar() {
 
 function Hero() {
   return (
-    <section className="min-h-screen flex flex-col md:flex-row items-center bg-slate-50 px-8 md:px-16 lg:px-20 gap-8 md:gap-12">
+    <section className="min-h-screen flex flex-col md:flex-row items-center bg-[color:var(--sky-tint)] px-8 md:px-16 lg:px-20 gap-8 md:gap-12">
       <div className="md:hidden w-full rounded-xl overflow-hidden aspect-[4/3]">
         <img
           src="/main_ombrellone_gestionale_bar2.png"
@@ -396,26 +404,30 @@ function PrimaDopo() {
         <div className="grid grid-cols-2">
           <div className="p-4 md:p-5 text-center font-semibold text-destructive border-b border-border">Prima</div>
           <div className="p-4 md:p-5 text-center font-semibold text-[color:var(--teal-deep)] border-b border-border">Dopo</div>
-          {PRIMA_DOPO.map((row, i) => (
-            <div key={i} className="contents">
-              <div
-                className={`p-4 md:p-5 flex items-center gap-2 text-sm md:text-base text-destructive/80 border-b border-border last:border-b-0 ${
-                  i % 2 === 1 ? "bg-destructive/5" : ""
-                }`}
-              >
-                <X className="w-4 h-4 text-destructive shrink-0" />
-                <span>{row.prima}</span>
+          {PRIMA_DOPO.map((row, i) => {
+            const PrimaIcon = row.primaIcon;
+            const DopoIcon = row.dopoIcon;
+            return (
+              <div key={i} className="contents">
+                <div
+                  className={`p-4 md:p-5 flex items-center gap-2 text-sm md:text-base text-destructive/80 border-b border-border last:border-b-0 ${
+                    i % 2 === 1 ? "bg-destructive/5" : ""
+                  }`}
+                >
+                  <PrimaIcon className="w-4 h-4 text-destructive shrink-0" />
+                  <span>{row.prima}</span>
+                </div>
+                <div
+                  className={`p-4 md:p-5 flex items-center gap-2 text-sm md:text-base font-medium text-[color:var(--teal-deep)] border-b border-border last:border-b-0 ${
+                    i % 2 === 1 ? "bg-[color:var(--teal-deep)]/5" : ""
+                  }`}
+                >
+                  <DopoIcon className="w-4 h-4 text-[color:var(--teal-deep)] shrink-0" />
+                  <span>{row.dopo}</span>
+                </div>
               </div>
-              <div
-                className={`p-4 md:p-5 flex items-center gap-2 text-sm md:text-base font-medium text-[color:var(--teal-deep)] border-b border-border last:border-b-0 ${
-                  i % 2 === 1 ? "bg-[color:var(--teal-deep)]/5" : ""
-                }`}
-              >
-                <Check className="w-4 h-4 text-[color:var(--teal-deep)] shrink-0" />
-                <span>{row.dopo}</span>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>
