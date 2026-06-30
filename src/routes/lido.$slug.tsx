@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
   ShoppingCart, Plus, Minus, X, Search, Loader2, CheckCircle2, Clock,
-  AlertTriangle, MapPin, ArrowLeft, ChevronDown, ChevronUp, Zap, Coffee,
+  AlertTriangle, MapPin, ArrowLeft, ChevronDown, ChevronUp, Zap, Coffee, Package, ChefHat,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -493,7 +493,7 @@ function FavoritesSection({ favoriti, cart, onAdd, onDec, onRemoveFavorite }: {
         {favoriti.map((p) => {
           const quantita = cart[p.id]?.quantita ?? 0;
           return (
-            <div key={p.id} className="relative card-soft p-3 w-32 shrink-0 flex flex-col">
+            <div key={p.id} className="relative card-soft p-2.5 w-36 shrink-0 flex flex-col">
               <button
                 onClick={() => onRemoveFavorite(p.id)}
                 aria-label={t("cliente.removeFavorite")}
@@ -504,16 +504,16 @@ function FavoritesSection({ favoriti, cart, onAdd, onDec, onRemoveFavorite }: {
               <h3 className="text-xs font-semibold text-foreground leading-tight line-clamp-2 min-h-[2.2em] pr-3">{p.nome}</h3>
               <p className="text-xs font-bold text-primary mt-1">€ {p.prezzo.toFixed(2)}</p>
               {quantita === 0 ? (
-                <Button onClick={() => onAdd(p)} size="sm" className="mt-2 rounded-full h-8 w-8 p-0 self-center">
+                <Button onClick={() => onAdd(p)} size="sm" className="mt-2 rounded-full h-10 w-10 p-0 self-center">
                   <Plus className="w-3.5 h-3.5" />
                 </Button>
               ) : (
-                <div className="mt-2 inline-flex items-center justify-center gap-1 bg-primary text-primary-foreground rounded-full p-1 self-center">
-                  <button onClick={() => onDec(p.id)} className="w-6 h-6 inline-flex items-center justify-center rounded-full hover:bg-white/15">
+                <div className="mt-2 inline-flex items-center justify-center gap-0.5 bg-primary text-primary-foreground rounded-full p-1 self-center">
+                  <button onClick={() => onDec(p.id)} className="w-10 h-10 inline-flex items-center justify-center rounded-full hover:bg-white/15">
                     <Minus className="w-3.5 h-3.5" />
                   </button>
                   <span className="min-w-[1.25rem] text-center font-semibold text-xs">{quantita}</span>
-                  <button onClick={() => onAdd(p)} className="w-6 h-6 inline-flex items-center justify-center rounded-full hover:bg-white/15">
+                  <button onClick={() => onAdd(p)} className="w-10 h-10 inline-flex items-center justify-center rounded-full hover:bg-white/15">
                     <Plus className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -534,14 +534,14 @@ function LandingChoice({ onOrder, onTrack }: { onOrder: () => void; onTrack: () 
         onClick={onOrder}
         className="card-soft p-6 flex items-center gap-4 text-left hover:bg-secondary/40 transition active:scale-[0.99]"
       >
-        <span className="text-3xl shrink-0">🛒</span>
+        <ShoppingCart className="w-7 h-7 shrink-0 text-primary" />
         <span className="text-lg font-bold text-primary">{t("cliente.orderButton")}</span>
       </button>
       <button
         onClick={onTrack}
         className="card-soft p-6 flex items-center gap-4 text-left hover:bg-secondary/40 transition active:scale-[0.99]"
       >
-        <span className="text-3xl shrink-0">📦</span>
+        <Package className="w-7 h-7 shrink-0 text-primary" />
         <span className="text-lg font-bold text-primary">{t("cliente.trackButton")}</span>
       </button>
     </div>
@@ -680,10 +680,10 @@ type TrackOrder = {
   items: { nome_snapshot: string; quantita: number }[];
 };
 
-const TRACK_STATO_PILL: Record<string, { bg: string; icon: string; labelKey: "cliente.trackStatusArrivati" | "cliente.status.da_evadere" | "cliente.status.consegnati" }> = {
-  arrivati: { bg: "bg-blue-100 text-blue-800", icon: "🕐", labelKey: "cliente.trackStatusArrivati" },
-  da_evadere: { bg: "bg-amber-100 text-amber-800", icon: "👨‍🍳", labelKey: "cliente.status.da_evadere" },
-  consegnati: { bg: "bg-emerald-100 text-emerald-800", icon: "✓", labelKey: "cliente.status.consegnati" },
+const TRACK_STATO_PILL: Record<string, { bg: string; icon: typeof Clock; labelKey: "cliente.trackStatusArrivati" | "cliente.status.da_evadere" | "cliente.status.consegnati" }> = {
+  arrivati: { bg: "bg-blue-100 text-blue-800", icon: Clock, labelKey: "cliente.trackStatusArrivati" },
+  da_evadere: { bg: "bg-amber-100 text-amber-800", icon: ChefHat, labelKey: "cliente.status.da_evadere" },
+  consegnati: { bg: "bg-emerald-100 text-emerald-800", icon: CheckCircle2, labelKey: "cliente.status.consegnati" },
 };
 
 type TrackPrefill = { numeroOmbrellone: string; prefix: string; phone: string };
@@ -783,12 +783,13 @@ function TrackOrderView({ lidoId, onBack, prefill }: { lidoId: string; onBack: (
               )}
               {results.map((o) => {
                 const pill = TRACK_STATO_PILL[o.stato] ?? TRACK_STATO_PILL.arrivati;
+                const PillIcon = pill.icon;
                 return (
                   <div key={o.id} className="card-soft p-4">
                     <div className="flex items-center justify-between gap-2">
                       <span className="font-bold text-primary">#{String(o.numero_ordine).padStart(3, "0")}</span>
-                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${pill.bg}`}>
-                        {pill.icon} {t(pill.labelKey)}
+                      <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${pill.bg}`}>
+                        <PillIcon className="w-3.5 h-3.5" /> {t(pill.labelKey)}
                       </span>
                     </div>
                     {o.items?.length > 0 && (
@@ -855,16 +856,16 @@ function ProdottoRow({
         <p className="text-sm font-bold text-primary mt-1">€ {prodotto.prezzo.toFixed(2)}</p>
       </div>
       {quantita === 0 ? (
-        <Button onClick={onAdd} size="sm" className="shrink-0 rounded-full h-9 w-9 p-0">
+        <Button onClick={onAdd} size="sm" className="shrink-0 rounded-full h-10 w-10 p-0">
           <Plus className="w-4 h-4" />
         </Button>
       ) : (
         <div className="inline-flex items-center gap-1 shrink-0 bg-primary text-primary-foreground rounded-full p-1">
-          <button onClick={onDec} className="w-7 h-7 inline-flex items-center justify-center rounded-full hover:bg-white/15">
+          <button onClick={onDec} className="w-10 h-10 inline-flex items-center justify-center rounded-full hover:bg-white/15">
             <Minus className="w-4 h-4" />
           </button>
           <span className="min-w-[1.5rem] text-center font-semibold text-sm">{quantita}</span>
-          <button onClick={onAdd} className="w-7 h-7 inline-flex items-center justify-center rounded-full hover:bg-white/15">
+          <button onClick={onAdd} className="w-10 h-10 inline-flex items-center justify-center rounded-full hover:bg-white/15">
             <Plus className="w-4 h-4" />
           </button>
         </div>
@@ -963,11 +964,11 @@ function CartView({
               <p className="text-xs text-muted-foreground">€ {it.prodotto.prezzo.toFixed(2)} {t("cliente.each")}</p>
             </div>
             <div className="inline-flex items-center gap-1 bg-secondary rounded-full p-0.5">
-              <button onClick={() => onDec(it.prodotto.id)} className="w-7 h-7 inline-flex items-center justify-center rounded-full hover:bg-background">
+              <button onClick={() => onDec(it.prodotto.id)} className="w-10 h-10 inline-flex items-center justify-center rounded-full hover:bg-background">
                 <Minus className="w-3.5 h-3.5" />
               </button>
               <span className="min-w-[1.5rem] text-center text-sm font-semibold">{it.quantita}</span>
-              <button onClick={() => onAdd(it.prodotto.id)} className="w-7 h-7 inline-flex items-center justify-center rounded-full hover:bg-background">
+              <button onClick={() => onAdd(it.prodotto.id)} className="w-10 h-10 inline-flex items-center justify-center rounded-full hover:bg-background">
                 <Plus className="w-3.5 h-3.5" />
               </button>
             </div>
