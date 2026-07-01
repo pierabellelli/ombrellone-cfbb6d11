@@ -46,8 +46,9 @@ function LoginPage() {
           src="/umbrella-sea.jpg"
           alt=""
           className="w-full h-full object-cover"
+          style={{ objectPosition: "50% 65%" }}
         />
-        <div className="absolute inset-0 bg-gradient-to-br from-teal-900/60 to-blue-900/60 z-0" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[color:var(--navy-deep)]/80 to-[color:var(--navy)]/75 z-0" />
       </div>
 
       {/* Home button top-left */}
