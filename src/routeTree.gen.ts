@@ -24,6 +24,7 @@ import { Route as AuthenticatedOrdiniRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedMappaRouteImport } from './routes/_authenticated/mappa'
 import { Route as AuthenticatedImpostazioniRouteImport } from './routes/_authenticated/impostazioni'
 import { Route as AuthenticatedConfigurazioneLidoRouteImport } from './routes/_authenticated/configurazione-lido'
+import { Route as AuthenticatedAdminNuovoClienteRouteImport } from './routes/_authenticated/admin/nuovo-cliente'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
@@ -101,6 +102,12 @@ const AuthenticatedConfigurazioneLidoRoute =
     path: '/configurazione-lido',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminNuovoClienteRoute =
+  AuthenticatedAdminNuovoClienteRouteImport.update({
+    id: '/admin/nuovo-cliente',
+    path: '/admin/nuovo-cliente',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -117,6 +124,7 @@ export interface FileRoutesByFullPath {
   '/report': typeof AuthenticatedReportRoute
   '/lido/$slug': typeof LidoSlugRoute
   '/traccia/$slug': typeof TracciaSlugRoute
+  '/admin/nuovo-cliente': typeof AuthenticatedAdminNuovoClienteRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -133,6 +141,7 @@ export interface FileRoutesByTo {
   '/report': typeof AuthenticatedReportRoute
   '/lido/$slug': typeof LidoSlugRoute
   '/traccia/$slug': typeof TracciaSlugRoute
+  '/admin/nuovo-cliente': typeof AuthenticatedAdminNuovoClienteRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -151,6 +160,7 @@ export interface FileRoutesById {
   '/_authenticated/report': typeof AuthenticatedReportRoute
   '/lido/$slug': typeof LidoSlugRoute
   '/traccia/$slug': typeof TracciaSlugRoute
+  '/_authenticated/admin/nuovo-cliente': typeof AuthenticatedAdminNuovoClienteRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -169,6 +179,7 @@ export interface FileRouteTypes {
     | '/report'
     | '/lido/$slug'
     | '/traccia/$slug'
+    | '/admin/nuovo-cliente'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -185,6 +196,7 @@ export interface FileRouteTypes {
     | '/report'
     | '/lido/$slug'
     | '/traccia/$slug'
+    | '/admin/nuovo-cliente'
   id:
     | '__root__'
     | '/'
@@ -202,6 +214,7 @@ export interface FileRouteTypes {
     | '/_authenticated/report'
     | '/lido/$slug'
     | '/traccia/$slug'
+    | '/_authenticated/admin/nuovo-cliente'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -322,6 +335,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedConfigurazioneLidoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/nuovo-cliente': {
+      id: '/_authenticated/admin/nuovo-cliente'
+      path: '/admin/nuovo-cliente'
+      fullPath: '/admin/nuovo-cliente'
+      preLoaderRoute: typeof AuthenticatedAdminNuovoClienteRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -333,6 +353,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedProdottiRoute: typeof AuthenticatedProdottiRoute
   AuthenticatedQrcodeRoute: typeof AuthenticatedQrcodeRoute
   AuthenticatedReportRoute: typeof AuthenticatedReportRoute
+  AuthenticatedAdminNuovoClienteRoute: typeof AuthenticatedAdminNuovoClienteRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -343,6 +364,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedProdottiRoute: AuthenticatedProdottiRoute,
   AuthenticatedQrcodeRoute: AuthenticatedQrcodeRoute,
   AuthenticatedReportRoute: AuthenticatedReportRoute,
+  AuthenticatedAdminNuovoClienteRoute: AuthenticatedAdminNuovoClienteRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
