@@ -597,7 +597,7 @@ function FormContatto() {
   return (
     <section id="contatto" className="px-6 lg:px-16 py-20 max-w-2xl mx-auto w-full">
       <h2 className="text-3xl md:text-4xl font-bold text-primary text-center">Richiedi una demo gratuita</h2>
-      <p className="text-sm text-muted-foreground mt-1">
+      <p className="text-sm text-muted-foreground mt-1 text-center">
         Oppure scrivici direttamente a{" "}
         <a href="mailto:ciao@ombrellone.app"
            className="text-teal-600 hover:underline font-medium">
@@ -635,8 +635,9 @@ function FormContatto() {
         </Button>
 
         {status === "success" && (
-          <p className="text-sm font-medium text-center text-[color:var(--success-foreground)] bg-[color:var(--success)]/30 rounded-lg py-2.5">
-            ✅ Richiesta inviata! Ti contatteremo presto.
+          <p className="flex items-center justify-center gap-1.5 text-sm font-medium text-center text-[color:var(--success-foreground)] bg-[color:var(--success)]/30 rounded-lg py-2.5">
+            <CheckCircle2 className="w-4 h-4 shrink-0" />
+            Richiesta inviata! Ti contatteremo presto.
           </p>
         )}
         {status === "error" && (
