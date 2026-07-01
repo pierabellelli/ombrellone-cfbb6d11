@@ -6,6 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
   QrCode,
   ShoppingCart,
   BellRing,
@@ -72,6 +78,59 @@ const COME_FUNZIONA = [
   },
 ];
 
+const FAQ_ITEMS = [
+  {
+    domanda: "Cos'è Ombrellone.app?",
+    risposta:
+      "Una piattaforma che permette ai clienti di ordinare cibo e bevande direttamente dal proprio ombrellone tramite QR code, senza scaricare app o registrarsi.",
+  },
+  {
+    domanda: "Come funziona per il cliente finale?",
+    risposta:
+      "Scansiona il QR code sul proprio ombrellone, visualizza il menu e ordina in pochi secondi, paga in contanti o con carta. Lo staff riceve l'ordine in tempo reale.",
+  },
+  {
+    domanda: "Come funziona per lo staff?",
+    risposta:
+      "Dashboard Kanban con tutti gli ordini in arrivo, in lavorazione e completati. Mappa interattiva dello stabilimento con stato ombrelloni in tempo reale. Storico ordini consultabile in qualsiasi momento.",
+  },
+  {
+    domanda: "Quanto tempo serve per attivare il mio stabilimento?",
+    risposta: "Pochi giorni: configurazione mappa ombrelloni, menu e accessi staff.",
+  },
+  {
+    domanda: "Serve un hardware particolare?",
+    risposta:
+      "No. Basta uno smartphone o tablet per lo staff; i clienti usano il proprio telefono per scansionare il QR.",
+  },
+  {
+    domanda: "Quanto costa?",
+    risposta: "Pricing personalizzato in base alle esigenze dello stabilimento — contattaci per un preventivo.",
+  },
+  {
+    domanda: "Qual è la durata del contratto?",
+    risposta: "Da definire in base alle esigenze dello stabilimento — contattaci per i dettagli.",
+  },
+  {
+    domanda: "I miei dati sono al sicuro?",
+    risposta:
+      "Sì, la piattaforma è conforme al GDPR; i dati sono gestiti su infrastruttura sicura e non vengono ceduti a terzi.",
+  },
+  {
+    domanda: "Posso gestire più ruoli (gestore, staff)?",
+    risposta:
+      "Sì: il gestore ha accesso completo, lo staff vede solo le sezioni operative (Mappa, Ordini, Storico).",
+  },
+  {
+    domanda: "È disponibile assistenza dopo l'attivazione?",
+    risposta: "Sì, supporto dedicato per onboarding e gestione quotidiana — canali e orari da definire.",
+  },
+  {
+    domanda: "Posso provare la piattaforma prima di attivarla?",
+    risposta: "Sì, è possibile richiedere una demo personalizzata.",
+  },
+];
+
 function DemoButton({ className }: { className?: string }) {
   return (
     <a
@@ -96,6 +155,7 @@ function Home() {
       <InAzione />
       <EmotionSection />
       <Urgenza />
+      <FAQ />
       <FormContatto />
       <CtaFinale />
       <Footer />
@@ -105,6 +165,7 @@ function Home() {
 
 const NAV_LINKS = [
   { href: "#come-funziona", label: "Come funziona", pill: false },
+  { href: "#faq", label: "FAQ", pill: false },
   { href: "#contatto", label: "Richiedi demo", pill: true },
   { href: "#contatto", label: "Contatti", pill: false },
 ];
@@ -470,6 +531,32 @@ function CtaFinale() {
       >
         Richiedi una demo gratuita
       </a>
+    </section>
+  );
+}
+
+function FAQ() {
+  return (
+    <section id="faq" className="px-6 lg:px-16 py-20 max-w-3xl mx-auto w-full">
+      <h2 className="text-3xl md:text-4xl font-bold text-primary text-center">
+        Domande frequenti
+      </h2>
+      <p className="mt-4 text-lg text-muted-foreground text-center">
+        Tutto quello che ti serve sapere prima di iniziare.
+      </p>
+
+      <Accordion type="single" collapsible className="mt-12 card-soft px-6 md:px-8">
+        {FAQ_ITEMS.map((item, index) => (
+          <AccordionItem key={item.domanda} value={`item-${index}`}>
+            <AccordionTrigger className="text-base md:text-lg text-primary hover:no-underline">
+              {item.domanda}
+            </AccordionTrigger>
+            <AccordionContent className="text-base text-muted-foreground">
+              {item.risposta}
+            </AccordionContent>
+          </AccordionItem>
+        ))}
+      </Accordion>
     </section>
   );
 }
