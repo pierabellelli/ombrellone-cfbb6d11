@@ -2,7 +2,7 @@ import { createFileRoute, Outlet, redirect, Link, useNavigate, useRouterState } 
 import { useEffect, useState, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Logo } from "@/components/Logo";
-import { LogOut, ClipboardList, Package, Settings, Map as MapIcon, LayoutPanelTop, BarChart3, QrCode, MoreHorizontal, X } from "lucide-react";
+import { LogOut, ClipboardList, Package, Settings, Map as MapIcon, LayoutPanelTop, BarChart3, QrCode, MoreHorizontal, X, LayoutDashboard } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useI18n } from "@/lib/i18n";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose } from "@/components/ui/sheet";
@@ -106,6 +106,7 @@ function AuthLayout() {
     { to: "/impostazioni", icon: <Settings className="w-4 h-4" />, label: t("nav.settings"), visible: isGestore || isSuper },
     { to: "/qrcode", icon: <QrCode className="w-4 h-4" />, label: t("nav.qrcode"), visible: isGestore },
     { to: "/report", icon: <BarChart3 className="w-4 h-4" />, label: isStaffOnly ? t("nav.storico") : t("nav.report"), visible: isGestore || isStaffOnly },
+    { to: "/admin/dashboard", icon: <LayoutDashboard className="w-4 h-4" />, label: "Admin", visible: isSuper },
   ];
   const visibleNavItems = navItems.filter((item) => item.visible);
   const mobileTabs = visibleNavItems.length > 5 ? visibleNavItems.slice(0, 4) : visibleNavItems;

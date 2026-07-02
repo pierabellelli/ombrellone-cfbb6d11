@@ -1,8 +1,8 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, UserPlus, CheckCircle2 } from "lucide-react";
+import { Loader2, UserPlus, CheckCircle2, LayoutDashboard, ArrowLeft } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -90,11 +90,25 @@ function NuovoClientePage() {
 
   return (
     <div className="max-w-[640px] mx-auto px-4 md:px-6 py-6">
-      <div>
-        <h1 className="text-2xl md:text-3xl font-bold text-primary">Nuovo cliente</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Crea rapidamente uno stabilimento, la griglia ombrelloni e invita il gestore.
-        </p>
+      <Link to="/admin/dashboard" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition">
+        <ArrowLeft className="w-4 h-4" /> Torna alla dashboard
+      </Link>
+
+      <div className="flex items-center justify-between flex-wrap gap-3 mt-2">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-primary">Nuovo cliente</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Crea rapidamente uno stabilimento, la griglia ombrelloni e invita il gestore.
+          </p>
+        </div>
+        <nav className="inline-flex rounded-full border border-border bg-card p-1 text-sm font-medium shrink-0">
+          <Link to="/admin/dashboard" className="px-3.5 py-1.5 rounded-full text-muted-foreground hover:text-foreground transition inline-flex items-center gap-1.5">
+            <LayoutDashboard className="w-3.5 h-3.5" /> Dashboard
+          </Link>
+          <span className="px-3.5 py-1.5 rounded-full bg-primary text-primary-foreground inline-flex items-center gap-1.5">
+            <UserPlus className="w-3.5 h-3.5" /> Nuovo cliente
+          </span>
+        </nav>
       </div>
 
       {riepilogo ? (

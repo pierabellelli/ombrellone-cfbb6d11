@@ -25,6 +25,7 @@ import { Route as AuthenticatedMappaRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedImpostazioniRouteImport } from './routes/_authenticated/impostazioni'
 import { Route as AuthenticatedConfigurazioneLidoRouteImport } from './routes/_authenticated/configurazione-lido'
 import { Route as AuthenticatedAdminNuovoClienteRouteImport } from './routes/_authenticated/admin/nuovo-cliente'
+import { Route as AuthenticatedAdminDashboardRouteImport } from './routes/_authenticated/admin/dashboard'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
@@ -108,6 +109,12 @@ const AuthenticatedAdminNuovoClienteRoute =
     path: '/admin/nuovo-cliente',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminDashboardRoute =
+  AuthenticatedAdminDashboardRouteImport.update({
+    id: '/admin/dashboard',
+    path: '/admin/dashboard',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -124,6 +131,7 @@ export interface FileRoutesByFullPath {
   '/report': typeof AuthenticatedReportRoute
   '/lido/$slug': typeof LidoSlugRoute
   '/traccia/$slug': typeof TracciaSlugRoute
+  '/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
   '/admin/nuovo-cliente': typeof AuthenticatedAdminNuovoClienteRoute
 }
 export interface FileRoutesByTo {
@@ -141,6 +149,7 @@ export interface FileRoutesByTo {
   '/report': typeof AuthenticatedReportRoute
   '/lido/$slug': typeof LidoSlugRoute
   '/traccia/$slug': typeof TracciaSlugRoute
+  '/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
   '/admin/nuovo-cliente': typeof AuthenticatedAdminNuovoClienteRoute
 }
 export interface FileRoutesById {
@@ -160,6 +169,7 @@ export interface FileRoutesById {
   '/_authenticated/report': typeof AuthenticatedReportRoute
   '/lido/$slug': typeof LidoSlugRoute
   '/traccia/$slug': typeof TracciaSlugRoute
+  '/_authenticated/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
   '/_authenticated/admin/nuovo-cliente': typeof AuthenticatedAdminNuovoClienteRoute
 }
 export interface FileRouteTypes {
@@ -179,6 +189,7 @@ export interface FileRouteTypes {
     | '/report'
     | '/lido/$slug'
     | '/traccia/$slug'
+    | '/admin/dashboard'
     | '/admin/nuovo-cliente'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -196,6 +207,7 @@ export interface FileRouteTypes {
     | '/report'
     | '/lido/$slug'
     | '/traccia/$slug'
+    | '/admin/dashboard'
     | '/admin/nuovo-cliente'
   id:
     | '__root__'
@@ -214,6 +226,7 @@ export interface FileRouteTypes {
     | '/_authenticated/report'
     | '/lido/$slug'
     | '/traccia/$slug'
+    | '/_authenticated/admin/dashboard'
     | '/_authenticated/admin/nuovo-cliente'
   fileRoutesById: FileRoutesById
 }
@@ -342,6 +355,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminNuovoClienteRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/dashboard': {
+      id: '/_authenticated/admin/dashboard'
+      path: '/admin/dashboard'
+      fullPath: '/admin/dashboard'
+      preLoaderRoute: typeof AuthenticatedAdminDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -353,6 +373,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedProdottiRoute: typeof AuthenticatedProdottiRoute
   AuthenticatedQrcodeRoute: typeof AuthenticatedQrcodeRoute
   AuthenticatedReportRoute: typeof AuthenticatedReportRoute
+  AuthenticatedAdminDashboardRoute: typeof AuthenticatedAdminDashboardRoute
   AuthenticatedAdminNuovoClienteRoute: typeof AuthenticatedAdminNuovoClienteRoute
 }
 
@@ -364,6 +385,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedProdottiRoute: AuthenticatedProdottiRoute,
   AuthenticatedQrcodeRoute: AuthenticatedQrcodeRoute,
   AuthenticatedReportRoute: AuthenticatedReportRoute,
+  AuthenticatedAdminDashboardRoute: AuthenticatedAdminDashboardRoute,
   AuthenticatedAdminNuovoClienteRoute: AuthenticatedAdminNuovoClienteRoute,
 }
 
