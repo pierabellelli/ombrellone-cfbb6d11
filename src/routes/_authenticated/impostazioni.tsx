@@ -222,6 +222,7 @@ function BrandingCard({ lido, onSaved }: { lido: Lido; onSaved: () => void }) {
           lidoId={lido.id}
           field="logo_url"
           onSaved={onSaved}
+          helpText="Formato consigliato: PNG quadrato con sfondo trasparente, minimo 200×200px. Max 5 MB."
         />
         <ImageUploader
           label="Foto di copertina"
@@ -238,7 +239,7 @@ function BrandingCard({ lido, onSaved }: { lido: Lido; onSaved: () => void }) {
 }
 
 function ImageUploader({
-  label, currentUrl, lidoId, field, onSaved, aspect, maxClass,
+  label, currentUrl, lidoId, field, onSaved, aspect, maxClass, helpText,
 }: {
   label: string;
   currentUrl: string | null;
@@ -247,6 +248,7 @@ function ImageUploader({
   onSaved: () => void;
   aspect: string;
   maxClass: string;
+  helpText?: string;
 }) {
   const [busy, setBusy] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -326,6 +328,9 @@ function ImageUploader({
             </Button>
           )}
         </div>
+        {helpText && (
+          <p className="text-xs text-muted-foreground mt-1.5">{helpText}</p>
+        )}
       </div>
     </div>
   );
