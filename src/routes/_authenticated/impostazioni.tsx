@@ -232,6 +232,7 @@ function BrandingCard({ lido, onSaved }: { lido: Lido; onSaved: () => void }) {
           lidoId={lido.id}
           field="foto_copertina_url"
           onSaved={onSaved}
+          helpText="Formato consigliato: JPG o PNG orizzontale (16:9), minimo 1280×720px. Max 5 MB."
         />
       </div>
     </Section>
