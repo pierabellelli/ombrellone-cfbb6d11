@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ombrellone-v3';
+const CACHE_NAME = 'ombrellone-v4';
 const urlsToCache = ['/', '/index.html', '/login'];
 
 self.addEventListener('install', event => {
@@ -18,6 +18,15 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
+  const url = new URL(event.request.url);
+  const isSameOriginGet = event.request.method === 'GET' && url.origin === self.location.origin;
+
+  // Only cache same-origin GET requests (the app shell). Every other request -
+  // API calls to Supabase (GET/PATCH/POST/DELETE) in particular - must always
+  // go straight to the network, uncached, so saves and fresh data are never
+  // served stale or interfered with.
+  if (!isSameOriginGet) return;
+
   event.respondWith(
     fetch(event.request)
       .then(response => {
