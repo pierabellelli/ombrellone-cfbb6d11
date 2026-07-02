@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
-  ImagePlus, Loader2, X, Save, Clock, Coffee, ShieldCheck, Store,
+  ImagePlus, ImageOff, Loader2, X, Save, Clock, Coffee, ShieldCheck, Store,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -40,6 +40,7 @@ type Lido = {
   tempo_attesa_attivo: boolean;
   tempo_attesa_minuti: number | null;
   numero_ordine_partenza: number;
+  nascondi_immagini_menu: boolean;
 };
 
 const SIGNED_TTL = 60 * 60 * 24 * 365;
@@ -116,6 +117,7 @@ function ImpostazioniPage() {
       <DatiGeneraliCard lido={lido} onSaved={() => qc.invalidateQueries({ queryKey: ["myLido"] })} />
       <BrandingCard lido={lido} onSaved={() => qc.invalidateQueries({ queryKey: ["myLido"] })} />
       <RegoleServizioCard lido={lido} onSaved={() => qc.invalidateQueries({ queryKey: ["myLido"] })} />
+      <NascondiImmaginiMenuCard lido={lido} onSaved={() => qc.invalidateQueries({ queryKey: ["myLido"] })} />
       <PagamentiCard lido={lido} onSaved={() => qc.invalidateQueries({ queryKey: ["myLido"] })} />
       {isGestore && (
         <StoricoStaffCard lido={lido} onSaved={() => qc.invalidateQueries({ queryKey: ["myLido"] })} />
@@ -563,6 +565,44 @@ function PagamentiCard({ lido, onSaved }: { lido: Lido; onSaved: () => void }) {
           {saving ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Save className="w-4 h-4 mr-1.5" />}
           Salva
         </Button>
+      </div>
+    </Section>
+  );
+}
+
+function NascondiImmaginiMenuCard({ lido, onSaved }: { lido: Lido; onSaved: () => void }) {
+  const [nascondi, setNascondi] = useState(lido.nascondi_immagini_menu);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => { setNascondi(lido.nascondi_immagini_menu); }, [lido.id, lido.nascondi_immagini_menu]);
+
+  const onToggle = async (checked: boolean) => {
+    setNascondi(checked);
+    setSaving(true);
+    const { error } = await (supabase.from("lidi") as any).update({ nascondi_immagini_menu: checked } as any).eq("id", lido.id);
+    setSaving(false);
+    if (error) {
+      setNascondi(lido.nascondi_immagini_menu);
+      toast.error("Impossibile salvare", { description: error.message });
+      return;
+    }
+    toast.success("Impostazione aggiornata");
+    onSaved();
+  };
+
+  return (
+    <Section
+      icon={<ImageOff className="w-5 h-5" />}
+      title="Immagini nel menu"
+      description="Se non hai foto per tutti i prodotti, puoi nascondere le immagini nel menu visto dai clienti."
+    >
+      <div className="flex items-center justify-between gap-4">
+        <p className="text-sm text-muted-foreground">
+          {nascondi
+            ? "Le immagini prodotto sono nascoste nel menu cliente."
+            : "Le immagini prodotto sono visibili nel menu cliente (dove presenti)."}
+        </p>
+        <Switch checked={nascondi} onCheckedChange={onToggle} disabled={saving} />
       </div>
     </Section>
   );

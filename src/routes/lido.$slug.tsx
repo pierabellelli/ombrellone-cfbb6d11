@@ -120,6 +120,7 @@ type Lido = {
   accetta_carta: boolean;
   tempo_attesa_attivo: boolean;
   tempo_attesa_minuti: number | null;
+  nascondi_immagini_menu: boolean;
 };
 
 type Categoria = { id: string; nome: string; ordine: number };
@@ -147,7 +148,7 @@ function LidoClientPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("lidi")
-        .select("id, nome, slug, logo_url, foto_copertina_url, servizio_bar_attivo, orario_apertura, orario_chiusura, soglia_ordine_libero, accetta_carta, tempo_attesa_attivo, tempo_attesa_minuti")
+        .select("id, nome, slug, logo_url, foto_copertina_url, servizio_bar_attivo, orario_apertura, orario_chiusura, soglia_ordine_libero, accetta_carta, tempo_attesa_attivo, tempo_attesa_minuti, nascondi_immagini_menu")
         .eq("slug", slug)
         .maybeSingle();
       if (error) throw error;
@@ -392,6 +393,7 @@ function LidoClientPage() {
                         quantita={cart[p.id]?.quantita ?? 0}
                         onAdd={() => add(p)}
                         onDec={() => dec(p.id)}
+                        nascondiImmagine={lido.nascondi_immagini_menu}
                       />
                     ))}
                   </div>
@@ -889,24 +891,27 @@ function CatChip({ label, active, onClick }: { label: string; active: boolean; o
 }
 
 function ProdottoRow({
-  prodotto, quantita, onAdd, onDec,
+  prodotto, quantita, onAdd, onDec, nascondiImmagine,
 }: {
   prodotto: Prodotto;
   quantita: number;
   onAdd: () => void;
   onDec: () => void;
+  nascondiImmagine?: boolean;
 }) {
   return (
     <div className="card-soft p-3 flex items-center gap-3">
-      <div className="w-16 h-16 rounded-lg bg-secondary overflow-hidden shrink-0">
-        {(prodotto.immagine_url ?? prodotto.foto_url) ? (
-          <img src={(prodotto.immagine_url ?? prodotto.foto_url)!} alt={prodotto.nome} className="w-full h-full object-cover" />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-secondary">
-            <Coffee className="w-6 h-6 text-muted-foreground" />
-          </div>
-        )}
-      </div>
+      {!nascondiImmagine && (
+        <div className="w-16 h-16 rounded-lg bg-secondary overflow-hidden shrink-0">
+          {(prodotto.immagine_url ?? prodotto.foto_url) ? (
+            <img src={(prodotto.immagine_url ?? prodotto.foto_url)!} alt={prodotto.nome} className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-secondary">
+              <Coffee className="w-6 h-6 text-muted-foreground" />
+            </div>
+          )}
+        </div>
+      )}
       <div className="flex-1 min-w-0">
         <h3 className="font-semibold text-foreground leading-tight">{prodotto.nome}</h3>
         {prodotto.descrizione && (
