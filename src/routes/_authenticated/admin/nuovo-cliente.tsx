@@ -37,6 +37,23 @@ async function fetchLidi(): Promise<LidoOption[]> {
   return (data ?? []) as LidoOption[];
 }
 
+// supabase-js sets data:null and a generic error.message on non-2xx responses from
+// functions.invoke(); the real message the function sent is only in error.context (the
+// raw Response body), so it has to be read separately to show something useful.
+async function extractEdgeFunctionError(error: unknown): Promise<string | null> {
+  if (!error || typeof error !== "object") return null;
+  const ctx = (error as { context?: unknown }).context;
+  if (ctx instanceof Response) {
+    try {
+      const body = await ctx.clone().json();
+      if (body?.error) return String(body.error);
+    } catch {
+      // response body wasn't JSON, fall through
+    }
+  }
+  return null;
+}
+
 function NuovoClientePage() {
   const [modalita, setModalita] = useState<Modalita>("nuovo");
   const [lidoEsistenteId, setLidoEsistenteId] = useState<string>("");
@@ -96,7 +113,8 @@ function NuovoClientePage() {
     setSubmitting(false);
 
     if (error || data?.error) {
-      const description = data?.error ?? error?.message ?? "Errore imprevisto.";
+      const edgeMessage = await extractEdgeFunctionError(error);
+      const description = data?.error ?? edgeMessage ?? error?.message ?? "Errore imprevisto.";
       toast.error("Invito non riuscito", { description });
       return;
     }
