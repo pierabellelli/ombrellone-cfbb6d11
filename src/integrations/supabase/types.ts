@@ -155,6 +155,7 @@ export type Database = {
           logo_url: string | null
           max_ordini_ravvicinati: number | null
           messaggio_benvenuto: string | null
+          nascondi_immagini_menu: boolean
           nome: string
           note_interne: string | null
           numero_ordine_partenza: number
@@ -188,6 +189,7 @@ export type Database = {
           logo_url?: string | null
           max_ordini_ravvicinati?: number | null
           messaggio_benvenuto?: string | null
+          nascondi_immagini_menu?: boolean
           nome: string
           note_interne?: string | null
           numero_ordine_partenza?: number
@@ -221,6 +223,7 @@ export type Database = {
           logo_url?: string | null
           max_ordini_ravvicinati?: number | null
           messaggio_benvenuto?: string | null
+          nascondi_immagini_menu?: boolean
           nome?: string
           note_interne?: string | null
           numero_ordine_partenza?: number
@@ -478,6 +481,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_lidi_last_access: {
+        Args: never
+        Returns: {
+          last_sign_in_at: string
+          lido_id: string
+        }[]
+      }
       create_ordine: {
         Args: {
           _cognome: string
