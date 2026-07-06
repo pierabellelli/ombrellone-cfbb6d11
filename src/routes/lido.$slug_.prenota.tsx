@@ -7,6 +7,7 @@ import { ArrowLeft, Loader2, AlertTriangle, CheckCircle2, CalendarDays, Umbrella
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Calendar } from "@/components/ui/calendar";
 
 export const Route = createFileRoute("/lido/$slug_/prenota")({
   head: ({ params }) => ({
@@ -71,23 +72,18 @@ function PrenotaPage() {
     },
   });
 
-  const [selectedDates, setSelectedDates] = useState<string[]>([]);
+  const [pickedDates, setPickedDates] = useState<Date[]>([]);
   const [selections, setSelections] = useState<Record<string, Selection>>({});
   const [confirmed, setConfirmed] = useState<{ fila: string; numero: string; data: string }[] | null>(null);
 
   const maxDays = lido?.max_booking_days_ahead ?? 0;
-  const availableDates = useMemo(() => {
-    const out: { iso: string; label: string }[] = [];
-    for (let i = 0; i <= maxDays; i++) {
-      const d = new Date();
-      d.setDate(d.getDate() + i);
-      out.push({
-        iso: isoDate(d),
-        label: d.toLocaleDateString("it-IT", { weekday: "short", day: "2-digit", month: "short" }),
-      });
-    }
-    return out;
-  }, [maxDays]);
+  const today = useMemo(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; }, []);
+  const maxDate = useMemo(() => { const d = new Date(today); d.setDate(d.getDate() + maxDays); return d; }, [today, maxDays]);
+
+  const selectedDates = useMemo(
+    () => [...pickedDates].map(isoDate).sort(),
+    [pickedDates],
+  );
 
   const bookedQueries = useQueries({
     queries: selectedDates.map((data) => ({
@@ -109,16 +105,6 @@ function PrenotaPage() {
     });
     return map;
   }, [selectedDates, bookedQueries]);
-
-  const toggleDate = (iso: string) => {
-    setSelectedDates((prev) => {
-      if (prev.includes(iso)) {
-        setSelections((s) => { const { [iso]: _, ...rest } = s; return rest; });
-        return prev.filter((d) => d !== iso);
-      }
-      return [...prev, iso].sort();
-    });
-  };
 
   const selectSpot = (data: string, fila: string, numero: number) => {
     setSelections((prev) => {
@@ -252,18 +238,14 @@ function PrenotaPage() {
           <h2 className="text-sm font-bold uppercase tracking-wider text-primary mb-2 inline-flex items-center gap-1.5">
             <CalendarDays className="w-4 h-4" /> Scegli una o più date
           </h2>
-          <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
-            {availableDates.map((d) => (
-              <button
-                key={d.iso}
-                onClick={() => toggleDate(d.iso)}
-                className={`shrink-0 px-3 py-2 rounded-xl text-xs font-semibold border transition whitespace-nowrap ${
-                  selectedDates.includes(d.iso) ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border text-foreground"
-                }`}
-              >
-                {d.label}
-              </button>
-            ))}
+          <div className="card-soft p-2 flex justify-center">
+            <Calendar
+              mode="multiple"
+              selected={pickedDates}
+              onSelect={(dates) => setPickedDates(dates ?? [])}
+              disabled={{ before: today, after: maxDate }}
+              defaultMonth={today}
+            />
           </div>
         </section>
 
