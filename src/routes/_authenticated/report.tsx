@@ -10,7 +10,7 @@ import {
   ResponsiveContainer, LineChart, Line, BarChart, Bar, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip,
 } from "recharts";
-import { TrendingUp, ShoppingBag, Flame, Award, Timer, X } from "lucide-react";
+import { TrendingUp, ShoppingBag, Flame, Award, Timer, X, CalendarClock, CheckCircle2, Percent } from "lucide-react";
 
 type Stato = "arrivati" | "da_evadere" | "consegnati" | "annullato";
 type Item = { id: string; nome_snapshot: string; prezzo_snapshot: number; quantita: number };
@@ -110,6 +110,25 @@ function ReportPage() {
   const { from, to, bucket } = useMemo(() => getRange(period, customFrom, customTo), [period, customFrom, customTo]);
 
   const { data: lidoId } = useQuery({ queryKey: ["report-lido-id"], queryFn: fetchUserLidoId, staleTime: 60_000 });
+
+  const [tab, setTab] = useState<"ordini" | "prenotazioni">("ordini");
+  const { data: bookingModuleEnabled = false } = useQuery({
+    queryKey: ["report-booking-module-enabled", lidoId],
+    enabled: !!lidoId && role === "gestore",
+    queryFn: async () => {
+      const { data } = await supabase.from("lidi").select("booking_module_enabled").eq("id", lidoId!).maybeSingle();
+      return !!data?.booking_module_enabled;
+    },
+  });
+  const { data: hasBookings = false } = useQuery({
+    queryKey: ["report-has-bookings", lidoId],
+    enabled: !!lidoId && role === "gestore" && bookingModuleEnabled,
+    queryFn: async () => {
+      const { count } = await supabase.from("bookings").select("id", { count: "exact", head: true }).eq("lido_id", lidoId!);
+      return (count ?? 0) > 0;
+    },
+  });
+  const showBookingsTab = role === "gestore" && bookingModuleEnabled && hasBookings;
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ["report-orders", lidoId, from.toISOString(), to.toISOString()],
@@ -246,6 +265,29 @@ function ReportPage() {
         <p className="text-sm text-muted-foreground mt-1">Statistiche e andamento del lido.</p>
       </div>
 
+      {showBookingsTab && (
+        <div className="mb-4 inline-flex rounded-full border border-border bg-card p-0.5 text-sm font-medium">
+          <button
+            onClick={() => setTab("ordini")}
+            className={`px-3.5 py-1.5 rounded-full transition ${tab === "ordini" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+          >
+            Ordini
+          </button>
+          <button
+            onClick={() => setTab("prenotazioni")}
+            className={`px-3.5 py-1.5 rounded-full transition ${tab === "prenotazioni" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+          >
+            Prenotazioni
+          </button>
+        </div>
+      )}
+
+      {tab === "prenotazioni" && showBookingsTab && lidoId && (
+        <BookingReportSection lidoId={lidoId} />
+      )}
+
+      {(tab === "ordini" || !showBookingsTab) && (
+      <>
       <FilterBar
         period={period}
         onPeriod={setPeriod}
@@ -438,6 +480,8 @@ function ReportPage() {
       {lidoId && (
         <StoricoOrdiniSection lidoId={lidoId} defaultFrom={from} defaultTo={to} role={role} userId={userId} />
       )}
+      </>
+      )}
     </div>
   );
 }
@@ -583,6 +627,209 @@ function OrdersTimeDrillModal({ label, orders, onClose }: { label: string; order
         </div>
       </div>
     </div>
+  );
+}
+
+type BookingReportDaily = {
+  data: string;
+  totale_prenotazioni: number;
+  check_in_effettuati: number;
+  scadute: number;
+  manually_held: number;
+  show_rate_pct: number | null;
+};
+
+async function loadBookingReportDaily(lidoId: string, from: Date, to: Date): Promise<BookingReportDaily[]> {
+  const { data, error } = await supabase
+    .from("booking_report_daily")
+    .select("*")
+    .eq("lido_id", lidoId)
+    .gte("data", format(from, "yyyy-MM-dd"))
+    .lte("data", format(to, "yyyy-MM-dd"))
+    .order("data", { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as BookingReportDaily[];
+}
+
+async function loadBeachCapacity(lidoId: string): Promise<number> {
+  const { data, error } = await supabase.from("beach_config").select("file").eq("lido_id", lidoId).maybeSingle();
+  if (error) throw error;
+  const file = (data?.file ?? []) as { ombrelloni: { numero: number }[] }[];
+  return file.reduce((s, row) => s + (row.ombrelloni?.length ?? 0), 0);
+}
+
+async function loadBookingCreationHours(lidoId: string, from: Date, to: Date): Promise<string[]> {
+  const { data, error } = await supabase
+    .from("bookings")
+    .select("created_at")
+    .eq("lido_id", lidoId)
+    .gte("data", format(from, "yyyy-MM-dd"))
+    .lte("data", format(to, "yyyy-MM-dd"));
+  if (error) throw error;
+  return (data ?? []).map((r) => r.created_at as string);
+}
+
+function BookingReportSection({ lidoId }: { lidoId: string }) {
+  const [period, setPeriod] = useState<Period>("settimana");
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo, setCustomTo] = useState("");
+  const { from, to } = useMemo(() => getRange(period, customFrom, customTo), [period, customFrom, customTo]);
+
+  const { data: dailyRows = [], isLoading } = useQuery({
+    queryKey: ["booking-report-daily", lidoId, format(from, "yyyy-MM-dd"), format(to, "yyyy-MM-dd")],
+    queryFn: () => loadBookingReportDaily(lidoId, from, to),
+    enabled: !!lidoId,
+  });
+
+  const { data: capacity = 0 } = useQuery({
+    queryKey: ["booking-report-capacity", lidoId],
+    queryFn: () => loadBeachCapacity(lidoId),
+    enabled: !!lidoId,
+  });
+
+  const { data: creationHours = [] } = useQuery({
+    queryKey: ["booking-report-hours", lidoId, format(from, "yyyy-MM-dd"), format(to, "yyyy-MM-dd")],
+    queryFn: () => loadBookingCreationHours(lidoId, from, to),
+    enabled: !!lidoId,
+  });
+
+  const metrics = useMemo(() => {
+    const totalBookings = dailyRows.reduce((s, r) => s + r.totale_prenotazioni, 0);
+    const totalConfirmed = dailyRows.reduce((s, r) => s + r.check_in_effettuati, 0);
+    const totalManual = dailyRows.reduce((s, r) => s + r.manually_held, 0);
+    const totalExpired = dailyRows.reduce((s, r) => s + r.scadute, 0);
+    const numDays = Math.max(1, differenceInCalendarDays(to, from) + 1);
+    const occupancyPct = capacity > 0 ? Math.round(((totalConfirmed + totalManual) / (capacity * numDays)) * 1000) / 10 : 0;
+    const showRatePct = totalBookings > 0 ? Math.round((totalConfirmed / totalBookings) * 1000) / 10 : 0;
+
+    const occupancySeries = dailyRows.map((r) => ({
+      label: format(new Date(r.data), "dd/MM"),
+      value: capacity > 0 ? Math.round(((r.check_in_effettuati + r.manually_held) / capacity) * 1000) / 10 : 0,
+    }));
+    const showRateSeries = dailyRows.map((r) => ({
+      label: format(new Date(r.data), "dd/MM"),
+      value: r.show_rate_pct ?? 0,
+    }));
+
+    const hourCounts = Array.from({ length: 24 }, () => 0);
+    for (const iso of creationHours) hourCounts[new Date(iso).getHours()] += 1;
+    const hourSeries = hourCounts.map((count, h) => ({ hour: `${String(h).padStart(2, "0")}:00`, count }));
+
+    return { totalBookings, totalConfirmed, totalManual, totalExpired, occupancyPct, showRatePct, occupancySeries, showRateSeries, hourSeries };
+  }, [dailyRows, capacity, from, to, creationHours]);
+
+  return (
+    <>
+      <FilterBar
+        period={period}
+        onPeriod={setPeriod}
+        customFrom={customFrom}
+        customTo={customTo}
+        onCustomFrom={setCustomFrom}
+        onCustomTo={setCustomTo}
+      />
+
+      {isLoading ? (
+        <div className="mt-10 text-center text-muted-foreground text-sm">Caricamento dati…</div>
+      ) : (
+        <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Card title="Tasso di occupazione" icon={<CalendarClock className="w-4 h-4" />}>
+            <div className="text-3xl font-bold text-primary">{metrics.occupancyPct}%</div>
+            <p className="text-xs text-muted-foreground mt-1">Confermate + riservate manualmente, sui {capacity || "—"} posti configurati.</p>
+            <div className="mt-3 h-40">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={metrics.occupancySeries}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 11 }} width={36} unit="%" />
+                  <Tooltip formatter={(v: number) => [`${v}%`, "Occupazione"]} />
+                  <Bar dataKey="value" fill="var(--primary)" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+
+          <Card title="Show rate" icon={<CheckCircle2 className="w-4 h-4" />}>
+            <div className="text-3xl font-bold text-primary">{metrics.showRatePct}%</div>
+            <p className="text-xs text-muted-foreground mt-1">Check-in effettuati sul totale prenotazioni non cancellate.</p>
+            <div className="mt-3 h-40">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={metrics.showRateSeries}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 11 }} width={36} unit="%" />
+                  <Tooltip formatter={(v: number) => [`${v}%`, "Show rate"]} />
+                  <Line type="monotone" dataKey="value" stroke="var(--primary)" strokeWidth={2} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+
+          <Card title="Prenotazioni" icon={<Percent className="w-4 h-4" />}>
+            <div className="text-3xl font-bold text-primary">{metrics.totalBookings}</div>
+            <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
+              <div className="rounded-lg bg-secondary p-2">
+                <div className="text-lg font-bold text-emerald-700">{metrics.totalConfirmed}</div>
+                <div className="text-muted-foreground mt-0.5">Check-in</div>
+              </div>
+              <div className="rounded-lg bg-secondary p-2">
+                <div className="text-lg font-bold text-amber-700">{metrics.totalManual}</div>
+                <div className="text-muted-foreground mt-0.5">Manuali</div>
+              </div>
+              <div className="rounded-lg bg-secondary p-2">
+                <div className="text-lg font-bold text-red-700">{metrics.totalExpired}</div>
+                <div className="text-muted-foreground mt-0.5">Scadute</div>
+              </div>
+            </div>
+          </Card>
+
+          <Card title="Orario di punta prenotazioni" icon={<Flame className="w-4 h-4" />}>
+            <p className="text-xs text-muted-foreground mb-1">Distribuzione oraria di quando i clienti prenotano.</p>
+            <div className="h-56">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={metrics.hourSeries}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="hour" tick={{ fontSize: 10 }} interval={1} />
+                  <YAxis tick={{ fontSize: 11 }} width={30} allowDecimals={false} />
+                  <Tooltip formatter={(v: number) => [v, "Prenotazioni"]} />
+                  <Bar dataKey="count" fill="var(--primary)" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {!isLoading && dailyRows.length > 0 && (
+        <div className="mt-4 card-soft p-4 overflow-x-auto">
+          <h2 className="text-sm font-bold text-primary mb-3">Dettaglio giornaliero</h2>
+          <table className="w-full text-sm min-w-[560px]">
+            <thead>
+              <tr className="text-left text-xs text-muted-foreground border-b border-border">
+                <th className="py-1.5 pr-2">Data</th>
+                <th className="py-1.5 pr-2 text-right">Totale</th>
+                <th className="py-1.5 pr-2 text-right">Check-in</th>
+                <th className="py-1.5 pr-2 text-right">Manuali</th>
+                <th className="py-1.5 pr-2 text-right">Scadute</th>
+                <th className="py-1.5 text-right">Show rate</th>
+              </tr>
+            </thead>
+            <tbody>
+              {dailyRows.map((r) => (
+                <tr key={r.data} className="border-b border-border last:border-b-0">
+                  <td className="py-1.5 pr-2 whitespace-nowrap">{format(new Date(r.data), "dd/MM/yyyy")}</td>
+                  <td className="py-1.5 pr-2 text-right tabular-nums">{r.totale_prenotazioni}</td>
+                  <td className="py-1.5 pr-2 text-right tabular-nums">{r.check_in_effettuati}</td>
+                  <td className="py-1.5 pr-2 text-right tabular-nums">{r.manually_held}</td>
+                  <td className="py-1.5 pr-2 text-right tabular-nums">{r.scadute}</td>
+                  <td className="py-1.5 text-right tabular-nums">{r.show_rate_pct ?? 0}%</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </>
   );
 }
 
