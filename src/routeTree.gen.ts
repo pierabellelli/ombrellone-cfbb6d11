@@ -20,6 +20,7 @@ import { Route as LidoSlugRouteImport } from './routes/lido.$slug'
 import { Route as AuthenticatedReportRouteImport } from './routes/_authenticated/report'
 import { Route as AuthenticatedQrcodeRouteImport } from './routes/_authenticated/qrcode'
 import { Route as AuthenticatedProdottiRouteImport } from './routes/_authenticated/prodotti'
+import { Route as AuthenticatedPrenotazioniRouteImport } from './routes/_authenticated/prenotazioni'
 import { Route as AuthenticatedOrdiniRouteImport } from './routes/_authenticated/ordini'
 import { Route as AuthenticatedMappaRouteImport } from './routes/_authenticated/mappa'
 import { Route as AuthenticatedImpostazioniRouteImport } from './routes/_authenticated/impostazioni'
@@ -81,6 +82,12 @@ const AuthenticatedProdottiRoute = AuthenticatedProdottiRouteImport.update({
   path: '/prodotti',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPrenotazioniRoute =
+  AuthenticatedPrenotazioniRouteImport.update({
+    id: '/prenotazioni',
+    path: '/prenotazioni',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedOrdiniRoute = AuthenticatedOrdiniRouteImport.update({
   id: '/ordini',
   path: '/ordini',
@@ -126,6 +133,7 @@ export interface FileRoutesByFullPath {
   '/impostazioni': typeof AuthenticatedImpostazioniRoute
   '/mappa': typeof AuthenticatedMappaRoute
   '/ordini': typeof AuthenticatedOrdiniRoute
+  '/prenotazioni': typeof AuthenticatedPrenotazioniRoute
   '/prodotti': typeof AuthenticatedProdottiRoute
   '/qrcode': typeof AuthenticatedQrcodeRoute
   '/report': typeof AuthenticatedReportRoute
@@ -144,6 +152,7 @@ export interface FileRoutesByTo {
   '/impostazioni': typeof AuthenticatedImpostazioniRoute
   '/mappa': typeof AuthenticatedMappaRoute
   '/ordini': typeof AuthenticatedOrdiniRoute
+  '/prenotazioni': typeof AuthenticatedPrenotazioniRoute
   '/prodotti': typeof AuthenticatedProdottiRoute
   '/qrcode': typeof AuthenticatedQrcodeRoute
   '/report': typeof AuthenticatedReportRoute
@@ -164,6 +173,7 @@ export interface FileRoutesById {
   '/_authenticated/impostazioni': typeof AuthenticatedImpostazioniRoute
   '/_authenticated/mappa': typeof AuthenticatedMappaRoute
   '/_authenticated/ordini': typeof AuthenticatedOrdiniRoute
+  '/_authenticated/prenotazioni': typeof AuthenticatedPrenotazioniRoute
   '/_authenticated/prodotti': typeof AuthenticatedProdottiRoute
   '/_authenticated/qrcode': typeof AuthenticatedQrcodeRoute
   '/_authenticated/report': typeof AuthenticatedReportRoute
@@ -184,6 +194,7 @@ export interface FileRouteTypes {
     | '/impostazioni'
     | '/mappa'
     | '/ordini'
+    | '/prenotazioni'
     | '/prodotti'
     | '/qrcode'
     | '/report'
@@ -202,6 +213,7 @@ export interface FileRouteTypes {
     | '/impostazioni'
     | '/mappa'
     | '/ordini'
+    | '/prenotazioni'
     | '/prodotti'
     | '/qrcode'
     | '/report'
@@ -221,6 +233,7 @@ export interface FileRouteTypes {
     | '/_authenticated/impostazioni'
     | '/_authenticated/mappa'
     | '/_authenticated/ordini'
+    | '/_authenticated/prenotazioni'
     | '/_authenticated/prodotti'
     | '/_authenticated/qrcode'
     | '/_authenticated/report'
@@ -320,6 +333,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProdottiRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/prenotazioni': {
+      id: '/_authenticated/prenotazioni'
+      path: '/prenotazioni'
+      fullPath: '/prenotazioni'
+      preLoaderRoute: typeof AuthenticatedPrenotazioniRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/ordini': {
       id: '/_authenticated/ordini'
       path: '/ordini'
@@ -370,6 +390,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedImpostazioniRoute: typeof AuthenticatedImpostazioniRoute
   AuthenticatedMappaRoute: typeof AuthenticatedMappaRoute
   AuthenticatedOrdiniRoute: typeof AuthenticatedOrdiniRoute
+  AuthenticatedPrenotazioniRoute: typeof AuthenticatedPrenotazioniRoute
   AuthenticatedProdottiRoute: typeof AuthenticatedProdottiRoute
   AuthenticatedQrcodeRoute: typeof AuthenticatedQrcodeRoute
   AuthenticatedReportRoute: typeof AuthenticatedReportRoute
@@ -382,6 +403,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedImpostazioniRoute: AuthenticatedImpostazioniRoute,
   AuthenticatedMappaRoute: AuthenticatedMappaRoute,
   AuthenticatedOrdiniRoute: AuthenticatedOrdiniRoute,
+  AuthenticatedPrenotazioniRoute: AuthenticatedPrenotazioniRoute,
   AuthenticatedProdottiRoute: AuthenticatedProdottiRoute,
   AuthenticatedQrcodeRoute: AuthenticatedQrcodeRoute,
   AuthenticatedReportRoute: AuthenticatedReportRoute,

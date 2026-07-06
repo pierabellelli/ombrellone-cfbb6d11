@@ -5,6 +5,7 @@ type Lang = "it" | "en";
 const DICT = {
   it: {
     "nav.orders": "Ordini",
+    "nav.bookings": "Prenotazioni",
     "nav.products": "Prodotti",
     "nav.settings": "Impostazioni",
     "nav.map": "Dashboard",
@@ -192,6 +193,7 @@ const DICT = {
   },
   en: {
     "nav.orders": "Orders",
+    "nav.bookings": "Bookings",
     "nav.products": "Products",
     "nav.settings": "Settings",
     "nav.map": "Dashboard",
