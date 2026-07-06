@@ -103,7 +103,7 @@ const DICT = {
     "map.booking.email": "Email",
     "map.booking.pending": "In attesa",
     "map.booking.confirmed": "Check-in effettuato",
-    "map.booking.manuallyHeld": "Riservato manualmente",
+    "map.booking.manuallyHeld": "Confermate manualmente",
     "map.booking.expired": "Scaduta",
     "map.booking.cancelled": "Cancellata",
     "common.cancel": "Annulla",

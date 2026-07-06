@@ -271,14 +271,14 @@ function bookingTileState(b: Booking | undefined): BookingTileState {
 
 const BOOKING_STATE_CLASS: Record<BookingTileState, string> = {
   libero: "bg-white border-gray-300 text-foreground",
-  prenotato: "bg-gray-200 border-gray-400 text-gray-900",
-  occupato: "bg-blue-100 border-blue-400 text-blue-900",
+  prenotato: "bg-[#bfbbae] border-[#938e7c] text-gray-900",
+  occupato: "bg-sky-100 border-sky-400 text-sky-900",
 };
 
 const TILE_CLASS: Record<BookingTileState, string> = {
   libero: "bg-white border-gray-300",
-  prenotato: "bg-gray-100 border-gray-400",
-  occupato: "bg-blue-50 border-blue-400",
+  prenotato: "bg-[#bfbbae] border-[#938e7c]",
+  occupato: "bg-sky-100 border-sky-400",
 };
 
 const DRINK_BADGE_CLASS: Record<Exclude<UmbrellaState, "free">, string> = {
@@ -334,9 +334,14 @@ function UmbrellaTile({ numero, rowLabel, orders, state, booking, now, onClick }
         overflow: "hidden",
       }}
     >
-      {bookingState !== "libero" && (
-        <span className="absolute top-1 left-1 z-10 w-5 h-5 rounded-full bg-white border border-gray-400 text-gray-900 text-[10px] font-bold flex items-center justify-center shadow-sm">
+      {bookingState === "prenotato" && (
+        <span className="absolute top-1 left-1/2 -translate-x-1/2 z-10 w-6 h-6 rounded-full bg-white border border-gray-400 text-gray-900 text-[11px] font-bold flex items-center justify-center shadow-sm">
           P
+        </span>
+      )}
+      {bookingState === "occupato" && (
+        <span className="absolute top-1 left-1/2 -translate-x-1/2 z-10 w-6 h-6 rounded-full bg-white border border-sky-400 text-sky-600 flex items-center justify-center shadow-sm">
+          <Check className="w-3.5 h-3.5" />
         </span>
       )}
       {state !== "free" && (

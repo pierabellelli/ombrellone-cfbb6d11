@@ -117,6 +117,7 @@ export type Database = {
       }
       bookings: {
         Row: {
+          archiviato: boolean
           booking_session_id: string
           cancelled_at: string | null
           cancelled_by: string | null
@@ -137,6 +138,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          archiviato?: boolean
           booking_session_id?: string
           cancelled_at?: string | null
           cancelled_by?: string | null
@@ -157,6 +159,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          archiviato?: boolean
           booking_session_id?: string
           cancelled_at?: string | null
           cancelled_by?: string | null
@@ -655,6 +658,7 @@ export type Database = {
           lido_id: string
         }[]
       }
+      booking_cron_archive_daily: { Args: never; Returns: undefined }
       booking_cron_expire_pending: { Args: never; Returns: undefined }
       booking_cron_purge_season: { Args: never; Returns: undefined }
       create_booking: {
@@ -667,6 +671,7 @@ export type Database = {
           _telefono: string
         }
         Returns: {
+          archiviato: boolean
           booking_session_id: string
           cancelled_at: string | null
           cancelled_by: string | null

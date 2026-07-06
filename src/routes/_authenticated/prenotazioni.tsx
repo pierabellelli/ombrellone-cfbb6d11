@@ -3,7 +3,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Search, X, Phone, Mail, Clock, CalendarClock, CheckCircle2, Ban, ShieldCheck, AlertTriangle, Users } from "lucide-react";
+import { format } from "date-fns";
+import { Search, X, Phone, Mail, Clock, CalendarClock, CheckCircle2, Ban, ShieldCheck, AlertTriangle, Users, Archive } from "lucide-react";
 
 type BookingStatus = "pending" | "confirmed" | "expired" | "manually_held" | "cancelled";
 
@@ -20,6 +21,7 @@ type Booking = {
   expires_at: string | null;
   checked_in_at: string | null;
   created_at: string;
+  archiviato: boolean;
 };
 
 export const Route = createFileRoute("/_authenticated/prenotazioni")({
@@ -28,7 +30,7 @@ export const Route = createFileRoute("/_authenticated/prenotazioni")({
 });
 
 const SELECT_COLS =
-  "id, numero_ombrellone, fila, nome, cognome, email, telefono, data, status, expires_at, checked_in_at, created_at";
+  "id, numero_ombrellone, fila, nome, cognome, email, telefono, data, status, expires_at, checked_in_at, created_at, archiviato";
 
 function todayLocalISO() {
   const d = new Date();
@@ -62,6 +64,7 @@ async function loadColonna(status: BookingStatus, lidoId: string): Promise<Booki
     .select(SELECT_COLS)
     .eq("lido_id", lidoId)
     .eq("status", status)
+    .eq("archiviato", false)
     .gte("data", todayLocalISO())
     .order("data", { ascending: true })
     .order("expires_at", { ascending: true, nullsFirst: false });
@@ -73,7 +76,7 @@ const COLUMNS: { status: BookingStatus; title: string; headerCls: string }[] = [
   { status: "pending", title: "Pending", headerCls: "bg-gray-200 text-gray-800 border-gray-300" },
   { status: "confirmed", title: "Confermate", headerCls: "bg-blue-100 text-blue-800 border-blue-200" },
   { status: "expired", title: "Scadute", headerCls: "bg-red-100 text-red-800 border-red-200" },
-  { status: "manually_held", title: "Manually Held", headerCls: "bg-amber-100 text-amber-900 border-amber-200" },
+  { status: "manually_held", title: "Confermate manualmente", headerCls: "bg-amber-100 text-amber-900 border-amber-200" },
 ];
 
 function fmtTime(iso: string | null) {
@@ -89,7 +92,7 @@ function PrenotazioniPage() {
   const canManage = ctx?.canManage ?? false;
   const enabled = !!lidoId;
 
-  const [tab, setTab] = useState<"prenotazioni" | "clienti">("prenotazioni");
+  const [tab, setTab] = useState<"prenotazioni" | "clienti" | "storico">("prenotazioni");
 
   const pending = useQuery({ queryKey: ["bookings-col", "pending", lidoId], queryFn: () => loadColonna("pending", lidoId!), enabled });
   const confirmed = useQuery({ queryKey: ["bookings-col", "confirmed", lidoId], queryFn: () => loadColonna("confirmed", lidoId!), enabled });
@@ -226,10 +229,18 @@ function PrenotazioniPage() {
         >
           Clienti
         </button>
+        <button
+          onClick={() => setTab("storico")}
+          className={`px-3.5 py-1.5 rounded-full transition ${tab === "storico" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+        >
+          Storico
+        </button>
       </div>
 
       {tab === "clienti" ? (
         <ClientiSection lidoId={lidoId} />
+      ) : tab === "storico" ? (
+        <StoricoSection lidoId={lidoId} />
       ) : (
         <>
           <div className="mb-4 bg-white rounded-xl shadow-sm border border-border p-4">
@@ -483,6 +494,133 @@ function ClientiSection({ lidoId }: { lidoId: string | null }) {
                   </td>
                   <td className="py-1.5 pr-2 text-right tabular-nums">{c.numero_prenotazioni}</td>
                   <td className="py-1.5 text-right whitespace-nowrap">{c.ultima_visita ?? "—"}</td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </>
+  );
+}
+
+const STORICO_STATUS_LABEL: Record<BookingStatus, string> = {
+  pending: "Pending",
+  confirmed: "Confermata",
+  expired: "Scaduta",
+  manually_held: "Confermate manualmente",
+  cancelled: "Cancellata",
+};
+
+async function loadStorico(lidoId: string, from: string, to: string): Promise<Booking[]> {
+  const { data, error } = await supabase
+    .from("bookings")
+    .select(SELECT_COLS)
+    .eq("lido_id", lidoId)
+    .eq("archiviato", true)
+    .gte("data", from)
+    .lte("data", to)
+    .order("data", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as Booking[];
+}
+
+function StoricoSection({ lidoId }: { lidoId: string | null }) {
+  const today = format(new Date(), "yyyy-MM-dd");
+  const [dateFrom, setDateFrom] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 30);
+    return format(d, "yyyy-MM-dd");
+  });
+  const [dateTo, setDateTo] = useState(today);
+  const [search, setSearch] = useState("");
+
+  const { data: rows = [], isLoading } = useQuery({
+    queryKey: ["bookings-storico", lidoId, dateFrom, dateTo],
+    queryFn: () => loadStorico(lidoId!, dateFrom, dateTo),
+    enabled: !!lidoId,
+  });
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return rows;
+    return rows.filter((b) =>
+      b.nome.toLowerCase().includes(q) ||
+      b.cognome.toLowerCase().includes(q) ||
+      b.numero_ombrellone.toLowerCase().includes(q),
+    );
+  }, [rows, search]);
+
+  return (
+    <>
+      <div className="mb-4 bg-white rounded-xl shadow-sm border border-border p-4 flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-2">
+          <input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="px-2.5 py-1.5 rounded-lg border border-border bg-card text-sm"
+          />
+          <span className="text-muted-foreground text-sm">→</span>
+          <input
+            type="date"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            className="px-2.5 py-1.5 rounded-lg border border-border bg-card text-sm"
+          />
+        </div>
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Cerca per nome, cognome o ombrellone..."
+            aria-label="Cerca storico"
+            className="h-9 w-full rounded-lg border border-border pl-8 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+          />
+          {search && (
+            <button onClick={() => setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="card-soft p-4 overflow-x-auto">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-bold text-primary inline-flex items-center gap-1.5">
+            <Archive className="w-4 h-4" /> Storico prenotazioni
+          </h2>
+          <span className="text-xs text-muted-foreground">{filtered.length} prenotazioni</span>
+        </div>
+        <table className="w-full text-sm min-w-[700px]">
+          <thead>
+            <tr className="text-left text-xs text-muted-foreground border-b border-border">
+              <th className="py-1.5 pr-2">Data</th>
+              <th className="py-1.5 pr-2">Nome</th>
+              <th className="py-1.5 pr-2">Cognome</th>
+              <th className="py-1.5 pr-2">Ombrellone</th>
+              <th className="py-1.5 pr-2">Stato</th>
+              <th className="py-1.5 pr-2">Email</th>
+              <th className="py-1.5">Telefono</th>
+            </tr>
+          </thead>
+          <tbody>
+            {isLoading ? (
+              <tr><td colSpan={7} className="py-6 text-center text-muted-foreground">Caricamento…</td></tr>
+            ) : filtered.length === 0 ? (
+              <tr><td colSpan={7} className="py-6 text-center text-muted-foreground">Nessuna prenotazione trovata</td></tr>
+            ) : (
+              filtered.map((b) => (
+                <tr key={b.id} className="border-b border-border last:border-b-0">
+                  <td className="py-1.5 pr-2 whitespace-nowrap">{b.data}</td>
+                  <td className="py-1.5 pr-2">{b.nome}</td>
+                  <td className="py-1.5 pr-2">{b.cognome}</td>
+                  <td className="py-1.5 pr-2 whitespace-nowrap">{b.fila} · {b.numero_ombrellone}</td>
+                  <td className="py-1.5 pr-2 whitespace-nowrap">{STORICO_STATUS_LABEL[b.status]}</td>
+                  <td className="py-1.5 pr-2 truncate max-w-[160px]">{b.email}</td>
+                  <td className="py-1.5 whitespace-nowrap">{b.telefono ?? "—"}</td>
                 </tr>
               ))
             )}
