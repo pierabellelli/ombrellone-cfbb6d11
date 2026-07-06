@@ -25,6 +25,7 @@ import { Route as AuthenticatedOrdiniRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedMappaRouteImport } from './routes/_authenticated/mappa'
 import { Route as AuthenticatedImpostazioniRouteImport } from './routes/_authenticated/impostazioni'
 import { Route as AuthenticatedConfigurazioneLidoRouteImport } from './routes/_authenticated/configurazione-lido'
+import { Route as LidoSlugPrenotaRouteImport } from './routes/lido.$slug_.prenota'
 import { Route as AuthenticatedAdminNuovoClienteRouteImport } from './routes/_authenticated/admin/nuovo-cliente'
 import { Route as AuthenticatedAdminDashboardRouteImport } from './routes/_authenticated/admin/dashboard'
 
@@ -110,6 +111,11 @@ const AuthenticatedConfigurazioneLidoRoute =
     path: '/configurazione-lido',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const LidoSlugPrenotaRoute = LidoSlugPrenotaRouteImport.update({
+  id: '/lido/$slug_/prenota',
+  path: '/lido/$slug/prenota',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAdminNuovoClienteRoute =
   AuthenticatedAdminNuovoClienteRouteImport.update({
     id: '/admin/nuovo-cliente',
@@ -141,6 +147,7 @@ export interface FileRoutesByFullPath {
   '/traccia/$slug': typeof TracciaSlugRoute
   '/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
   '/admin/nuovo-cliente': typeof AuthenticatedAdminNuovoClienteRoute
+  '/lido/$slug/prenota': typeof LidoSlugPrenotaRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -160,6 +167,7 @@ export interface FileRoutesByTo {
   '/traccia/$slug': typeof TracciaSlugRoute
   '/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
   '/admin/nuovo-cliente': typeof AuthenticatedAdminNuovoClienteRoute
+  '/lido/$slug/prenota': typeof LidoSlugPrenotaRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -181,6 +189,7 @@ export interface FileRoutesById {
   '/traccia/$slug': typeof TracciaSlugRoute
   '/_authenticated/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
   '/_authenticated/admin/nuovo-cliente': typeof AuthenticatedAdminNuovoClienteRoute
+  '/lido/$slug_/prenota': typeof LidoSlugPrenotaRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -202,6 +211,7 @@ export interface FileRouteTypes {
     | '/traccia/$slug'
     | '/admin/dashboard'
     | '/admin/nuovo-cliente'
+    | '/lido/$slug/prenota'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -221,6 +231,7 @@ export interface FileRouteTypes {
     | '/traccia/$slug'
     | '/admin/dashboard'
     | '/admin/nuovo-cliente'
+    | '/lido/$slug/prenota'
   id:
     | '__root__'
     | '/'
@@ -241,6 +252,7 @@ export interface FileRouteTypes {
     | '/traccia/$slug'
     | '/_authenticated/admin/dashboard'
     | '/_authenticated/admin/nuovo-cliente'
+    | '/lido/$slug_/prenota'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -252,6 +264,7 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   LidoSlugRoute: typeof LidoSlugRoute
   TracciaSlugRoute: typeof TracciaSlugRoute
+  LidoSlugPrenotaRoute: typeof LidoSlugPrenotaRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -368,6 +381,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedConfigurazioneLidoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/lido/$slug_/prenota': {
+      id: '/lido/$slug_/prenota'
+      path: '/lido/$slug/prenota'
+      fullPath: '/lido/$slug/prenota'
+      preLoaderRoute: typeof LidoSlugPrenotaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/admin/nuovo-cliente': {
       id: '/_authenticated/admin/nuovo-cliente'
       path: '/admin/nuovo-cliente'
@@ -423,6 +443,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   LidoSlugRoute: LidoSlugRoute,
   TracciaSlugRoute: TracciaSlugRoute,
+  LidoSlugPrenotaRoute: LidoSlugPrenotaRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

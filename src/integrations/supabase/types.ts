@@ -657,6 +657,42 @@ export type Database = {
       }
       booking_cron_expire_pending: { Args: never; Returns: undefined }
       booking_cron_purge_season: { Args: never; Returns: undefined }
+      create_booking: {
+        Args: {
+          _cognome: string
+          _email: string
+          _lido_id: string
+          _nome: string
+          _slots: Json
+          _telefono: string
+        }
+        Returns: {
+          booking_session_id: string
+          cancelled_at: string | null
+          cancelled_by: string | null
+          checked_in_at: string | null
+          checked_in_by: string | null
+          cognome: string
+          created_at: string
+          data: string
+          email: string
+          expires_at: string | null
+          fila: string
+          id: string
+          lido_id: string
+          nome: string
+          numero_ombrellone: string
+          status: string
+          telefono: string | null
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "bookings"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       create_ordine: {
         Args: {
           _cognome: string
@@ -673,6 +709,13 @@ export type Database = {
           numero_ordine: number
         }[]
       }
+      get_booked_spots: {
+        Args: { _data: string; _lido_id: string }
+        Returns: {
+          fila: string
+          numero_ombrellone: string
+        }[]
+      }
       get_order_history: {
         Args: { _lido_id: string; _telefono: string }
         Returns: {
@@ -685,6 +728,7 @@ export type Database = {
           totale: number
         }[]
       }
+      get_public_beach_layout: { Args: { _lido_id: string }; Returns: Json }
       get_user_emails: {
         Args: { _user_ids: string[] }
         Returns: {
