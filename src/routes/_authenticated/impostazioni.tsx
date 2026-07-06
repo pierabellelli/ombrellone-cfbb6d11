@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
-  ImagePlus, ImageOff, Loader2, X, Save, Clock, Coffee, ShieldCheck, Store,
+  ImagePlus, ImageOff, Loader2, X, Save, Clock, Coffee, ShieldCheck, Store, CalendarClock, Mail,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -41,6 +41,11 @@ type Lido = {
   tempo_attesa_minuti: number | null;
   numero_ordine_partenza: number;
   nascondi_immagini_menu: boolean;
+  booking_module_enabled: boolean;
+  auto_email_enabled: boolean;
+  staff_can_manage_bookings: boolean;
+  booking_expiry_time: string;
+  max_booking_days_ahead: number;
 };
 
 const SIGNED_TTL = 60 * 60 * 24 * 365;
@@ -121,6 +126,12 @@ function ImpostazioniPage() {
       <PagamentiCard lido={lido} onSaved={() => qc.invalidateQueries({ queryKey: ["myLido"] })} />
       {isGestore && (
         <StoricoStaffCard lido={lido} onSaved={() => qc.invalidateQueries({ queryKey: ["myLido"] })} />
+      )}
+      {isGestore && (
+        <BookingSettingsCard lido={lido} onSaved={() => qc.invalidateQueries({ queryKey: ["myLido"] })} />
+      )}
+      {isGestore && lido.booking_module_enabled && (
+        <BookingEmailTemplateCard lidoId={lido.id} />
       )}
     </div>
   );
@@ -604,6 +615,255 @@ function NascondiImmaginiMenuCard({ lido, onSaved }: { lido: Lido; onSaved: () =
         </p>
         <Switch checked={nascondi} onCheckedChange={onToggle} disabled={saving} />
       </div>
+    </Section>
+  );
+}
+
+function BookingSettingsCard({ lido, onSaved }: { lido: Lido; onSaved: () => void }) {
+  const [enabled, setEnabled] = useState(lido.booking_module_enabled);
+  const [autoEmail, setAutoEmail] = useState(lido.auto_email_enabled);
+  const [staffManage, setStaffManage] = useState(lido.staff_can_manage_bookings);
+  const [expiryTime, setExpiryTime] = useState(lido.booking_expiry_time.slice(0, 5));
+  const [maxDays, setMaxDays] = useState(String(lido.max_booking_days_ahead));
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setEnabled(lido.booking_module_enabled);
+    setAutoEmail(lido.auto_email_enabled);
+    setStaffManage(lido.staff_can_manage_bookings);
+    setExpiryTime(lido.booking_expiry_time.slice(0, 5));
+    setMaxDays(String(lido.max_booking_days_ahead));
+  }, [lido.id]);
+
+  const dirty =
+    enabled !== lido.booking_module_enabled ||
+    autoEmail !== lido.auto_email_enabled ||
+    staffManage !== lido.staff_can_manage_bookings ||
+    expiryTime !== lido.booking_expiry_time.slice(0, 5) ||
+    maxDays !== String(lido.max_booking_days_ahead);
+
+  const handleSave = async () => {
+    const days = parseInt(maxDays, 10);
+    if (!expiryTime) { toast.error("Orario di scadenza non valido"); return; }
+    if (!Number.isFinite(days) || days < 0) { toast.error("Giorni massimi non validi"); return; }
+
+    setSaving(true);
+    const { error } = await supabase.from("lidi").update({
+      booking_module_enabled: enabled,
+      auto_email_enabled: autoEmail,
+      staff_can_manage_bookings: staffManage,
+      booking_expiry_time: `${expiryTime}:00`,
+      max_booking_days_ahead: days,
+    }).eq("id", lido.id);
+    setSaving(false);
+    if (error) { toast.error("Impossibile salvare", { description: error.message }); return; }
+    toast.success("Impostazioni prenotazioni aggiornate");
+    onSaved();
+  };
+
+  return (
+    <Section
+      icon={<CalendarClock className="w-5 h-5" />}
+      title="Prenotazioni"
+      description="Modulo prenotazioni ombrelloni: attivazione, regole di scadenza e permessi."
+    >
+      <div className="space-y-5">
+        <div className="flex items-center justify-between rounded-lg border border-border p-4">
+          <div>
+            <p className="text-sm font-medium">Modulo prenotazioni attivo</p>
+            <p className="text-xs text-muted-foreground">
+              Se disattivato, il tab Prenotazioni e il form pubblico sono nascosti.
+            </p>
+          </div>
+          <Switch checked={enabled} onCheckedChange={setEnabled} />
+        </div>
+
+        <div className="flex items-center justify-between rounded-lg border border-border p-4">
+          <div>
+            <p className="text-sm font-medium">Email automatiche</p>
+            <p className="text-xs text-muted-foreground">
+              Invia una email di conferma al cliente e una notifica al gestore per ogni nuova prenotazione.
+            </p>
+          </div>
+          <Switch checked={autoEmail} onCheckedChange={setAutoEmail} />
+        </div>
+
+        <div className="flex items-center justify-between rounded-lg border border-border p-4">
+          <div>
+            <p className="text-sm font-medium">Staff può gestire le prenotazioni</p>
+            <p className="text-xs text-muted-foreground">
+              Se disattivato, lo staff vede le prenotazioni in sola lettura: solo il gestore può fare check-in, riservare o cancellare.
+            </p>
+          </div>
+          <Switch checked={staffManage} onCheckedChange={setStaffManage} />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="scadenza" className="flex items-center gap-1.5">
+              <Clock className="w-4 h-4" /> Orario di scadenza check-in
+            </Label>
+            <Input id="scadenza" type="time" value={expiryTime} onChange={(e) => setExpiryTime(e.target.value)} className="mt-1.5 max-w-xs" />
+            <p className="text-xs text-muted-foreground mt-1.5">
+              Ora entro cui il cliente deve presentarsi, altrimenti la prenotazione risulta scaduta.
+            </p>
+          </div>
+          <div>
+            <Label htmlFor="maxgiorni">Giorni massimi di anticipo</Label>
+            <Input id="maxgiorni" inputMode="numeric" value={maxDays} onChange={(e) => setMaxDays(e.target.value)} className="mt-1.5 max-w-xs" />
+            <p className="text-xs text-muted-foreground mt-1.5">
+              Quanti giorni nel futuro un cliente può prenotare rispetto a oggi.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex justify-end pt-2">
+          <Button onClick={handleSave} disabled={!dirty || saving}>
+            {saving ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Save className="w-4 h-4 mr-1.5" />}
+            Salva
+          </Button>
+        </div>
+      </div>
+    </Section>
+  );
+}
+
+type BookingEmailTemplate = {
+  subject_cliente: string;
+  body_cliente: string;
+  subject_gestore: string;
+  body_gestore: string;
+};
+
+const TEMPLATE_VARS = ["nome", "cognome", "data", "fila", "numero_ombrellone", "ora_scadenza", "lido_nome"];
+
+const DEFAULT_TEMPLATE: BookingEmailTemplate = {
+  subject_cliente: "Prenotazione confermata - {{lido_nome}}",
+  body_cliente:
+    "Ciao {{nome}},\n\nla tua prenotazione per il {{data}} è confermata: {{fila}}, ombrellone {{numero_ombrellone}}.\nTi aspettiamo entro le {{ora_scadenza}}, altrimenti il posto potrebbe essere riassegnato.\n\nA presto,\n{{lido_nome}}",
+  subject_gestore: "Nuova prenotazione - {{fila}} {{numero_ombrellone}} il {{data}}",
+  body_gestore:
+    "Nuova prenotazione da {{nome}} {{cognome}} per il {{data}}.\n{{fila}}, ombrellone {{numero_ombrellone}}.\nScadenza check-in: {{ora_scadenza}}.",
+};
+
+async function loadBookingEmailTemplate(lidoId: string): Promise<BookingEmailTemplate> {
+  const { data, error } = await supabase
+    .from("booking_email_templates")
+    .select("subject_cliente, body_cliente, subject_gestore, body_gestore")
+    .eq("lido_id", lidoId)
+    .maybeSingle();
+  if (error) throw error;
+  return data ?? DEFAULT_TEMPLATE;
+}
+
+function BookingEmailTemplateCard({ lidoId }: { lidoId: string }) {
+  const qc = useQueryClient();
+  const { data: tpl, isLoading } = useQuery({
+    queryKey: ["bookingEmailTemplate", lidoId],
+    queryFn: () => loadBookingEmailTemplate(lidoId),
+  });
+
+  const [subjectCliente, setSubjectCliente] = useState("");
+  const [bodyCliente, setBodyCliente] = useState("");
+  const [subjectGestore, setSubjectGestore] = useState("");
+  const [bodyGestore, setBodyGestore] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [loadedFor, setLoadedFor] = useState<string | null>(null);
+
+  if (tpl && loadedFor !== lidoId) {
+    setSubjectCliente(tpl.subject_cliente);
+    setBodyCliente(tpl.body_cliente);
+    setSubjectGestore(tpl.subject_gestore);
+    setBodyGestore(tpl.body_gestore);
+    setLoadedFor(lidoId);
+  }
+
+  const handleSave = async () => {
+    setSaving(true);
+    const { error } = await supabase.from("booking_email_templates").upsert(
+      {
+        lido_id: lidoId,
+        subject_cliente: subjectCliente,
+        body_cliente: bodyCliente,
+        subject_gestore: subjectGestore,
+        body_gestore: bodyGestore,
+      },
+      { onConflict: "lido_id" },
+    );
+    setSaving(false);
+    if (error) { toast.error("Impossibile salvare", { description: error.message }); return; }
+    toast.success("Template email aggiornato");
+    qc.invalidateQueries({ queryKey: ["bookingEmailTemplate", lidoId] });
+  };
+
+  return (
+    <Section
+      icon={<Mail className="w-5 h-5" />}
+      title="Template email prenotazioni"
+      description="Personalizza i testi delle email inviate a cliente e gestore. Variabili disponibili: {{nome}}, {{cognome}}, {{data}}, {{fila}}, {{numero_ombrellone}}, {{ora_scadenza}}, {{lido_nome}}."
+    >
+      {isLoading ? (
+        <div className="text-sm text-muted-foreground inline-flex items-center gap-2">
+          <Loader2 className="w-4 h-4 animate-spin" /> Caricamento…
+        </div>
+      ) : (
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-sm font-semibold text-primary mb-3">Email al cliente</h3>
+            <div className="space-y-3">
+              <div>
+                <Label htmlFor="subj-cliente">Oggetto</Label>
+                <Input id="subj-cliente" value={subjectCliente} onChange={(e) => setSubjectCliente(e.target.value)} className="mt-1.5" />
+              </div>
+              <div>
+                <Label htmlFor="body-cliente">Corpo</Label>
+                <textarea
+                  id="body-cliente"
+                  value={bodyCliente}
+                  onChange={(e) => setBodyCliente(e.target.value)}
+                  rows={5}
+                  className="mt-1.5 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-semibold text-primary mb-3">Notifica al gestore</h3>
+            <div className="space-y-3">
+              <div>
+                <Label htmlFor="subj-gestore">Oggetto</Label>
+                <Input id="subj-gestore" value={subjectGestore} onChange={(e) => setSubjectGestore(e.target.value)} className="mt-1.5" />
+              </div>
+              <div>
+                <Label htmlFor="body-gestore">Corpo</Label>
+                <textarea
+                  id="body-gestore"
+                  value={bodyGestore}
+                  onChange={(e) => setBodyGestore(e.target.value)}
+                  rows={5}
+                  className="mt-1.5 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-1.5">
+            {TEMPLATE_VARS.map((v) => (
+              <span key={v} className="text-xs font-mono px-2 py-0.5 rounded-full bg-secondary text-muted-foreground">
+                {`{{${v}}}`}
+              </span>
+            ))}
+          </div>
+
+          <div className="flex justify-end pt-2">
+            <Button onClick={handleSave} disabled={saving}>
+              {saving ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Save className="w-4 h-4 mr-1.5" />}
+              Salva template
+            </Button>
+          </div>
+        </div>
+      )}
     </Section>
   );
 }
