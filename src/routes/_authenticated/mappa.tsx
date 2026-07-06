@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n";
-import { Umbrella, X, Check, Phone, Wallet, Clock, Bell } from "lucide-react";
+import { Umbrella, X, Check, Phone, Wallet, Clock, Bell, CupSoda, Mail } from "lucide-react";
 
 type Fila = { index: number; label: string; ombrelloni: { numero: number }[] };
 type Stato = "arrivati" | "da_evadere" | "consegnati" | "annullato";
@@ -21,6 +21,19 @@ type Ordine = {
   created_at: string;
   fila: string | null;
   ordine_items?: Item[];
+};
+
+type BookingStatus = "pending" | "confirmed" | "manually_held" | "expired" | "cancelled";
+type Booking = {
+  id: string;
+  numero_ombrellone: string;
+  fila: string;
+  nome: string;
+  cognome: string;
+  email: string;
+  telefono: string | null;
+  data: string;
+  status: BookingStatus;
 };
 
 export const Route = createFileRoute("/_authenticated/mappa")({
@@ -53,6 +66,26 @@ async function loadOrdiniAttivi(lidoId: string): Promise<Ordine[]> {
   return (data ?? []) as unknown as Ordine[];
 }
 
+function todayLocalISO() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+async function loadBookingsOggi(lidoId: string): Promise<Booking[]> {
+  const { data, error } = await supabase
+    .from("bookings")
+    .select("id, numero_ombrellone, fila, nome, cognome, email, telefono, data, status")
+    .eq("lido_id", lidoId)
+    .eq("data", todayLocalISO())
+    .in("status", ["pending", "confirmed", "manually_held"]);
+  if (error) throw error;
+  return (data ?? []) as Booking[];
+}
+
+function bookingKey(fila: string, numero: number | string) {
+  return `${fila}|${numero}`;
+}
+
 type UmbrellaState = "free" | "active" | "warn" | "late";
 const STATE_RANK: Record<UmbrellaState, number> = { free: 0, active: 1, warn: 2, late: 3 };
 function stateOfOrder(order: Ordine, now: number): UmbrellaState {
@@ -83,6 +116,13 @@ function MappaPage() {
     refetchOnWindowFocus: false,
   });
 
+  const { data: bookings = [] } = useQuery({
+    queryKey: ["mappa-bookings", lidoId],
+    queryFn: () => loadBookingsOggi(lidoId!),
+    enabled: !!lidoId,
+    refetchOnWindowFocus: false,
+  });
+
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);
@@ -103,6 +143,11 @@ function MappaPage() {
         "postgres_changes",
         { event: "*", schema: "public", table: "beach_config", filter: `lido_id=eq.${lidoId}` },
         () => qc.invalidateQueries({ queryKey: ["mappa-ctx"] })
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "bookings", filter: `lido_id=eq.${lidoId}` },
+        () => qc.invalidateQueries({ queryKey: ["mappa-bookings", lidoId] })
       )
       .subscribe();
     return () => { supabase.removeChannel(ch); };
@@ -125,8 +170,15 @@ function MappaPage() {
     return map;
   }, [ordini]);
 
+  const bookingsByKey = useMemo(() => {
+    const map = new Map<string, Booking>();
+    for (const b of bookings) map.set(bookingKey(b.fila, b.numero_ombrellone), b);
+    return map;
+  }, [bookings]);
+
   const [selected, setSelected] = useState<{ numero: number; fila: string } | null>(null);
   const selectedOrders = selected ? ordersByNumero.get(String(selected.numero)) ?? [] : [];
+  const selectedBooking = selected ? bookingsByKey.get(bookingKey(selected.fila, selected.numero)) : undefined;
 
   const markDelivered = async (id: string) => {
     const { error } = await supabase.from("ordini").update({ stato: "consegnati" }).eq("id", id);
@@ -163,6 +215,7 @@ function MappaPage() {
                   {row.ombrelloni.map((u) => {
                     const orders = ordersByNumero.get(String(u.numero)) ?? [];
                     const s = worstState(orders, now);
+                    const booking = bookingsByKey.get(bookingKey(row.label, u.numero));
                     return (
                       <UmbrellaTile
                         key={`${row.index}-${u.numero}`}
@@ -170,6 +223,7 @@ function MappaPage() {
                         rowLabel={row.label}
                         orders={orders}
                         state={s}
+                        booking={booking}
                         now={now}
                         onClick={() => setSelected({ numero: u.numero, fila: row.label })}
                       />
@@ -190,6 +244,7 @@ function MappaPage() {
             numero={selected.numero}
             fila={selected.fila}
             orders={selectedOrders}
+            booking={selectedBooking}
             now={now}
             onClose={() => setSelected(null)}
             onDelivered={markDelivered}
@@ -207,11 +262,29 @@ const STATE_CLASS: Record<UmbrellaState, string> = {
   late: "bg-red-100 border-red-400 text-red-900",
 };
 
-const TILE_CLASS: Record<UmbrellaState, string> = {
-  free: "bg-white border-gray-300",
-  active: "bg-emerald-50 border-emerald-400",
-  warn: "bg-amber-50 border-amber-400",
-  late: "bg-red-50 border-red-400",
+type BookingTileState = "libero" | "prenotato" | "occupato";
+function bookingTileState(b: Booking | undefined): BookingTileState {
+  if (!b) return "libero";
+  if (b.status === "confirmed") return "occupato";
+  return "prenotato";
+}
+
+const BOOKING_STATE_CLASS: Record<BookingTileState, string> = {
+  libero: "bg-white border-gray-300 text-foreground",
+  prenotato: "bg-gray-200 border-gray-400 text-gray-900",
+  occupato: "bg-blue-100 border-blue-400 text-blue-900",
+};
+
+const TILE_CLASS: Record<BookingTileState, string> = {
+  libero: "bg-white border-gray-300",
+  prenotato: "bg-gray-100 border-gray-400",
+  occupato: "bg-blue-50 border-blue-400",
+};
+
+const DRINK_BADGE_CLASS: Record<Exclude<UmbrellaState, "free">, string> = {
+  active: "bg-emerald-500 text-white",
+  warn: "bg-amber-500 text-white",
+  late: "bg-red-500 text-white",
 };
 
 const TILE_ACCENT: Record<UmbrellaState, string> = {
@@ -239,18 +312,19 @@ function fmtElapsed(ms: number) {
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
-function UmbrellaTile({ numero, rowLabel, orders, state, now, onClick }: {
-  numero: number; rowLabel: string; orders: Ordine[]; state: UmbrellaState; now: number; onClick: () => void;
+function UmbrellaTile({ numero, rowLabel, orders, state, booking, now, onClick }: {
+  numero: number; rowLabel: string; orders: Ordine[]; state: UmbrellaState; booking: Booking | undefined; now: number; onClick: () => void;
 }) {
   const { t } = useI18n();
   const oldest = orders[0];
   const elapsed = oldest ? now - new Date(oldest.created_at).getTime() : 0;
   const bar = state === "free" ? null : TILE_BAR[state];
   const accent = TILE_ACCENT[state];
+  const bookingState = bookingTileState(booking);
   return (
     <button
       onClick={onClick}
-      className={`relative min-h-[88px] rounded-2xl border-2 ${TILE_CLASS[state]} flex flex-col items-center transition active:scale-95 shadow-sm`}
+      className={`relative min-h-[88px] rounded-2xl border-2 ${TILE_CLASS[bookingState]} flex flex-col items-center transition active:scale-95 shadow-sm`}
       style={{
         width: "80px",
         minWidth: "80px",
@@ -260,6 +334,16 @@ function UmbrellaTile({ numero, rowLabel, orders, state, now, onClick }: {
         overflow: "hidden",
       }}
     >
+      {bookingState !== "libero" && (
+        <span className="absolute top-1 left-1 z-10 w-5 h-5 rounded-full bg-white border border-gray-400 text-gray-900 text-[10px] font-bold flex items-center justify-center shadow-sm">
+          P
+        </span>
+      )}
+      {state !== "free" && (
+        <span className={`absolute top-1 right-1 z-10 w-5 h-5 rounded-full flex items-center justify-center shadow-sm ${DRINK_BADGE_CLASS[state]}`}>
+          <CupSoda className="w-3 h-3" />
+        </span>
+      )}
       {bar && (
         <div className={`w-full h-6 flex items-center justify-center gap-1 ${bar.barClass} text-white`}>
           <bar.icon className="w-3 h-3 shrink-0" />
@@ -288,37 +372,41 @@ function UmbrellaTile({ numero, rowLabel, orders, state, now, onClick }: {
   );
 }
 
-const LEGEND_ICON: Record<UmbrellaState, typeof Check | null> = {
-  free: null,
-  active: Check,
-  warn: Clock,
-  late: Bell,
-};
-
 function Legend({ t }: { t: (k: any) => string }) {
-  const items: [UmbrellaState, string][] = [
-    ["free", t("map.legend.free")],
+  const bookingItems: [BookingTileState, string][] = [
+    ["libero", t("map.legend.free")],
+    ["prenotato", t("map.legend.reserved")],
+    ["occupato", t("map.legend.occupied")],
+  ];
+  const orderItems: [Exclude<UmbrellaState, "free">, string][] = [
     ["active", t("map.legend.active")],
     ["warn", t("map.legend.warn")],
     ["late", t("map.legend.late")],
   ];
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      {items.map(([s, lbl]) => {
-        const Icon = LEGEND_ICON[s];
-        return (
-          <span key={s} className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border-2 ${STATE_CLASS[s]}`}>
-            {Icon ? <Icon className="w-3 h-3" /> : <span className="w-2 h-2 rounded-full bg-current opacity-70" />}
+    <div className="flex flex-col items-end gap-1.5">
+      <div className="flex flex-wrap items-center gap-2">
+        {bookingItems.map(([s, lbl]) => (
+          <span key={s} className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border-2 ${BOOKING_STATE_CLASS[s]}`}>
+            <span className="w-2 h-2 rounded-full bg-current opacity-70" />
             {lbl}
           </span>
-        );
-      })}
+        ))}
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        {orderItems.map(([s, lbl]) => (
+          <span key={s} className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border-2 ${STATE_CLASS[s]}`}>
+            <CupSoda className="w-3 h-3" />
+            {lbl}
+          </span>
+        ))}
+      </div>
     </div>
   );
 }
 
-function DetailSheet({ numero, fila, orders, now, onClose, onDelivered }: {
-  numero: number; fila: string; orders: Ordine[]; now: number; onClose: () => void; onDelivered: (id: string) => void;
+function DetailSheet({ numero, fila, orders, booking, now, onClose, onDelivered }: {
+  numero: number; fila: string; orders: Ordine[]; booking: Booking | undefined; now: number; onClose: () => void; onDelivered: (id: string) => void;
 }) {
   const { t } = useI18n();
   return (
@@ -337,6 +425,12 @@ function DetailSheet({ numero, fila, orders, now, onClose, onDelivered }: {
             <X className="w-5 h-5" />
           </button>
         </div>
+
+        {booking && (
+          <div className="mt-5 rounded-2xl border border-border p-3">
+            <BookingDetailCard booking={booking} />
+          </div>
+        )}
 
         {orders.length === 0 ? (
           <div className="mt-8 text-center text-muted-foreground py-12">{t("map.noOrder")}</div>
@@ -409,6 +503,49 @@ function OrderDetailCard({ order, now, onDelivered }: { order: Ordine; now: numb
       </button>
     </div>
   );
+}
+
+function BookingDetailCard({ booking }: { booking: Booking }) {
+  const { t } = useI18n();
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">{t("map.booking.title")}</div>
+        <BookingStatusBadge status={booking.status} />
+      </div>
+      <Row label={t("map.customer")} value={`${booking.nome} ${booking.cognome}`} />
+      <Row label={t("map.booking.date")} value={booking.data} />
+      <Row label={t("map.booking.type")} value={booking.status === "manually_held" ? t("map.booking.manual") : t("map.booking.normal")} />
+      {booking.email && (
+        <Row
+          label={t("map.booking.email")}
+          value={<a href={`mailto:${booking.email}`} className="inline-flex items-center gap-1.5 text-primary underline"><Mail className="w-3.5 h-3.5" />{booking.email}</a>}
+        />
+      )}
+      {booking.telefono && (
+        <Row label={t("map.phone")} value={<a href={`tel:${booking.telefono}`} className="inline-flex items-center gap-1.5 text-primary underline"><Phone className="w-3.5 h-3.5" />{booking.telefono}</a>} />
+      )}
+    </div>
+  );
+}
+
+function BookingStatusBadge({ status }: { status: BookingStatus }) {
+  const { t } = useI18n();
+  const map: Record<BookingStatus, string> = {
+    pending: "bg-gray-200 text-gray-800",
+    confirmed: "bg-blue-100 text-blue-800",
+    manually_held: "bg-gray-200 text-gray-800",
+    expired: "bg-red-100 text-red-800",
+    cancelled: "bg-red-100 text-red-800",
+  };
+  const key: Record<BookingStatus, any> = {
+    pending: "map.booking.pending",
+    confirmed: "map.booking.confirmed",
+    manually_held: "map.booking.manuallyHeld",
+    expired: "map.booking.expired",
+    cancelled: "map.booking.cancelled",
+  };
+  return <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${map[status]}`}>{t(key[status])}</span>;
 }
 
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
