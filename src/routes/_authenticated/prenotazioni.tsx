@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Search, X, Phone, Mail, Clock, CalendarClock, CheckCircle2, Ban, ShieldCheck, AlertTriangle } from "lucide-react";
+import { Search, X, Phone, Mail, Clock, CalendarClock, CheckCircle2, Ban, ShieldCheck, AlertTriangle, Users } from "lucide-react";
 
 type BookingStatus = "pending" | "confirmed" | "expired" | "manually_held" | "cancelled";
 
@@ -88,6 +88,8 @@ function PrenotazioniPage() {
   const lidoId = ctx?.lidoId ?? null;
   const canManage = ctx?.canManage ?? false;
   const enabled = !!lidoId;
+
+  const [tab, setTab] = useState<"prenotazioni" | "clienti">("prenotazioni");
 
   const pending = useQuery({ queryKey: ["bookings-col", "pending", lidoId], queryFn: () => loadColonna("pending", lidoId!), enabled });
   const confirmed = useQuery({ queryKey: ["bookings-col", "confirmed", lidoId], queryFn: () => loadColonna("confirmed", lidoId!), enabled });
@@ -211,40 +213,61 @@ function PrenotazioniPage() {
         <p className="text-sm text-muted-foreground mt-1">Kanban in tempo reale delle prenotazioni del lido.</p>
       </div>
 
-      <div className="mb-4 bg-white rounded-xl shadow-sm border border-border p-4">
-        <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Cerca per ombrellone, cognome o data..."
-            aria-label="Cerca prenotazioni"
-            className="h-9 w-full rounded-lg border border-border pl-8 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-          />
-          {search && (
-            <button onClick={() => setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-              <X className="w-4 h-4" />
-            </button>
-          )}
-        </div>
+      <div className="mb-4 inline-flex rounded-full border border-border bg-card p-0.5 text-sm font-medium">
+        <button
+          onClick={() => setTab("prenotazioni")}
+          className={`px-3.5 py-1.5 rounded-full transition ${tab === "prenotazioni" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+        >
+          Prenotazioni
+        </button>
+        <button
+          onClick={() => setTab("clienti")}
+          className={`px-3.5 py-1.5 rounded-full transition ${tab === "clienti" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+        >
+          Clienti
+        </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 overflow-x-auto">
-        {COLUMNS.map((col) => (
-          <BookingColumn
-            key={col.status}
-            status={col.status}
-            title={col.title}
-            headerCls={col.headerCls}
-            bookings={filteredByStatus[col.status]}
-            canManage={canManage}
-            onCheckIn={checkIn}
-            onHoldManually={holdManually}
-            onCancel={cancel}
-          />
-        ))}
-      </div>
+      {tab === "clienti" ? (
+        <ClientiSection lidoId={lidoId} />
+      ) : (
+        <>
+          <div className="mb-4 bg-white rounded-xl shadow-sm border border-border p-4">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Cerca per ombrellone, cognome o data..."
+                aria-label="Cerca prenotazioni"
+                className="h-9 w-full rounded-lg border border-border pl-8 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+              {search && (
+                <button onClick={() => setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 overflow-x-auto">
+            {COLUMNS.map((col) => (
+              <BookingColumn
+                key={col.status}
+                status={col.status}
+                title={col.title}
+                headerCls={col.headerCls}
+                bookings={filteredByStatus[col.status]}
+                canManage={canManage}
+                onCheckIn={checkIn}
+                onHoldManually={holdManually}
+                onCancel={cancel}
+              />
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -355,5 +378,117 @@ function BookingCard({ booking, canManage, onCheckIn, onHoldManually, onCancel }
         </div>
       )}
     </div>
+  );
+}
+
+type BookingCustomer = {
+  email: string;
+  nome: string;
+  cognome: string;
+  telefono: string | null;
+  numero_prenotazioni: number;
+  ultima_visita: string | null;
+  cliente_da: string | null;
+};
+
+async function loadBookingCustomers(lidoId: string): Promise<BookingCustomer[]> {
+  const { data, error } = await supabase
+    .from("booking_customers")
+    .select("email, nome, cognome, telefono, numero_prenotazioni, ultima_visita, cliente_da")
+    .eq("lido_id", lidoId)
+    .order("ultima_visita", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as BookingCustomer[];
+}
+
+function ClientiSection({ lidoId }: { lidoId: string | null }) {
+  const { data: customers = [], isLoading } = useQuery({
+    queryKey: ["booking-customers", lidoId],
+    queryFn: () => loadBookingCustomers(lidoId!),
+    enabled: !!lidoId,
+  });
+
+  const [search, setSearch] = useState("");
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return customers;
+    return customers.filter((c) =>
+      c.nome.toLowerCase().includes(q) ||
+      c.cognome.toLowerCase().includes(q) ||
+      c.email.toLowerCase().includes(q) ||
+      (c.telefono ?? "").toLowerCase().includes(q),
+    );
+  }, [customers, search]);
+
+  return (
+    <>
+      <div className="mb-4 bg-white rounded-xl shadow-sm border border-border p-4">
+        <div className="relative">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Cerca per nome, cognome, email o telefono..."
+            aria-label="Cerca clienti"
+            className="h-9 w-full rounded-lg border border-border pl-8 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+          />
+          {search && (
+            <button onClick={() => setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="card-soft p-4 overflow-x-auto">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-bold text-primary inline-flex items-center gap-1.5">
+            <Users className="w-4 h-4" /> Clienti
+          </h2>
+          <span className="text-xs text-muted-foreground">{filtered.length} clienti</span>
+        </div>
+        <table className="w-full text-sm min-w-[640px]">
+          <thead>
+            <tr className="text-left text-xs text-muted-foreground border-b border-border">
+              <th className="py-1.5 pr-2">Nome</th>
+              <th className="py-1.5 pr-2">Cognome</th>
+              <th className="py-1.5 pr-2">Email</th>
+              <th className="py-1.5 pr-2">Telefono</th>
+              <th className="py-1.5 pr-2 text-right">Prenotazioni</th>
+              <th className="py-1.5 text-right">Ultima visita</th>
+            </tr>
+          </thead>
+          <tbody>
+            {isLoading ? (
+              <tr><td colSpan={6} className="py-6 text-center text-muted-foreground">Caricamento…</td></tr>
+            ) : filtered.length === 0 ? (
+              <tr><td colSpan={6} className="py-6 text-center text-muted-foreground">Nessun cliente trovato</td></tr>
+            ) : (
+              filtered.map((c) => (
+                <tr key={c.email} className="border-b border-border last:border-b-0">
+                  <td className="py-1.5 pr-2">{c.nome}</td>
+                  <td className="py-1.5 pr-2">{c.cognome}</td>
+                  <td className="py-1.5 pr-2">
+                    <a href={`mailto:${c.email}`} className="inline-flex items-center gap-1 text-primary hover:underline">
+                      <Mail className="w-3.5 h-3.5" /> {c.email}
+                    </a>
+                  </td>
+                  <td className="py-1.5 pr-2">
+                    {c.telefono ? (
+                      <a href={`tel:${c.telefono}`} className="inline-flex items-center gap-1 text-primary hover:underline">
+                        <Phone className="w-3.5 h-3.5" /> {c.telefono}
+                      </a>
+                    ) : "—"}
+                  </td>
+                  <td className="py-1.5 pr-2 text-right tabular-nums">{c.numero_prenotazioni}</td>
+                  <td className="py-1.5 text-right whitespace-nowrap">{c.ultima_visita ?? "—"}</td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </>
   );
 }
