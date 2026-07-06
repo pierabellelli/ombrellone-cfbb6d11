@@ -74,6 +74,118 @@ export type Database = {
           },
         ]
       }
+      booking_email_templates: {
+        Row: {
+          body_cliente: string
+          body_gestore: string
+          created_at: string
+          id: string
+          lido_id: string
+          subject_cliente: string
+          subject_gestore: string
+          updated_at: string
+        }
+        Insert: {
+          body_cliente?: string
+          body_gestore?: string
+          created_at?: string
+          id?: string
+          lido_id: string
+          subject_cliente?: string
+          subject_gestore?: string
+          updated_at?: string
+        }
+        Update: {
+          body_cliente?: string
+          body_gestore?: string
+          created_at?: string
+          id?: string
+          lido_id?: string
+          subject_cliente?: string
+          subject_gestore?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_email_templates_lido_id_fkey"
+            columns: ["lido_id"]
+            isOneToOne: true
+            referencedRelation: "lidi"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bookings: {
+        Row: {
+          booking_session_id: string
+          cancelled_at: string | null
+          cancelled_by: string | null
+          checked_in_at: string | null
+          checked_in_by: string | null
+          cognome: string
+          created_at: string
+          data: string
+          email: string
+          expires_at: string | null
+          fila: string
+          id: string
+          lido_id: string
+          nome: string
+          numero_ombrellone: string
+          status: string
+          telefono: string | null
+          updated_at: string
+        }
+        Insert: {
+          booking_session_id?: string
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          checked_in_at?: string | null
+          checked_in_by?: string | null
+          cognome: string
+          created_at?: string
+          data: string
+          email: string
+          expires_at?: string | null
+          fila: string
+          id?: string
+          lido_id: string
+          nome: string
+          numero_ombrellone: string
+          status?: string
+          telefono?: string | null
+          updated_at?: string
+        }
+        Update: {
+          booking_session_id?: string
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          checked_in_at?: string | null
+          checked_in_by?: string | null
+          cognome?: string
+          created_at?: string
+          data?: string
+          email?: string
+          expires_at?: string | null
+          fila?: string
+          id?: string
+          lido_id?: string
+          nome?: string
+          numero_ombrellone?: string
+          status?: string
+          telefono?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_lido_id_fkey"
+            columns: ["lido_id"]
+            isOneToOne: false
+            referencedRelation: "lidi"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categorie_prodotto: {
         Row: {
           created_at: string
@@ -140,6 +252,9 @@ export type Database = {
         Row: {
           accetta_carta: boolean
           attivo: boolean
+          auto_email_enabled: boolean
+          booking_expiry_time: string
+          booking_module_enabled: boolean
           citta: string | null
           colore_primario: string | null
           colore_secondario: string | null
@@ -153,6 +268,7 @@ export type Database = {
           intervallo_minuti: number | null
           lingua_default: string | null
           logo_url: string | null
+          max_booking_days_ahead: number
           max_ordini_ravvicinati: number | null
           messaggio_benvenuto: string | null
           nascondi_immagini_menu: boolean
@@ -164,6 +280,7 @@ export type Database = {
           servizio_bar_attivo: boolean | null
           slug: string
           soglia_ordine_libero: number | null
+          staff_can_manage_bookings: boolean
           storico_staff_globale: boolean
           telefono: string | null
           tempo_attesa_attivo: boolean
@@ -174,6 +291,9 @@ export type Database = {
         Insert: {
           accetta_carta?: boolean
           attivo?: boolean
+          auto_email_enabled?: boolean
+          booking_expiry_time?: string
+          booking_module_enabled?: boolean
           citta?: string | null
           colore_primario?: string | null
           colore_secondario?: string | null
@@ -187,6 +307,7 @@ export type Database = {
           intervallo_minuti?: number | null
           lingua_default?: string | null
           logo_url?: string | null
+          max_booking_days_ahead?: number
           max_ordini_ravvicinati?: number | null
           messaggio_benvenuto?: string | null
           nascondi_immagini_menu?: boolean
@@ -198,6 +319,7 @@ export type Database = {
           servizio_bar_attivo?: boolean | null
           slug: string
           soglia_ordine_libero?: number | null
+          staff_can_manage_bookings?: boolean
           storico_staff_globale?: boolean
           telefono?: string | null
           tempo_attesa_attivo?: boolean
@@ -208,6 +330,9 @@ export type Database = {
         Update: {
           accetta_carta?: boolean
           attivo?: boolean
+          auto_email_enabled?: boolean
+          booking_expiry_time?: string
+          booking_module_enabled?: boolean
           citta?: string | null
           colore_primario?: string | null
           colore_secondario?: string | null
@@ -221,6 +346,7 @@ export type Database = {
           intervallo_minuti?: number | null
           lingua_default?: string | null
           logo_url?: string | null
+          max_booking_days_ahead?: number
           max_ordini_ravvicinati?: number | null
           messaggio_benvenuto?: string | null
           nascondi_immagini_menu?: boolean
@@ -232,6 +358,7 @@ export type Database = {
           servizio_bar_attivo?: boolean | null
           slug?: string
           soglia_ordine_libero?: number | null
+          staff_can_manage_bookings?: boolean
           storico_staff_globale?: boolean
           telefono?: string | null
           tempo_attesa_attivo?: boolean
@@ -478,7 +605,47 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      booking_customers: {
+        Row: {
+          cliente_da: string | null
+          cognome: string | null
+          email: string | null
+          lido_id: string | null
+          nome: string | null
+          numero_prenotazioni: number | null
+          telefono: string | null
+          ultima_visita: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_lido_id_fkey"
+            columns: ["lido_id"]
+            isOneToOne: false
+            referencedRelation: "lidi"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      booking_report_daily: {
+        Row: {
+          check_in_effettuati: number | null
+          data: string | null
+          lido_id: string | null
+          manually_held: number | null
+          scadute: number | null
+          show_rate_pct: number | null
+          totale_prenotazioni: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_lido_id_fkey"
+            columns: ["lido_id"]
+            isOneToOne: false
+            referencedRelation: "lidi"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       admin_lidi_last_access: {
@@ -488,6 +655,8 @@ export type Database = {
           lido_id: string
         }[]
       }
+      booking_cron_expire_pending: { Args: never; Returns: undefined }
+      booking_cron_purge_season: { Args: never; Returns: undefined }
       create_ordine: {
         Args: {
           _cognome: string
