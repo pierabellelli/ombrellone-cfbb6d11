@@ -211,7 +211,7 @@ function MappaPage() {
             {file.map((row) => (
               <div key={row.index}>
                 <div className="text-xs font-semibold text-muted-foreground mb-2 px-1">{row.label}</div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", width: "100%", overflow: "hidden" }}>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", width: "100%", overflow: "visible", paddingTop: "6px", paddingRight: "6px" }}>
                   {row.ombrelloni.map((u) => {
                     const orders = ordersByNumero.get(String(u.numero)) ?? [];
                     const s = worstState(orders, now);
@@ -330,20 +330,13 @@ function UmbrellaTile({ numero, rowLabel, orders, state, booking, now, onClick }
       }}
     >
       {state !== "free" && (
-        <span className={`absolute -top-1 -right-1 z-10 w-5 h-5 rounded-full flex items-center justify-center shadow-sm ring-2 ring-white ${DRINK_BADGE_CLASS[state]}`}>
-          <CupSoda className="w-3 h-3" />
+        <span className={`absolute -top-1.5 -right-1.5 z-10 min-w-[20px] h-5 px-1 rounded-full flex items-center justify-center shadow-sm ring-2 ring-white text-[11px] font-bold ${DRINK_BADGE_CLASS[state]}`}>
+          {orders.length}
         </span>
       )}
       <div className="px-1.5 py-1.5 flex flex-col items-center w-full flex-1 justify-center overflow-hidden rounded-2xl">
         <Umbrella className={`w-4 h-4 ${accent} ${state === "free" ? "opacity-70" : ""}`} />
-        <div className="flex items-center justify-center gap-1">
-          <div className={`text-lg font-extrabold leading-tight ${accent}`}>{numero}</div>
-          {orders.length > 1 && (
-            <span className="w-5 h-5 rounded-full bg-gray-500 text-white text-[10px] font-bold flex items-center justify-center shadow-sm shrink-0">
-              {orders.length}
-            </span>
-          )}
-        </div>
+        <div className={`text-lg font-extrabold leading-tight ${accent}`}>{numero}</div>
         {newest ? (
           <div className={`text-[10px] tabular-nums truncate w-full text-center font-semibold ${accent}`}>
             {fmtElapsedShort(elapsed)}
@@ -439,6 +432,7 @@ function DetailSheet({ numero, fila, orders, booking, now, onClose, onDelivered 
 function OrderDetailCard({ order, now, onDelivered }: { order: Ordine; now: number; onDelivered: (id: string) => void }) {
   const { t } = useI18n();
   const elapsed = now - new Date(order.created_at).getTime();
+  const urgency = stateOfOrder(order, now);
   return (
     <div className="space-y-4">
       <Row label={t("map.customer")} value={order.cognome} />
@@ -449,7 +443,7 @@ function OrderDetailCard({ order, now, onDelivered }: { order: Ordine; now: numb
         label={t("map.elapsed")}
         value={<span className="inline-flex items-center gap-1.5 tabular-nums font-semibold"><Clock className="w-3.5 h-3.5" />{fmtElapsed(elapsed)}</span>}
       />
-      <Row label={t("map.status")} value={<StatusBadge stato={order.stato} />} />
+      <Row label={t("map.status")} value={<UrgencyBadge state={urgency} t={t} />} />
       {order.metodo_pagamento && (
         <Row
           label={t("map.payment")}
@@ -541,12 +535,19 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
-function StatusBadge({ stato }: { stato: Stato }) {
-  const map: Record<Stato, string> = {
-    arrivati: "bg-blue-100 text-blue-800",
-    da_evadere: "bg-amber-100 text-amber-800",
-    consegnati: "bg-emerald-100 text-emerald-800",
-    annullato: "bg-red-100 text-red-800",
+const URGENCY_PILL_CLASS: Record<UmbrellaState, string> = {
+  free: "bg-secondary text-foreground",
+  active: "bg-emerald-100 text-emerald-800",
+  warn: "bg-amber-100 text-amber-800",
+  late: "bg-red-100 text-red-800",
+};
+
+function UrgencyBadge({ state, t }: { state: UmbrellaState; t: (k: any) => string }) {
+  const labelKey: Record<UmbrellaState, string> = {
+    free: "map.legend.free",
+    active: "map.legend.active",
+    warn: "map.legend.warn",
+    late: "map.legend.late",
   };
-  return <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${map[stato]}`}>{stato.replace("_", " ")}</span>;
+  return <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${URGENCY_PILL_CLASS[state]}`}>{t(labelKey[state] as any)}</span>;
 }
