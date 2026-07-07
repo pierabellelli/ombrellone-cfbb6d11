@@ -6,7 +6,7 @@ const DICT = {
   it: {
     "nav.orders": "Ordini",
     "nav.bookings": "Prenotazioni",
-    "nav.products": "Prodotti",
+    "nav.products": "Menu",
     "nav.settings": "Impostazioni",
     "nav.map": "Dashboard",
     "nav.beachConfig": "Spiaggia",
@@ -188,7 +188,7 @@ const DICT = {
   en: {
     "nav.orders": "Orders",
     "nav.bookings": "Bookings",
-    "nav.products": "Products",
+    "nav.products": "Menu",
     "nav.settings": "Settings",
     "nav.map": "Dashboard",
     "nav.beachConfig": "Beach",
