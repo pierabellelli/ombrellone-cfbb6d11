@@ -101,14 +101,14 @@ function AuthLayout() {
 
   const navItems: { to: string; icon: ReactNode; label: string; visible: boolean }[] = [
     { to: "/mappa", icon: <MapIcon className="w-4 h-4" />, label: t("nav.map"), visible: canSeeMap },
-    { to: "/ordini", icon: <ClipboardList className="w-4 h-4" />, label: t("nav.orders"), visible: true },
     { to: "/prenotazioni", icon: <CalendarClock className="w-4 h-4" />, label: t("nav.bookings"), visible: canSeeBookings },
+    { to: "/ordini", icon: <ClipboardList className="w-4 h-4" />, label: t("nav.orders"), visible: true },
     { to: "/prodotti", icon: <UtensilsCrossed className="w-4 h-4" />, label: t("nav.products"), visible: isGestore || isSuper },
     { to: "/configurazione-lido", icon: <LayoutPanelTop className="w-4 h-4" />, label: t("nav.beachConfig"), visible: isGestore || isSuper },
-    { to: "/impostazioni", icon: <Settings className="w-4 h-4" />, label: t("nav.settings"), visible: isGestore || isSuper },
     { to: "/qrcode", icon: <QrCode className="w-4 h-4" />, label: t("nav.qrcode"), visible: isGestore },
     { to: "/report", icon: <BarChart3 className="w-4 h-4" />, label: isStaffOnly ? t("nav.storico") : t("nav.report"), visible: isGestore || isStaffOnly },
     { to: "/admin/dashboard", icon: <LayoutDashboard className="w-4 h-4" />, label: "Admin", visible: isSuper },
+    { to: "/impostazioni", icon: <Settings className="w-4 h-4" />, label: t("nav.settings"), visible: isGestore || isSuper },
   ];
   const visibleNavItems = navItems.filter((item) => item.visible);
   const mobileTabs = visibleNavItems.length > 5 ? visibleNavItems.slice(0, 4) : visibleNavItems;
