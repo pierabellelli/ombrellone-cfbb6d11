@@ -312,8 +312,8 @@ function fmtElapsedShort(ms: number) {
 function UmbrellaTile({ numero, rowLabel, orders, state, booking, now, onClick }: {
   numero: number; rowLabel: string; orders: Ordine[]; state: UmbrellaState; booking: Booking | undefined; now: number; onClick: () => void;
 }) {
-  const oldest = orders[0];
-  const elapsed = oldest ? now - new Date(oldest.created_at).getTime() : 0;
+  const newest = orders[orders.length - 1];
+  const elapsed = newest ? now - new Date(newest.created_at).getTime() : 0;
   const accent = TILE_ACCENT[state];
   const bookingState = bookingTileState(booking);
   return (
@@ -329,23 +329,11 @@ function UmbrellaTile({ numero, rowLabel, orders, state, booking, now, onClick }
         overflow: "visible",
       }}
     >
-      {bookingState === "prenotato" && (
-        <span className="absolute top-1 left-1/2 -translate-x-1/2 z-10 w-6 h-6 rounded-full bg-white border border-gray-400 text-gray-900 text-[11px] font-bold flex items-center justify-center shadow-sm">
-          P
+      {state !== "free" && (
+        <span className={`absolute -top-1 -right-1 z-10 w-5 h-5 rounded-full flex items-center justify-center shadow-sm ring-2 ring-white ${DRINK_BADGE_CLASS[state]}`}>
+          <CupSoda className="w-3 h-3" />
         </span>
       )}
-      <div className="absolute -top-1.5 -right-1.5 z-10 flex items-center">
-        {bookingState === "occupato" && (
-          <span className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-sm ring-2 ring-white">
-            <Check className="w-3 h-3" />
-          </span>
-        )}
-        {state !== "free" && (
-          <span className={`w-8 h-8 rounded-full flex items-center justify-center shadow-sm ring-2 ring-white -ml-1.5 ${DRINK_BADGE_CLASS[state]}`}>
-            <CupSoda className="w-5 h-5" />
-          </span>
-        )}
-      </div>
       <div className="px-1.5 py-1.5 flex flex-col items-center w-full flex-1 justify-center overflow-hidden rounded-2xl">
         <Umbrella className={`w-4 h-4 ${accent} ${state === "free" ? "opacity-70" : ""}`} />
         <div className="flex items-center justify-center gap-1">
@@ -356,7 +344,7 @@ function UmbrellaTile({ numero, rowLabel, orders, state, booking, now, onClick }
             </span>
           )}
         </div>
-        {oldest ? (
+        {newest ? (
           <div className={`text-[10px] tabular-nums truncate w-full text-center font-semibold ${accent}`}>
             {fmtElapsedShort(elapsed)}
           </div>
