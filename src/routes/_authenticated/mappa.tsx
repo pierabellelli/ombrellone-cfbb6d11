@@ -19,6 +19,7 @@ type Ordine = {
   totale: number;
   stato: Stato;
   created_at: string;
+  preso_in_carico_at: string | null;
   fila: string | null;
   ordine_items?: Item[];
 };
@@ -58,7 +59,7 @@ async function loadOrdiniAttivi(lidoId: string): Promise<Ordine[]> {
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const { data, error } = await supabase
     .from("ordini")
-    .select("id, numero_ordine, numero_ombrellone, cognome, telefono, metodo_pagamento, totale, stato, created_at, fila, ordine_items(id, nome_snapshot, prezzo_snapshot, quantita)")
+    .select("id, numero_ordine, numero_ombrellone, cognome, telefono, metodo_pagamento, totale, stato, created_at, preso_in_carico_at, fila, ordine_items(id, nome_snapshot, prezzo_snapshot, quantita)")
     .eq("lido_id", lidoId)
     .gte("created_at", today.toISOString())
     .in("stato", ["arrivati", "da_evadere"]);
@@ -89,10 +90,13 @@ function bookingKey(fila: string, numero: number | string) {
 type UmbrellaState = "free" | "active" | "warn" | "late";
 const STATE_RANK: Record<UmbrellaState, number> = { free: 0, active: 1, warn: 2, late: 3 };
 function stateOfOrder(order: Ordine, now: number): UmbrellaState {
-  const minutes = (now - new Date(order.created_at).getTime()) / 60000;
-  if (minutes >= 15) return "late";
-  if (minutes >= 10) return "warn";
-  return "active";
+  // Mirrors the Kanban: "active"/verde = arrivati (non ancora preso in carico).
+  // "warn"/giallo e "late"/rosso si applicano solo dopo la presa in carico
+  // (da_evadere), misurati da preso_in_carico_at — non da created_at.
+  if (order.stato !== "da_evadere") return "active";
+  const takenAt = order.preso_in_carico_at ? new Date(order.preso_in_carico_at).getTime() : new Date(order.created_at).getTime();
+  const minutes = (now - takenAt) / 60000;
+  return minutes >= 15 ? "late" : "warn";
 }
 function worstState(orders: Ordine[], now: number): UmbrellaState {
   let worst: UmbrellaState = "free";
