@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
-  ImagePlus, ImageOff, Loader2, X, Save, Clock, Coffee, ShieldCheck, Store, CalendarClock, Mail,
+  ImagePlus, ImageOff, Loader2, X, Save, Clock, Coffee, ShieldCheck, Store, CalendarClock, Mail, Copy, Check,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -49,6 +49,7 @@ type Lido = {
 };
 
 const SIGNED_TTL = 60 * 60 * 24 * 365;
+const APP_URL = import.meta.env.VITE_APP_URL ?? "";
 
 async function getMyLido(): Promise<Lido | null> {
   const { data: u } = await supabase.auth.getUser();
@@ -619,6 +620,43 @@ function NascondiImmaginiMenuCard({ lido, onSaved }: { lido: Lido; onSaved: () =
   );
 }
 
+function BookingLinkCard({ slug }: { slug: string }) {
+  const [copied, setCopied] = useState(false);
+  const link = `${APP_URL}/lido/${slug}/prenota`;
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopied(true);
+      toast.success("Link copiato");
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("Impossibile copiare il link");
+    }
+  };
+
+  return (
+    <div className="rounded-lg border border-border p-4 bg-secondary/30">
+      <p className="text-sm font-medium">Link prenotazioni per i clienti</p>
+      <p className="text-xs text-muted-foreground mt-0.5 mb-2">
+        Condividi questo link con i clienti (sito, social, WhatsApp) per farli prenotare online.
+      </p>
+      <div className="flex items-stretch gap-2">
+        <input
+          readOnly
+          value={link}
+          onFocus={(e) => e.target.select()}
+          className="flex-1 px-3 py-2 rounded-md border border-input bg-background text-sm font-mono truncate"
+        />
+        <Button type="button" variant="outline" onClick={handleCopy} className="shrink-0">
+          {copied ? <Check className="w-4 h-4 mr-1.5" /> : <Copy className="w-4 h-4 mr-1.5" />}
+          {copied ? "Copiato" : "Copia"}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function BookingSettingsCard({ lido, onSaved }: { lido: Lido; onSaved: () => void }) {
   const [enabled, setEnabled] = useState(lido.booking_module_enabled);
   const [autoEmail, setAutoEmail] = useState(lido.auto_email_enabled);
@@ -677,6 +715,8 @@ function BookingSettingsCard({ lido, onSaved }: { lido: Lido; onSaved: () => voi
           </div>
           <Switch checked={enabled} onCheckedChange={setEnabled} />
         </div>
+
+        {enabled && <BookingLinkCard slug={lido.slug} />}
 
         <div className="flex items-center justify-between rounded-lg border border-border p-4">
           <div>
