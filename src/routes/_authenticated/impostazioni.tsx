@@ -445,6 +445,14 @@ function RegoleServizioCard({ lido, onSaved }: { lido: Lido; onSaved: () => void
           <Switch checked={attivo} onCheckedChange={setAttivo} />
         </div>
 
+        {attivo && (
+          <ShareLinkCard
+            title="Link menu per i clienti"
+            description="Condividi questo link con i clienti (sito, social, WhatsApp) per farli ordinare online."
+            path={`/lido/${lido.slug}`}
+          />
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Label htmlFor="ap" className="flex items-center gap-1.5">
@@ -620,9 +628,9 @@ function NascondiImmaginiMenuCard({ lido, onSaved }: { lido: Lido; onSaved: () =
   );
 }
 
-function BookingLinkCard({ slug }: { slug: string }) {
+function ShareLinkCard({ title, description, path }: { title: string; description: string; path: string }) {
   const [copied, setCopied] = useState(false);
-  const link = `${APP_URL}/lido/${slug}/prenota`;
+  const link = `${APP_URL}${path}`;
 
   const handleCopy = async () => {
     try {
@@ -637,10 +645,8 @@ function BookingLinkCard({ slug }: { slug: string }) {
 
   return (
     <div className="rounded-lg border border-border p-4 bg-secondary/30">
-      <p className="text-sm font-medium">Link prenotazioni per i clienti</p>
-      <p className="text-xs text-muted-foreground mt-0.5 mb-2">
-        Condividi questo link con i clienti (sito, social, WhatsApp) per farli prenotare online.
-      </p>
+      <p className="text-sm font-medium">{title}</p>
+      <p className="text-xs text-muted-foreground mt-0.5 mb-2">{description}</p>
       <div className="flex items-stretch gap-2">
         <input
           readOnly
@@ -716,7 +722,13 @@ function BookingSettingsCard({ lido, onSaved }: { lido: Lido; onSaved: () => voi
           <Switch checked={enabled} onCheckedChange={setEnabled} />
         </div>
 
-        {enabled && <BookingLinkCard slug={lido.slug} />}
+        {enabled && (
+          <ShareLinkCard
+            title="Link prenotazioni per i clienti"
+            description="Condividi questo link con i clienti (sito, social, WhatsApp) per farli prenotare online."
+            path={`/lido/${lido.slug}/prenota`}
+          />
+        )}
 
         <div className="flex items-center justify-between rounded-lg border border-border p-4">
           <div>
