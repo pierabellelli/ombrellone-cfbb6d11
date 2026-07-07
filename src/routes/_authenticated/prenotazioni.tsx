@@ -3,8 +3,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { format } from "date-fns";
-import { Search, X, Phone, Mail, Clock, CalendarClock, CheckCircle2, Ban, ShieldCheck, AlertTriangle, Users, Archive } from "lucide-react";
+import { format, addDays, subDays, isSameDay } from "date-fns";
+import { it } from "date-fns/locale";
+import { Search, X, Phone, Mail, Clock, CalendarClock, CheckCircle2, Ban, ShieldCheck, AlertTriangle, Users, Archive, ChevronLeft, ChevronRight, CalendarDays, RotateCcw } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Button } from "@/components/ui/button";
 
 type BookingStatus = "pending" | "confirmed" | "expired" | "manually_held" | "cancelled";
 
@@ -32,9 +36,25 @@ export const Route = createFileRoute("/_authenticated/prenotazioni")({
 const SELECT_COLS =
   "id, numero_ombrellone, fila, nome, cognome, email, telefono, data, status, expires_at, checked_in_at, created_at, archiviato";
 
-function todayLocalISO() {
-  const d = new Date();
+function isoDate(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function todayLocalISO() {
+  return isoDate(new Date());
+}
+
+function isToday(d: Date) {
+  return isSameDay(d, new Date());
+}
+
+function fmtDateLabel(d: Date) {
+  if (isToday(d)) return `Oggi, ${format(d, "d MMMM yyyy", { locale: it })}`;
+  return format(d, "EEEE d MMMM yyyy", { locale: it }).replace(/^./, (c) => c.toUpperCase());
+}
+
+function fmtDateTitleSuffix(d: Date) {
+  return format(d, "EEEE d MMMM", { locale: it }).replace(/^./, (c) => c.toUpperCase());
 }
 
 async function loadCtx() {
@@ -58,14 +78,15 @@ async function loadCtx() {
   return { lidoId, canManage };
 }
 
-async function loadColonna(status: BookingStatus, lidoId: string): Promise<Booking[]> {
+async function loadColonna(status: BookingStatus, lidoId: string, from: string, to: string): Promise<Booking[]> {
   const { data, error } = await supabase
     .from("bookings")
     .select(SELECT_COLS)
     .eq("lido_id", lidoId)
     .eq("status", status)
     .eq("archiviato", false)
-    .gte("data", todayLocalISO())
+    .gte("data", from)
+    .lte("data", to)
     .order("data", { ascending: true })
     .order("expires_at", { ascending: true, nullsFirst: false });
   if (error) throw error;
@@ -85,6 +106,103 @@ function fmtTime(iso: string | null) {
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
+function DateControlBar({
+  mode, onModeChange, selectedDate, onSelectedDateChange,
+  rangeFromDraft, rangeToDraft, onRangeFromDraft, onRangeToDraft, onApplyRange,
+}: {
+  mode: "single" | "range";
+  onModeChange: (m: "single" | "range") => void;
+  selectedDate: Date;
+  onSelectedDateChange: (d: Date) => void;
+  rangeFromDraft: string;
+  rangeToDraft: string;
+  onRangeFromDraft: (v: string) => void;
+  onRangeToDraft: (v: string) => void;
+  onApplyRange: () => void;
+}) {
+  const [pickerOpen, setPickerOpen] = useState(false);
+
+  return (
+    <div className="mb-4 bg-white rounded-xl shadow-sm border border-border p-3 flex flex-wrap items-center gap-3">
+      <div className="inline-flex rounded-full border border-border bg-secondary/40 p-0.5 text-xs font-semibold shrink-0">
+        <button
+          onClick={() => onModeChange("single")}
+          className={`px-3 py-1.5 rounded-full transition ${mode === "single" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+        >
+          Giorno singolo
+        </button>
+        <button
+          onClick={() => onModeChange("range")}
+          className={`px-3 py-1.5 rounded-full transition ${mode === "range" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+        >
+          Intervallo
+        </button>
+      </div>
+
+      {mode === "single" ? (
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-sm text-muted-foreground mr-1">Prenotazioni per</span>
+          <button
+            onClick={() => onSelectedDateChange(subDays(selectedDate, 1))}
+            aria-label="Giorno precedente"
+            className="w-8 h-8 inline-flex items-center justify-center rounded-lg border border-border hover:bg-secondary transition"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+
+          <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
+            <PopoverTrigger asChild>
+              <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-sm font-medium hover:bg-secondary transition">
+                <CalendarDays className="w-4 h-4" />
+                {fmtDateLabel(selectedDate)}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={(d) => { if (d) { onSelectedDateChange(d); setPickerOpen(false); } }}
+              />
+            </PopoverContent>
+          </Popover>
+
+          <button
+            onClick={() => onSelectedDateChange(addDays(selectedDate, 1))}
+            aria-label="Giorno successivo"
+            className="w-8 h-8 inline-flex items-center justify-center rounded-lg border border-border hover:bg-secondary transition"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+
+          {!isToday(selectedDate) && (
+            <Button type="button" variant="outline" size="sm" onClick={() => onSelectedDateChange(new Date())} className="ml-1">
+              <RotateCcw className="w-3.5 h-3.5 mr-1.5" /> Torna a oggi
+            </Button>
+          )}
+        </div>
+      ) : (
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-sm text-muted-foreground">Da</span>
+          <input
+            type="date"
+            value={rangeFromDraft}
+            onChange={(e) => onRangeFromDraft(e.target.value)}
+            className="px-2.5 py-1.5 rounded-lg border border-border bg-card text-sm"
+          />
+          <span className="text-sm text-muted-foreground">A</span>
+          <input
+            type="date"
+            value={rangeToDraft}
+            onChange={(e) => onRangeToDraft(e.target.value)}
+            className="px-2.5 py-1.5 rounded-lg border border-border bg-card text-sm"
+          />
+          <Button type="button" size="sm" onClick={onApplyRange}>Applica</Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function PrenotazioniPage() {
   const qc = useQueryClient();
   const { data: ctx } = useQuery({ queryKey: ["prenotazioni-ctx"], queryFn: loadCtx });
@@ -94,10 +212,19 @@ function PrenotazioniPage() {
 
   const [tab, setTab] = useState<"prenotazioni" | "clienti" | "storico">("prenotazioni");
 
-  const pending = useQuery({ queryKey: ["bookings-col", "pending", lidoId], queryFn: () => loadColonna("pending", lidoId!), enabled });
-  const confirmed = useQuery({ queryKey: ["bookings-col", "confirmed", lidoId], queryFn: () => loadColonna("confirmed", lidoId!), enabled });
-  const expired = useQuery({ queryKey: ["bookings-col", "expired", lidoId], queryFn: () => loadColonna("expired", lidoId!), enabled });
-  const manuallyHeld = useQuery({ queryKey: ["bookings-col", "manually_held", lidoId], queryFn: () => loadColonna("manually_held", lidoId!), enabled });
+  const [dateMode, setDateMode] = useState<"single" | "range">("single");
+  const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
+  const [rangeFromDraft, setRangeFromDraft] = useState(todayLocalISO());
+  const [rangeToDraft, setRangeToDraft] = useState(todayLocalISO());
+  const [appliedRange, setAppliedRange] = useState({ from: todayLocalISO(), to: todayLocalISO() });
+
+  const dateFrom = dateMode === "single" ? isoDate(selectedDate) : appliedRange.from;
+  const dateTo = dateMode === "single" ? isoDate(selectedDate) : appliedRange.to;
+
+  const pending = useQuery({ queryKey: ["bookings-col", "pending", lidoId, dateFrom, dateTo], queryFn: () => loadColonna("pending", lidoId!, dateFrom, dateTo), enabled });
+  const confirmed = useQuery({ queryKey: ["bookings-col", "confirmed", lidoId, dateFrom, dateTo], queryFn: () => loadColonna("confirmed", lidoId!, dateFrom, dateTo), enabled });
+  const expired = useQuery({ queryKey: ["bookings-col", "expired", lidoId, dateFrom, dateTo], queryFn: () => loadColonna("expired", lidoId!, dateFrom, dateTo), enabled });
+  const manuallyHeld = useQuery({ queryKey: ["bookings-col", "manually_held", lidoId, dateFrom, dateTo], queryFn: () => loadColonna("manually_held", lidoId!, dateFrom, dateTo), enabled });
 
   const dataByStatus: Record<BookingStatus, Booking[]> = {
     pending: pending.data ?? [],
@@ -212,7 +339,11 @@ function PrenotazioniPage() {
   return (
     <div className="max-w-[1600px] mx-auto px-4 md:px-6 py-6">
       <div className="mb-5">
-        <h1 className="text-2xl md:text-3xl font-bold text-primary">Prenotazioni</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-primary">
+          {tab === "prenotazioni" && dateMode === "single" && !isToday(selectedDate)
+            ? `Prenotazioni — ${fmtDateTitleSuffix(selectedDate)}`
+            : "Prenotazioni"}
+        </h1>
         <p className="text-sm text-muted-foreground mt-1">Kanban in tempo reale delle prenotazioni del lido.</p>
       </div>
 
@@ -243,6 +374,18 @@ function PrenotazioniPage() {
         <StoricoSection lidoId={lidoId} />
       ) : (
         <>
+          <DateControlBar
+            mode={dateMode}
+            onModeChange={setDateMode}
+            selectedDate={selectedDate}
+            onSelectedDateChange={setSelectedDate}
+            rangeFromDraft={rangeFromDraft}
+            rangeToDraft={rangeToDraft}
+            onRangeFromDraft={setRangeFromDraft}
+            onRangeToDraft={setRangeToDraft}
+            onApplyRange={() => setAppliedRange({ from: rangeFromDraft, to: rangeToDraft })}
+          />
+
           <div className="mb-4 bg-white rounded-xl shadow-sm border border-border p-4">
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -271,6 +414,8 @@ function PrenotazioniPage() {
                 headerCls={col.headerCls}
                 bookings={filteredByStatus[col.status]}
                 canManage={canManage}
+                groupByDate={dateMode === "range"}
+                emptyText={dateMode === "range" ? "Nessuna prenotazione in questo intervallo" : "Nessuna prenotazione per questa data"}
                 onCheckIn={checkIn}
                 onHoldManually={holdManually}
                 onCancel={cancel}
@@ -284,17 +429,30 @@ function PrenotazioniPage() {
 }
 
 function BookingColumn({
-  status, title, headerCls, bookings, canManage, onCheckIn, onHoldManually, onCancel,
+  status, title, headerCls, bookings, canManage, groupByDate, emptyText, onCheckIn, onHoldManually, onCancel,
 }: {
   status: BookingStatus;
   title: string;
   headerCls: string;
   bookings: Booking[];
   canManage: boolean;
+  groupByDate?: boolean;
+  emptyText?: string;
   onCheckIn: (id: string) => void;
   onHoldManually: (id: string) => void;
   onCancel: (id: string) => void;
 }) {
+  const groups = useMemo(() => {
+    if (!groupByDate) return null;
+    const map = new Map<string, Booking[]>();
+    for (const b of bookings) {
+      const list = map.get(b.data);
+      if (list) list.push(b);
+      else map.set(b.data, [b]);
+    }
+    return [...map.entries()].sort(([a], [b]) => a.localeCompare(b));
+  }, [bookings, groupByDate]);
+
   return (
     <div className="rounded-2xl bg-secondary/40 border border-border p-3 min-w-[280px]">
       <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-sm font-semibold ${headerCls}`}>
@@ -304,7 +462,27 @@ function BookingColumn({
 
       <div className="mt-3 space-y-2.5">
         {bookings.length === 0 ? (
-          <div className="text-xs text-muted-foreground py-10 text-center">Nessuna prenotazione</div>
+          <div className="text-xs text-muted-foreground py-10 text-center">{emptyText ?? "Nessuna prenotazione"}</div>
+        ) : groups ? (
+          groups.map(([data, group]) => (
+            <div key={data}>
+              <div className="text-xs font-semibold text-muted-foreground mb-1.5 px-1">
+                {format(new Date(`${data}T00:00:00`), "EEEE d MMMM", { locale: it })}
+              </div>
+              <div className="space-y-2.5">
+                {group.map((b) => (
+                  <BookingCard
+                    key={b.id}
+                    booking={b}
+                    canManage={canManage}
+                    onCheckIn={onCheckIn}
+                    onHoldManually={onHoldManually}
+                    onCancel={onCancel}
+                  />
+                ))}
+              </div>
+            </div>
+          ))
         ) : (
           bookings.map((b) => (
             <BookingCard
