@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n";
-import { Umbrella, X, Check, Phone, Wallet, Clock, Bell, CupSoda, Mail } from "lucide-react";
+import { Umbrella, X, Check, Phone, Wallet, Clock, CupSoda, Mail } from "lucide-react";
 
 type Fila = { index: number; label: string; ombrelloni: { numero: number }[] };
 type Stato = "arrivati" | "da_evadere" | "consegnati" | "annullato";
@@ -294,17 +294,6 @@ const TILE_ACCENT: Record<UmbrellaState, string> = {
   late: "text-red-700",
 };
 
-const TILE_BAR: Record<Exclude<UmbrellaState, "free">, {
-  icon: typeof Check;
-  barClass: string;
-  labelKey: "map.tile.activeBar" | "map.tile.warnBar" | "map.tile.lateBar";
-  prefixKey: "map.tile.inviato" | "map.tile.arrivo" | "map.tile.ritardo";
-}> = {
-  active: { icon: Check, barClass: "bg-emerald-500", labelKey: "map.tile.activeBar", prefixKey: "map.tile.inviato" },
-  warn: { icon: Clock, barClass: "bg-amber-500", labelKey: "map.tile.warnBar", prefixKey: "map.tile.arrivo" },
-  late: { icon: Bell, barClass: "bg-red-500", labelKey: "map.tile.lateBar", prefixKey: "map.tile.ritardo" },
-};
-
 function fmtElapsed(ms: number) {
   const totalMin = Math.max(0, Math.floor(ms / 60000));
   const h = Math.floor(totalMin / 60);
@@ -312,13 +301,19 @@ function fmtElapsed(ms: number) {
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
+function fmtElapsedShort(ms: number) {
+  const totalMin = Math.max(0, Math.floor(ms / 60000));
+  if (totalMin < 60) return `${totalMin}min`;
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  return `${h}h ${m}min`;
+}
+
 function UmbrellaTile({ numero, rowLabel, orders, state, booking, now, onClick }: {
   numero: number; rowLabel: string; orders: Ordine[]; state: UmbrellaState; booking: Booking | undefined; now: number; onClick: () => void;
 }) {
-  const { t } = useI18n();
   const oldest = orders[0];
   const elapsed = oldest ? now - new Date(oldest.created_at).getTime() : 0;
-  const bar = state === "free" ? null : TILE_BAR[state];
   const accent = TILE_ACCENT[state];
   const bookingState = bookingTileState(booking);
   return (
@@ -331,7 +326,7 @@ function UmbrellaTile({ numero, rowLabel, orders, state, booking, now, onClick }
         maxWidth: "80px",
         flexShrink: 0,
         flexGrow: 0,
-        overflow: "hidden",
+        overflow: "visible",
       }}
     >
       {bookingState === "prenotato" && (
@@ -339,23 +334,19 @@ function UmbrellaTile({ numero, rowLabel, orders, state, booking, now, onClick }
           P
         </span>
       )}
-      {bookingState === "occupato" && (
-        <span className="absolute top-1 left-1/2 -translate-x-1/2 z-10 w-6 h-6 rounded-full bg-white border border-sky-400 text-sky-600 flex items-center justify-center shadow-sm">
-          <Check className="w-3.5 h-3.5" />
-        </span>
-      )}
-      {state !== "free" && (
-        <span className={`absolute top-1 right-1 z-10 w-5 h-5 rounded-full flex items-center justify-center shadow-sm ${DRINK_BADGE_CLASS[state]}`}>
-          <CupSoda className="w-3 h-3" />
-        </span>
-      )}
-      {bar && (
-        <div className={`w-full h-6 flex items-center justify-center gap-1 ${bar.barClass} text-white`}>
-          <bar.icon className="w-3 h-3 shrink-0" />
-          <span className="text-[8px] font-semibold uppercase leading-none">{t(bar.labelKey)}</span>
-        </div>
-      )}
-      <div className="px-1.5 py-1.5 flex flex-col items-center w-full flex-1 justify-center">
+      <div className="absolute -top-1.5 -right-1.5 z-10 flex items-center">
+        {bookingState === "occupato" && (
+          <span className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-sm ring-2 ring-white">
+            <Check className="w-3 h-3" />
+          </span>
+        )}
+        {state !== "free" && (
+          <span className={`w-8 h-8 rounded-full flex items-center justify-center shadow-sm ring-2 ring-white -ml-1.5 ${DRINK_BADGE_CLASS[state]}`}>
+            <CupSoda className="w-5 h-5" />
+          </span>
+        )}
+      </div>
+      <div className="px-1.5 py-1.5 flex flex-col items-center w-full flex-1 justify-center overflow-hidden rounded-2xl">
         <Umbrella className={`w-4 h-4 ${accent} ${state === "free" ? "opacity-70" : ""}`} />
         <div className="flex items-center justify-center gap-1">
           <div className={`text-lg font-extrabold leading-tight ${accent}`}>{numero}</div>
@@ -365,12 +356,12 @@ function UmbrellaTile({ numero, rowLabel, orders, state, booking, now, onClick }
             </span>
           )}
         </div>
-        <div className="text-[10px] opacity-70 truncate w-full text-center">{rowLabel}</div>
-        {oldest && bar && (
-          <div className="mt-1 w-full">
-            <div className={`text-[11px] font-bold truncate text-center ${accent}`}>{oldest.cognome}</div>
-            <div className={`text-[10px] tabular-nums text-center font-medium ${accent}`}>{t(bar.prefixKey)} {fmtElapsed(elapsed)}</div>
+        {oldest ? (
+          <div className={`text-[10px] tabular-nums truncate w-full text-center font-semibold ${accent}`}>
+            {fmtElapsedShort(elapsed)}
           </div>
+        ) : (
+          <div className="text-[10px] opacity-70 truncate w-full text-center">{rowLabel}</div>
         )}
       </div>
     </button>
