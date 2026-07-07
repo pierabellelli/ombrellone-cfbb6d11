@@ -2,7 +2,7 @@ import { createFileRoute, Outlet, redirect, Link, useNavigate, useRouterState } 
 import { useEffect, useState, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Logo } from "@/components/Logo";
-import { LogOut, ClipboardList, Package, Settings, Map as MapIcon, LayoutPanelTop, BarChart3, QrCode, MoreHorizontal, X, LayoutDashboard, CalendarClock } from "lucide-react";
+import { LogOut, ClipboardList, UtensilsCrossed, Settings, Map as MapIcon, LayoutPanelTop, BarChart3, QrCode, MoreHorizontal, X, LayoutDashboard, CalendarClock } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useI18n } from "@/lib/i18n";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose } from "@/components/ui/sheet";
@@ -103,7 +103,7 @@ function AuthLayout() {
     { to: "/mappa", icon: <MapIcon className="w-4 h-4" />, label: t("nav.map"), visible: canSeeMap },
     { to: "/ordini", icon: <ClipboardList className="w-4 h-4" />, label: t("nav.orders"), visible: true },
     { to: "/prenotazioni", icon: <CalendarClock className="w-4 h-4" />, label: t("nav.bookings"), visible: canSeeBookings },
-    { to: "/prodotti", icon: <Package className="w-4 h-4" />, label: t("nav.products"), visible: isGestore || isSuper },
+    { to: "/prodotti", icon: <UtensilsCrossed className="w-4 h-4" />, label: t("nav.products"), visible: isGestore || isSuper },
     { to: "/configurazione-lido", icon: <LayoutPanelTop className="w-4 h-4" />, label: t("nav.beachConfig"), visible: isGestore || isSuper },
     { to: "/impostazioni", icon: <Settings className="w-4 h-4" />, label: t("nav.settings"), visible: isGestore || isSuper },
     { to: "/qrcode", icon: <QrCode className="w-4 h-4" />, label: t("nav.qrcode"), visible: isGestore },
