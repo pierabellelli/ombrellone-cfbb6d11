@@ -137,6 +137,17 @@ type Prodotto = {
 
 type CartItem = { prodotto: Prodotto; quantita: number };
 
+function isBarOpen(apertura: string | null, chiusura: string | null): boolean {
+  if (!apertura || !chiusura) return true;
+  const now = new Date();
+  const [oh, om] = apertura.split(":").map(Number);
+  const [ch, cm] = chiusura.split(":").map(Number);
+  const nowMins = now.getHours() * 60 + now.getMinutes();
+  const openMins = oh * 60 + om;
+  const closeMins = ch * 60 + cm;
+  return nowMins >= openMins && nowMins < closeMins;
+}
+
 function LidoClientPage() {
   const { t } = useI18n();
   const { slug } = Route.useParams();
@@ -315,6 +326,8 @@ function LidoClientPage() {
     );
   }
 
+  const barAperto = lido.servizio_bar_attivo && isBarOpen(lido.orario_apertura, lido.orario_chiusura);
+
   return (
     <div className="min-h-screen bg-[color:var(--background)] pb-24">
       <Header lido={lido} ombrellone={ombrelloneParam} />
@@ -334,12 +347,21 @@ function LidoClientPage() {
 
         {view === "order" && (
         <>
-        {!lido.servizio_bar_attivo && (
-          <div className="mb-4 rounded-xl border border-amber-300 bg-amber-50 text-amber-900 p-4 flex items-start gap-2">
-            <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
-            <div>
-              <p className="font-semibold">{t("cliente.barInactiveTitle")}</p>
-              <p className="text-sm">{t("cliente.barInactiveDesc")}</p>
+        {!barAperto && (
+          <div className="mb-4 rounded-2xl border border-amber-300 bg-amber-50 text-amber-900 p-5 flex items-start gap-3">
+            <AlertTriangle className="w-6 h-6 shrink-0 mt-0.5 text-amber-500" />
+            <div className="min-w-0">
+              <p className="font-bold text-base leading-snug">
+                {lido.servizio_bar_attivo ? "Il bar è temporaneamente chiuso" : "Servizio bar non attivo"}
+              </p>
+              {lido.servizio_bar_attivo && lido.orario_apertura && lido.orario_chiusura ? (
+                <p className="text-sm mt-1 flex items-center gap-1.5">
+                  <Clock className="w-4 h-4 shrink-0" />
+                  Orario di servizio: <strong>{lido.orario_apertura.slice(0, 5)} – {lido.orario_chiusura.slice(0, 5)}</strong>
+                </p>
+              ) : (
+                <p className="text-sm mt-1">Gli ordini non sono disponibili al momento.</p>
+              )}
             </div>
           </div>
         )}
@@ -366,7 +388,7 @@ function LidoClientPage() {
           </div>
         </div>
 
-        {lido.servizio_bar_attivo && favoriti.length > 0 && (
+        {barAperto && favoriti.length > 0 && (
           <FavoritesSection favoriti={favoriti} cart={cart} onAdd={add} onDec={dec} onRemoveFavorite={removeFavorite} />
         )}
 
@@ -408,7 +430,7 @@ function LidoClientPage() {
         )}
       </main>
 
-      {view === "order" && itemCount > 0 && lido.servizio_bar_attivo && (
+      {view === "order" && itemCount > 0 && barAperto && (
         <Sheet open={cartOpen} onOpenChange={setCartOpen}>
           <SheetTrigger asChild>
             <button
