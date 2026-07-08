@@ -266,22 +266,25 @@ const STATE_CLASS: Record<UmbrellaState, string> = {
   late: "bg-red-100 border-red-400 text-red-900",
 };
 
-type BookingTileState = "libero" | "prenotato" | "occupato";
+type BookingTileState = "libero" | "prenotato" | "manuale" | "occupato";
 function bookingTileState(b: Booking | undefined): BookingTileState {
   if (!b) return "libero";
   if (b.status === "confirmed") return "occupato";
+  if (b.status === "manually_held") return "manuale";
   return "prenotato";
 }
 
 const BOOKING_STATE_CLASS: Record<BookingTileState, string> = {
   libero: "bg-white border-gray-300 text-foreground",
   prenotato: "bg-[#bfbbae] border-[#938e7c] text-gray-900",
+  manuale: "bg-amber-100 border-amber-400 text-amber-900",
   occupato: "bg-sky-100 border-sky-400 text-sky-900",
 };
 
 const TILE_CLASS: Record<BookingTileState, string> = {
   libero: "bg-white border-gray-300",
   prenotato: "bg-[#bfbbae] border-[#938e7c]",
+  manuale: "bg-amber-100 border-amber-400",
   occupato: "bg-sky-100 border-sky-400",
 };
 
@@ -357,6 +360,7 @@ function Legend({ t }: { t: (k: any) => string }) {
   const bookingItems: [BookingTileState, string][] = [
     ["libero", t("map.legend.free")],
     ["prenotato", t("map.legend.reserved")],
+    ["manuale", t("map.legend.manual")],
     ["occupato", t("map.legend.occupied")],
   ];
   const orderItems: [Exclude<UmbrellaState, "free">, string][] = [

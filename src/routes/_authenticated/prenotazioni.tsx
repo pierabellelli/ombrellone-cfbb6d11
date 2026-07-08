@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format, addDays, subDays, isSameDay } from "date-fns";
 import { it } from "date-fns/locale";
-import { Search, X, Phone, Mail, Clock, CalendarClock, CheckCircle2, Ban, ShieldCheck, AlertTriangle, Users, Archive, ChevronLeft, ChevronRight, CalendarDays, RotateCcw } from "lucide-react";
+import { Search, X, Phone, Mail, Clock, CalendarClock, CheckCircle2, Ban, ShieldCheck, AlertTriangle, Users, Archive, ChevronLeft, ChevronRight, CalendarDays, RotateCcw, Zap } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
@@ -508,6 +508,7 @@ function BookingCard({ booking, canManage, onCheckIn, onHoldManually, onCancel }
   onCancel: (id: string) => void;
 }) {
   const isManual = booking.status === "manually_held";
+  const isImmediate = booking.status === "pending" && !booking.expires_at;
   return (
     <div className="relative bg-white rounded-2xl border border-border shadow-sm p-3 transition">
       <div className="flex items-start justify-between gap-2">
@@ -518,6 +519,11 @@ function BookingCard({ booking, canManage, onCheckIn, onHoldManually, onCancel }
         {isManual && (
           <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900">
             <ShieldCheck className="w-3 h-3" /> Manuale
+          </span>
+        )}
+        {isImmediate && (
+          <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-900">
+            <Zap className="w-3 h-3" /> Immediata
           </span>
         )}
       </div>
