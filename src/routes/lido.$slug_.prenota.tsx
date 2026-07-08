@@ -74,7 +74,7 @@ function PrenotaPage() {
 
   const [pickedDates, setPickedDates] = useState<Date[]>([]);
   const [selections, setSelections] = useState<Record<string, Selection>>({});
-  const [confirmed, setConfirmed] = useState<{ fila: string; numero: string; data: string }[] | null>(null);
+  const [confirmed, setConfirmed] = useState<{ fila: string; numero: string; data: string; expiresAt: string | null }[] | null>(null);
 
   const maxDays = lido?.max_booking_days_ahead ?? 0;
   const today = useMemo(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; }, []);
@@ -156,7 +156,7 @@ function PrenotaPage() {
       return;
     }
 
-    setConfirmed((rows ?? []).map((r: any) => ({ fila: r.fila, numero: r.numero_ombrellone, data: r.data })));
+    setConfirmed((rows ?? []).map((r: any) => ({ fila: r.fila, numero: r.numero_ombrellone, data: r.data, expiresAt: r.expires_at })));
   };
 
   if (lidoLoading) {
@@ -203,9 +203,16 @@ function PrenotaPage() {
           <p className="text-muted-foreground mt-1">Ti aspettiamo a {lido.nome}.</p>
           <div className="mt-6 space-y-2 text-left">
             {confirmed.map((c, i) => (
-              <div key={i} className="rounded-xl bg-secondary p-3 flex items-center justify-between text-sm">
-                <span className="font-medium">{c.data}</span>
-                <span className="text-muted-foreground">{c.fila} · Ombrellone {c.numero}</span>
+              <div key={i} className="rounded-xl bg-secondary p-3 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">{c.data}</span>
+                  <span className="text-muted-foreground">{c.fila} · Ombrellone {c.numero}</span>
+                </div>
+                {!c.expiresAt && (
+                  <div className="mt-1 text-xs font-medium text-[color:var(--teal-deep)]">
+                    Prenotazione immediata: ti aspettiamo oggi, nessuna scadenza.
+                  </div>
+                )}
               </div>
             ))}
           </div>

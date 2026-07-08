@@ -30,6 +30,9 @@ import {
   Zap,
   Frown,
   Smile,
+  CalendarDays,
+  Phone,
+  CalendarCheck,
   type LucideIcon,
 } from "lucide-react";
 
@@ -46,13 +49,14 @@ export const Route = createFileRoute("/")({
 });
 
 const BENEFICI = [
-  { titolo: "Kanban in tempo reale", descrizione: "Ogni ordine arriva subito allo staff con notifica sonora. Nessun ordine perso, nessuna confusione.", Icon: Kanban },
-  { titolo: "Mappa ombrelloni", descrizione: "Sai sempre cosa sta succedendo in spiaggia. Vedi in un colpo d'occhio dove c'è un ordine in attesa o in ritardo.", Icon: Map },
-  { titolo: "Report e analytics", descrizione: "Scopri quali prodotti vendono di più, le ore di punta e il tempo medio di consegna. Dati reali per decisioni migliori.", Icon: BarChart3 },
-  { titolo: "Accesso per ruoli", descrizione: "Il gestore controlla tutto. Lo staff vede solo quello che gli serve. Zero confusione, zero errori.", Icon: ShieldCheck },
+  { titolo: "Prenotazioni senza confusione", descrizione: "Controlla disponibilità e prenotazioni senza rincorrere telefonate, messaggi o fogli.", Icon: Kanban },
+  { titolo: "Mappa del lido sempre aggiornata", descrizione: "Vedi subito quali ombrelloni sono liberi, prenotati o occupati.", Icon: Map },
+  { titolo: "Ordini semplici sotto l'ombrellone", descrizione: "Il cliente ordina dal QR code e lo staff sa subito cosa preparare e dove consegnare.", Icon: BarChart3 },
+  { titolo: "Tutto sotto controllo", descrizione: "Uno strumento chiaro e intuitivo per organizzare il lavoro anche nei momenti di punta.", Icon: ShieldCheck },
 ];
 
 const PRIMA_DOPO: { prima: string; primaIcon: LucideIcon; dopo: string; dopoIcon: LucideIcon }[] = [
+  { prima: "Prenotazioni a voce, telefono o WhatsApp", primaIcon: Phone, dopo: "Prenotazioni online in autonomia, sempre tracciate con storico", dopoIcon: CalendarCheck },
   { prima: "Code al bar", primaIcon: Clock, dopo: "Ordini dal lettino", dopoIcon: Smartphone },
   { prima: "Cameriere prende nota", primaIcon: PenLine, dopo: "Ordine digitale preciso", dopoIcon: CheckCircle2 },
   { prima: "Errori di trascrizione", primaIcon: AlertTriangle, dopo: "Notifica immediata allo staff", dopoIcon: BellRing },
@@ -61,6 +65,12 @@ const PRIMA_DOPO: { prima: string; primaIcon: LucideIcon; dopo: string; dopoIcon
 ];
 
 const COME_FUNZIONA = [
+  {
+    Icon: CalendarDays,
+    titolo: "Prenota",
+    descrizione: "Il cliente prenota l'ombrellone online, arriva e trova il posto pronto",
+    badge: "Opzionale",
+  },
   {
     Icon: QrCode,
     titolo: "Scansiona",
@@ -128,6 +138,16 @@ const FAQ_ITEMS = [
   {
     domanda: "Posso provare la piattaforma prima di attivarla?",
     risposta: "Sì, è possibile richiedere una demo personalizzata.",
+  },
+  {
+    domanda: "Posso gestire le prenotazioni online?",
+    risposta:
+      "Sì, i clienti possono prenotare l'ombrellone online e lo staff vede subito le prenotazioni sulla mappa del lido, con storico sempre consultabile.",
+  },
+  {
+    domanda: "Il cliente può vedere la disponibilità in tempo reale?",
+    risposta:
+      "Sì, la disponibilità degli ombrelloni è sempre aggiornata: il cliente vede subito cosa è libero prima di prenotare.",
   },
 ];
 
@@ -264,18 +284,24 @@ function Hero() {
       <div className="w-full md:w-[45%] flex flex-col justify-center">
         <span className="chip chip-active w-fit mb-6">🏖️ Pensato per i lidi italiani</span>
         <h1 className="text-5xl md:text-6xl font-extrabold leading-[1.05] text-primary">
-          Il sistema operativo<br />
-          del tuo <span className="text-[color:var(--teal-deep)]">stabilimento.</span>
+          Meno caos in spiaggia.<br />
+          Più organizzazione <span className="text-[color:var(--teal-deep)]">per il tuo lido.</span>
         </h1>
         <p className="mt-6 text-lg text-muted-foreground max-w-md">
-          Ordini digitali, mappa in tempo reale, analytics e menu dal QR. OmbrellOne gestisce l'operatività del tuo bar mentre tu ti concentri sui clienti.
+          Prenotazioni, disponibilità, mappa degli ombrelloni e ordini sotto la postazione: tutto in un unico posto, semplice da usare per te, il tuo staff e i tuoi clienti.
         </p>
-        <div className="mt-8">
+        <div className="mt-8 flex flex-wrap items-center gap-4">
           <a
             href="#contatto"
             className="bg-primary text-primary-foreground inline-flex items-center justify-center rounded-full px-6 py-3 font-semibold shadow-[var(--shadow-elevated)] hover:bg-primary/90 transition"
           >
-            Richiedi una demo gratuita
+            Richiedi una demo
+          </a>
+          <a
+            href="#come-funziona"
+            className="inline-flex items-center justify-center rounded-full px-6 py-3 font-semibold text-primary hover:text-primary/80 transition"
+          >
+            Scopri come funziona
           </a>
         </div>
       </div>
@@ -347,7 +373,10 @@ function ComeFunziona() {
           <div key={step.titolo} className="flex-1 flex items-center gap-4 lg:gap-6">
             <div className="flex-1 text-center">
               <step.Icon className="w-16 h-16 text-teal-600 mx-auto mb-4" />
-              <h3 className="text-xl font-bold text-primary">{step.titolo}</h3>
+              <h3 className="text-xl font-bold text-primary flex items-center justify-center gap-2">
+                {step.titolo}
+                {step.badge && <span className="chip text-xs font-medium">{step.badge}</span>}
+              </h3>
               <p className="mt-2 text-sm text-muted-foreground">{step.descrizione}</p>
             </div>
             {index < COME_FUNZIONA.length - 1 && (
@@ -386,7 +415,7 @@ const IN_AZIONE_ITEMS = [
   {
     badge: "🗺️ Mappa ombrelloni",
     titolo: "Controllo visivo di ogni ombrellone",
-    testo: "Vedi in un colpo d'occhio quali ombrelloni hanno ordini attivi, in ritardo o consegnati. Clicca su un ombrellone per vedere i dettagli.",
+    testo: "Vedi in un colpo d'occhio disponibilità, prenotazioni e ordini attivi, in ritardo o consegnati. Clicca su un ombrellone per vedere i dettagli.",
     image: "/screenshot-mappa.jpg.jpeg",
     imageClassName: "rounded-2xl shadow-xl w-full max-w-[280px] mx-auto",
     reverse: false,
@@ -503,7 +532,7 @@ function Urgenza() {
           La stagione è già iniziata.
         </p>
         <p className="mt-3 text-lg md:text-xl text-primary-foreground/90">
-          Ogni settimana senza OmbrellOne è una settimana di ordini persi.
+          Ogni settimana senza OmbrellOne è una settimana di prenotazioni e ordini persi.
         </p>
         <a
           href="#contatto"
