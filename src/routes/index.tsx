@@ -33,6 +33,9 @@ import {
   CalendarDays,
   Phone,
   CalendarCheck,
+  Wrench,
+  Gift,
+  Headphones,
   type LucideIcon,
 } from "lucide-react";
 
@@ -151,6 +154,65 @@ const FAQ_ITEMS = [
   },
 ];
 
+const PILOTA_CARDS = [
+  {
+    Icon: Wrench,
+    titolo: "Setup fatto da noi",
+    descrizione: "Configuriamo mappa, menu e QR code. Tu non tocchi niente: in 48 ore sei operativo.",
+  },
+  {
+    Icon: Gift,
+    titolo: "1 mese gratuito",
+    descrizione: "Nessun costo, nessun vincolo. Se non ti è servito, ci stringiamo la mano.",
+  },
+  {
+    Icon: Headphones,
+    titolo: "Supporto diretto del founder",
+    descrizione: "Parli con chi ha costruito il prodotto, non con un call center. Modifiche e richieste gestite in 48 ore.",
+  },
+];
+
+function ProgrammaPilota() {
+  return (
+    <section id="programma-pilota" className="px-6 lg:px-16 py-20 max-w-5xl mx-auto w-full text-center">
+      <span className="chip chip-active w-fit mx-auto">PROGRAMMA PILOTA — ESTATE 2026</span>
+      <h2 className="mt-4 text-3xl md:text-4xl font-bold text-primary">
+        Stiamo cercando 3 lidi pilota. 1 mese gratuito.
+      </h2>
+      <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
+        Porta gli ordini dal lettino nel tuo stabilimento senza cambiare nulla nel tuo modo di lavorare. Pensiamo a tutto noi: setup completo in 48 ore, menu digitalizzato, QR pronti da mettere sugli ombrelloni.
+      </p>
+
+      <div className="mt-12 grid sm:grid-cols-3 gap-6">
+        {PILOTA_CARDS.map((c) => (
+          <div
+            key={c.titolo}
+            className="bg-white rounded-2xl border border-border shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-elevated)] transition p-6 text-center"
+          >
+            <c.Icon className="w-8 h-8 text-teal-600 mx-auto mb-4" />
+            <h3 className="text-lg font-bold text-primary">{c.titolo}</h3>
+            <p className="mt-2 text-sm text-muted-foreground">{c.descrizione}</p>
+          </div>
+        ))}
+      </div>
+
+      <p className="mt-10 text-sm font-semibold text-destructive">
+        Solo 3 posti disponibili. Selezioniamo lidi con bar attivo e almeno 40 ombrelloni.
+      </p>
+
+      <Link
+        to="/pilota"
+        className="mt-6 inline-flex items-center justify-center rounded-full px-8 py-4 font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition shadow-[var(--shadow-elevated)]"
+      >
+        Candida il tuo lido →
+      </Link>
+      <p className="mt-4 text-sm text-muted-foreground">
+        Ti ricontattiamo entro 24 ore. Nessuna carta di credito richiesta.
+      </p>
+    </section>
+  );
+}
+
 function DemoButton({ className }: { className?: string }) {
   return (
     <a
@@ -174,6 +236,7 @@ function Home() {
       <Benefici />
       <InAzione />
       <EmotionSection />
+      <ProgrammaPilota />
       <Urgenza />
       <FAQ />
       <FormContatto />
