@@ -1,7 +1,20 @@
 -- Programma Pilota: form di candidatura sulla landing page.
 -- Anon può solo inserire (lead capture); solo super_admin può leggere,
--- aggiornare lo status o cancellare i lead, seguendo il pattern RLS
--- esistente (public.is_super_admin, vedi 20260623184125_...).
+-- aggiornare lo status o cancellare i lead.
+--
+-- public.is_super_admin() è definita nella migration 20260623184125 ma
+-- risulta assente sul DB live (drift di schema noto su questo progetto:
+-- user_roles e l'enum app_role esistono live, la funzione no). La
+-- ricreiamo qui (CREATE OR REPLACE, idempotente, stessa definizione
+-- della migration originale) invece di indebolire le policy di
+-- pilot_leads ad accesso authenticated ampio.
+CREATE OR REPLACE FUNCTION public.is_super_admin(_user_id UUID)
+RETURNS BOOLEAN LANGUAGE SQL STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.user_roles
+    WHERE user_id = _user_id AND role = 'super_admin'
+  );
+$$;
 
 CREATE TYPE public.pilot_lead_status AS ENUM (
   'new',
@@ -153,3 +166,5 @@ create trigger trg_pilot_leads_notify
 -- drop table if exists public.pilot_leads;
 -- drop type if exists public.pilot_lead_status;
 -- delete from vault.secrets where name = 'pilot_lead_webhook_secret';
+-- Nota: NON droppare public.is_super_admin() nel rollback — è una
+-- funzione condivisa (drift-fix), non specifica di pilot_leads.
