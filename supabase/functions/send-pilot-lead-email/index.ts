@@ -39,7 +39,7 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const sharedSecret = Deno.env.get("WEBHOOK_SHARED_SECRET");
+    const sharedSecret = Deno.env.get("PILOT_LEAD_WEBHOOK_SECRET");
     const providedSecret = req.headers.get("x-webhook-secret");
     if (!sharedSecret || providedSecret !== sharedSecret) {
       return json({ error: "Non autorizzato." }, 401);
