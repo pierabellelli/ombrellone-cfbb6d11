@@ -196,7 +196,8 @@ function ProgrammaPilota() {
         ))}
       </div>
 
-      <p className="mt-10 text-sm font-semibold text-destructive">
+      <p className="mt-10 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-base md:text-lg font-bold bg-[color:var(--teal-deep)]/10 text-[color:var(--teal-deep)] border border-[color:var(--teal-deep)]/25">
+        <Hourglass className="w-5 h-5 shrink-0" />
         Solo 3 posti disponibili. Selezioniamo lidi con bar attivo e almeno 40 ombrelloni.
       </p>
 
@@ -463,44 +464,59 @@ const IN_AZIONE_ITEMS = [
     badge: "👤 Esperienza cliente",
     titolo: "Il cliente ordina in 30 secondi",
     testo: "Scansiona il QR, sceglie dal menu, invia. Nessuna app da installare, nessuna registrazione. I preferiti vengono ricordati per il prossimo ordine.",
-    image: "/screenshot-menu.jpeg",
-    imageClassName: "rounded-2xl shadow-xl w-full max-w-[280px] mx-auto",
+    image: "/screenshots/cliente-mobile.png",
+    mockup: "phone" as const,
     reverse: false,
   },
   {
     badge: "👨‍💼 Gestionale staff",
     titolo: "Lo staff gestisce tutto in tempo reale",
     testo: "Ogni ordine appare istantaneamente nel Kanban con notifica sonora. Nuovi → In preparazione → Consegnato. Nessun ordine perso, nessuna confusione.",
-    image: "/screenshot-kanban-desktop.png",
-    imageClassName: "rounded-2xl shadow-xl w-full",
+    image: "/screenshots/kanban.png",
+    mockup: "browser" as const,
     reverse: true,
+    caption: "📱 Lavora da qualsiasi dispositivo: il gestionale è ottimizzato per tablet e smartphone.",
   },
   {
-    badge: "🗺️ Mappa ombrelloni",
+    badge: "🗺️ Mappa in tempo reale",
     titolo: "Controllo visivo di ogni ombrellone",
     testo: "Vedi in un colpo d'occhio disponibilità, prenotazioni e ordini attivi, in ritardo o consegnati. Clicca su un ombrellone per vedere i dettagli.",
-    image: "/screenshot-mappa.jpg.jpeg",
-    imageClassName: "rounded-2xl shadow-xl w-full max-w-[280px] mx-auto",
+    image: "/screenshots/mappa.png",
+    mockup: "browser" as const,
     reverse: false,
+  },
+  {
+    badge: "📊 Performance del lido",
+    titolo: "Analizza le performance del tuo lido",
+    testo: "Prodotti più venduti, ore di punta, revenue e tempo medio di consegna. Dati per decidere meglio.",
+    image: "/screenshots/report.png",
+    mockup: "browser" as const,
+    reverse: true,
   },
 ];
 
-const IN_AZIONE_GRID = [
-  {
-    badge: "📱 Mobile first",
-    titolo: "Lavora da qualsiasi dispositivo",
-    testo: "Il gestionale è ottimizzato per tablet e smartphone. Lo staff può lavorare senza PC.",
-    image: "/screenshot-kanban-mobile.jpeg",
-    imageClassName: "rounded-2xl shadow-xl w-full max-w-[220px] mx-auto",
-  },
-  {
-    badge: "📊 Analytics",
-    titolo: "Analizza le performance del tuo lido",
-    testo: "Prodotti più venduti, ore di punta, revenue e tempo medio di consegna. Dati per decidere meglio.",
-    image: "/screenshot-report.png",
-    imageClassName: "rounded-2xl shadow-xl w-full",
-  },
-];
+function PhoneMockup({ src, alt }: { src: string; alt: string }) {
+  return (
+    <div className="mx-auto w-full max-w-[260px] rounded-[2.25rem] border-[6px] border-[color:var(--navy-deep)] bg-[color:var(--navy-deep)] shadow-lg">
+      <div className="overflow-hidden rounded-[1.75rem]">
+        <img src={src} alt={alt} className="w-full h-auto block" />
+      </div>
+    </div>
+  );
+}
+
+function BrowserMockup({ src, alt }: { src: string; alt: string }) {
+  return (
+    <div className="w-full rounded-2xl border border-border shadow-lg overflow-hidden bg-white">
+      <div className="flex items-center gap-1.5 px-4 py-2.5 bg-slate-100 border-b border-border">
+        <span className="w-2.5 h-2.5 rounded-full bg-red-400" />
+        <span className="w-2.5 h-2.5 rounded-full bg-yellow-400" />
+        <span className="w-2.5 h-2.5 rounded-full bg-green-400" />
+      </div>
+      <img src={src} alt={alt} className="w-full h-auto block" />
+    </div>
+  );
+}
 
 function InAzione() {
   return (
@@ -524,19 +540,15 @@ function InAzione() {
               <p className="mt-3 text-muted-foreground">{item.testo}</p>
             </div>
             <div>
-              <img src={item.image} alt={item.titolo} className={item.imageClassName} />
+              {item.mockup === "phone" ? (
+                <PhoneMockup src={item.image} alt={item.titolo} />
+              ) : (
+                <BrowserMockup src={item.image} alt={item.titolo} />
+              )}
+              {item.caption && (
+                <p className="mt-4 text-sm text-muted-foreground text-center italic">{item.caption}</p>
+              )}
             </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="mt-16 grid md:grid-cols-2 gap-8">
-        {IN_AZIONE_GRID.map((item) => (
-          <div key={item.titolo} className="bg-white rounded-2xl border border-border shadow-[var(--shadow-card)] p-6 md:p-8">
-            <span className="chip chip-active">{item.badge}</span>
-            <h3 className="mt-4 text-xl font-bold text-primary">{item.titolo}</h3>
-            <p className="mt-3 text-muted-foreground">{item.testo}</p>
-            <img src={item.image} alt={item.titolo} className={`mt-6 ${item.imageClassName}`} />
           </div>
         ))}
       </div>
