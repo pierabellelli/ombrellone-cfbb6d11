@@ -114,7 +114,7 @@ function PilotaPage() {
           <span className="chip chip-active w-fit mx-auto mb-4">PROGRAMMA PILOTA — ESTATE 2026</span>
           <h1 className="text-3xl md:text-4xl font-bold text-primary">Candida il tuo lido</h1>
           <p className="mt-3 text-muted-foreground">
-            Solo 3 posti disponibili. Ti ricontattiamo entro 24 ore.
+            Ti ricontattiamo entro 24 ore.
           </p>
         </div>
 
