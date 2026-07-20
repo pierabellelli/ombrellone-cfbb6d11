@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as PilotaRouteImport } from './routes/pilota'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AccettaInvitoRouteImport } from './routes/accetta-invito'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
@@ -37,6 +38,11 @@ const TermsRoute = TermsRouteImport.update({
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PilotaRoute = PilotaRouteImport.update({
+  id: '/pilota',
+  path: '/pilota',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -133,6 +139,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/accetta-invito': typeof AccettaInvitoRoute
   '/login': typeof LoginRoute
+  '/pilota': typeof PilotaRoute
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
   '/configurazione-lido': typeof AuthenticatedConfigurazioneLidoRoute
@@ -153,6 +160,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/accetta-invito': typeof AccettaInvitoRoute
   '/login': typeof LoginRoute
+  '/pilota': typeof PilotaRoute
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
   '/configurazione-lido': typeof AuthenticatedConfigurazioneLidoRoute
@@ -175,6 +183,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/accetta-invito': typeof AccettaInvitoRoute
   '/login': typeof LoginRoute
+  '/pilota': typeof PilotaRoute
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
   '/_authenticated/configurazione-lido': typeof AuthenticatedConfigurazioneLidoRoute
@@ -197,6 +206,7 @@ export interface FileRouteTypes {
     | '/'
     | '/accetta-invito'
     | '/login'
+    | '/pilota'
     | '/privacy'
     | '/terms'
     | '/configurazione-lido'
@@ -217,6 +227,7 @@ export interface FileRouteTypes {
     | '/'
     | '/accetta-invito'
     | '/login'
+    | '/pilota'
     | '/privacy'
     | '/terms'
     | '/configurazione-lido'
@@ -238,6 +249,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/accetta-invito'
     | '/login'
+    | '/pilota'
     | '/privacy'
     | '/terms'
     | '/_authenticated/configurazione-lido'
@@ -260,6 +272,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AccettaInvitoRoute: typeof AccettaInvitoRoute
   LoginRoute: typeof LoginRoute
+  PilotaRoute: typeof PilotaRoute
   PrivacyRoute: typeof PrivacyRoute
   TermsRoute: typeof TermsRoute
   LidoSlugRoute: typeof LidoSlugRoute
@@ -281,6 +294,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy'
       fullPath: '/privacy'
       preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pilota': {
+      id: '/pilota'
+      path: '/pilota'
+      fullPath: '/pilota'
+      preLoaderRoute: typeof PilotaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -439,6 +459,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AccettaInvitoRoute: AccettaInvitoRoute,
   LoginRoute: LoginRoute,
+  PilotaRoute: PilotaRoute,
   PrivacyRoute: PrivacyRoute,
   TermsRoute: TermsRoute,
   LidoSlugRoute: LidoSlugRoute,
