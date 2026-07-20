@@ -118,11 +118,13 @@ const FAQ_ITEMS = [
   },
   {
     domanda: "Quanto costa?",
-    risposta: "Pricing personalizzato in base alle esigenze dello stabilimento — contattaci per un preventivo.",
+    risposta:
+      "A partire da 35€/mese, in base al numero di ombrelloni del tuo stabilimento. Nessun costo di attivazione, nessun vincolo — puoi disdire quando vuoi. Se preferisci pagare un'unica volta per tutta la stagione (maggio-settembre), il costo è più conveniente. Ti diciamo il prezzo esatto in 5 minuti, senza impegno.",
   },
   {
     domanda: "Qual è la durata del contratto?",
-    risposta: "Da definire in base alle esigenze dello stabilimento — contattaci per i dettagli.",
+    risposta:
+      "Nessun vincolo. Puoi scegliere l'abbonamento mensile, disdicibile in ogni momento, oppure quello stagionale a prezzo scontato. Nessuna carta di credito richiesta per il periodo di prova.",
   },
   {
     domanda: "I miei dati sono al sicuro?",
@@ -235,6 +237,7 @@ function Home() {
       <ProgrammaPilota />
       <Urgenza />
       <FAQ />
+      <Prezzi />
       <FormContatto />
       <CtaFinale />
       <Footer />
@@ -656,6 +659,29 @@ function FAQ() {
           </AccordionItem>
         ))}
       </Accordion>
+    </section>
+  );
+}
+
+function Prezzi() {
+  return (
+    <section className="px-6 lg:px-16 py-20 max-w-3xl mx-auto w-full text-center">
+      <div className="card-soft p-8 md:p-12">
+        <h2 className="text-2xl md:text-3xl font-bold text-primary">
+          Prezzi semplici, pensati per la tua stagione
+        </h2>
+        <p className="mt-4 text-lg text-muted-foreground">
+          A partire da 35€/mese — o risparmia il 20% pagando l'intera stagione in
+          un'unica soluzione. Il prezzo varia in base al numero di ombrelloni: te lo
+          confermiamo subito, senza sorprese.
+        </p>
+        <a
+          href="#contatto"
+          className="mt-8 inline-flex items-center justify-center rounded-full px-8 py-4 font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition shadow-[var(--shadow-elevated)]"
+        >
+          Richiedi il tuo prezzo →
+        </a>
+      </div>
     </section>
   );
 }
