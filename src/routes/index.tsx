@@ -196,14 +196,9 @@ function ProgrammaPilota() {
         ))}
       </div>
 
-      <p className="mt-10 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-base md:text-lg font-bold bg-[color:var(--teal-deep)]/10 text-[color:var(--teal-deep)] border border-[color:var(--teal-deep)]/25">
-        <Hourglass className="w-5 h-5 shrink-0" />
-        Solo 3 posti disponibili. Selezioniamo lidi con bar attivo e almeno 40 ombrelloni.
-      </p>
-
       <Link
         to="/pilota"
-        className="mt-6 inline-flex items-center justify-center rounded-full px-8 py-4 font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition shadow-[var(--shadow-elevated)]"
+        className="mt-10 inline-flex items-center justify-center rounded-full px-8 py-4 font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition shadow-[var(--shadow-elevated)]"
       >
         Candida il tuo lido →
       </Link>
